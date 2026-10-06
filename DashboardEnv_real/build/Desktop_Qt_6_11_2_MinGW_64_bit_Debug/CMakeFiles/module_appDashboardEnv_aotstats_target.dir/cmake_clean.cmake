@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  ".rcc/qmlcache/appDashboardEnv_qml_Main_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_Main_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_AppTheme_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_AppTheme_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_BoxWrap_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_BoxWrap_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_ClampedTextField_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_ClampedTextField_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomBoxFiled_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomBoxFiled_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomComboBox_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomComboBox_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomSwitch_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_CustomSwitch_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_MiniMonitorChart_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_components_MiniMonitorChart_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Attenuation_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Attenuation_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Detect_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Detect_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_EnvelopeChartPanel_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_EnvelopeChartPanel_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_PowerControlPanel_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_PowerControlPanel_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_TimeDelay_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_TimeDelay_qml.cpp.aotstats"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_chartView_qml.cpp"
+  ".rcc/qmlcache/appDashboardEnv_qml_views_chartView_qml.cpp.aotstats"
+  ".rcc/qmlcache/module_appDashboardEnv.aotstats"
+  "CMakeFiles/module_appDashboardEnv_aotstats_target"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang )
+  include(CMakeFiles/module_appDashboardEnv_aotstats_target.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

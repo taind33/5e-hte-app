@@ -1,0 +1,1562 @@
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/CMakeLists.txt r3/app/CMakeLists.txt
+--- /tmp/claude-0/prev/DashboardEnv_real/CMakeLists.txt	2026-10-05 09:06:26.000000000 +0000
++++ r3/app/CMakeLists.txt	2026-10-05 11:07:29.643600616 +0000
+@@ -45,6 +45,7 @@
+         backend/dcsource.h backend/dcsource.cpp
+         backend/rfcontroller.h backend/rfcontroller.cpp
+         backend/dashboardmanager.h backend/dashboardmanager.cpp
++        backend/dashboardcli.cpp
+         backend/mavlink_helper.h
+ 
+     RESOURCES
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardcli.cpp r3/app/backend/dashboardcli.cpp
+--- /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardcli.cpp	1970-01-01 00:00:00.000000000 +0000
++++ r3/app/backend/dashboardcli.cpp	2026-10-05 11:08:43.467006748 +0000
+@@ -0,0 +1,611 @@
++// dashboardcli.cpp - Terminal kiểu dòng lệnh (CLI) của DashboardManager.
++//
++// Mọi lệnh gõ đi qua ĐÚNG các hàm mà nút bấm trên giao diện dùng
++// (requestAcPower, requestSetAtt, applyDelayTime, refreshPower...) nên có
++// cùng giới hạn/kiểm tra, và ô nhập/công tắc trên giao diện cập nhật theo.
++#include "dashboardmanager.h"
++#include <QSerialPortInfo>
++#include <QRegularExpression>
++#include <cmath>
++
++namespace {
++
++// Lệnh chức năng của nguồn AC IT-M7700 (programming guide). Gửi qua kênh
++// lệnh thô (msgid 43), board trả lời bằng msgid 44.
++const char *AC_PROT_CLEAR = "PROT:CLE";       // PROTect:CLEar - xoá trạng thái bảo vệ (reset lỗi)
++const char *AC_ERR_QUERY  = "SYST:ERR?";
++const char *AC_ERR_CLEAR  = "SYST:CLE";       // xoá hàng đợi lỗi
++const char *AC_IDN        = "*IDN?";
++const char *AC_POWER      = "MEAS:POW?";
++// Nguồn DC Matsusada: đọc trạng thái/giá trị cài đặt.
++const char *DC_STATUS     = "#0 STT?";
++
++struct CliCmd { const char *name; const char *usage; const char *desc; };
++const CliCmd kCommands[] = {
++    { "help",    "help [lệnh]",                   "Danh sách lệnh, hoặc chi tiết 1 lệnh" },
++    { "clear",   "clear",                         "Xoá màn hình Terminal" },
++    { "status",  "status",                        "Kết nối, firmware, AD9361/DMA, trạng thái nguồn AC/DC" },
++    { "ac",      "ac on <V> <Hz> | ac off | ac read | ac clear | ac err | ac idn | ac power | ac raw <lệnh>",
++                                                  "Nguồn AC (IT-M7700)" },
++    { "dc",      "dc on <V> <A> | dc off | dc read | dc status | dc raw <lệnh>",
++                                                  "Nguồn DC (Matsusada)" },
++    { "read",    "read ac|dc|all",                "Đọc số đo tức thời (giống nút ⟳ / phím F5)" },
++    { "att",     "att <1-3> <dB>",                "Đặt suy hao F1956, 0..31.75 dB, bước 0.25" },
++    { "delay",   "delay <0|100|270|400>",          "Đặt giữ chậm quang (ns)" },
++    { "reset",   "reset  (rồi: reset yes)",       "Đặt lại hệ thống: tắt AC/DC, ATT 0 dB, delay 0 ns" },
++    { "ping",    "ping",                          "Gửi PING tới board, đo thời gian trả lời" },
++    { "scan",    "scan",                          "Tự tìm cổng COM + baud đang có board 5E-HTE" },
++    { "monitor", "monitor on|off",                "Mỗi giây in số byte/khung nhận được từ board" },
++    { "board",   "board <TÊN> [v1 v2 v3]",        "Lệnh chung tới FIRMWARE board (kiểu cũ, msgid 39)" },
++};
++
++QStringList tokens(const QString &line)
++{
++    return line.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
++}
++
++bool toNum(const QString &s, double &out)
++{
++    bool ok = false;
++    QString t = s;
++    t.replace(',', '.');
++    out = t.toDouble(&ok);
++    return ok && std::isfinite(out);
++}
++
++} // namespace
++
++void DashboardManager::cliOut(const QString &text)
++{
++    m_commandLog.append(text);
++    while (m_commandLog.size() > MAX_LOG_LINES)
++        m_commandLog.removeFirst();
++    emit commandLogChanged();
++}
++
++void DashboardManager::cliError(const QString &text)
++{
++    appendCommandLog("ERR", text);
++}
++
++void DashboardManager::clearCommandLog()
++{
++    m_commandLog.clear();
++    emit commandLogChanged();
++}
++
++QStringList DashboardManager::cliCompletions(const QString &prefix) const
++{
++    static const QStringList words = {
++        "help", "clear", "status", "read ac", "read dc", "read all",
++        "ac on", "ac off", "ac read", "ac clear", "ac err", "ac idn", "ac power", "ac raw",
++        "dc on", "dc off", "dc read", "dc status", "dc raw",
++        "att 1", "att 2", "att 3", "delay", "reset", "reset yes",
++        "ping", "scan", "monitor on", "monitor off", "board" };
++    QStringList out;
++    const QString p = prefix.trimmed().toLower();
++    for (const QString &w : words)
++        if (w.startsWith(p))
++            out << w;
++    return out;
++}
++
++void DashboardManager::executeCommand(const QString &line)
++{
++    const QString trimmed = line.trimmed();
++    if (trimmed.isEmpty())
++        return;
++
++    // Tiếng vọng lệnh vào Terminal + file log phiên.
++    appendCommandLog("CMD", trimmed);
++    writeToLog("[CLI] " + trimmed);
++
++    const QStringList a = tokens(trimmed);
++    const QString cmd = a.first().toLower();
++
++    // Kiểu lệnh cũ "TÊN, v1, v2" (có dấu phẩy) -> nhắc dùng "board".
++    if (cmd.contains(',')) {
++        cliError(QString("Không hiểu lệnh '%1'. Lệnh chung tới firmware giờ là: board <TÊN> [v1 v2 v3]. Gõ help.").arg(trimmed));
++        return;
++    }
++    if (cmd == "help" || cmd == "?")  { cliHelp(a.size() > 1 ? a[1].toLower() : QString()); return; }
++    if (cmd == "clear" || cmd == "cls") { clearCommandLog(); return; }
++    if (cmd == "status")  { cliStatus(); return; }
++    if (cmd == "ac")      { cliAc(a); return; }
++    if (cmd == "dc")      { cliDc(a); return; }
++    if (cmd == "read")    { cliRead(a); return; }
++    if (cmd == "att")     { cliAtt(a); return; }
++    if (cmd == "delay")   { cliDelay(a); return; }
++    if (cmd == "reset")   { cliReset(a); return; }
++    if (cmd == "ping")    { cliPing(); return; }
++    if (cmd == "scan")    { startScan(); return; }
++    if (cmd == "monitor") { cliMonitor(a); return; }
++    if (cmd == "board")   { cliBoard(a, trimmed); return; }
++
++    cliError(QString("Không có lệnh '%1'. Gõ help để xem danh sách lệnh.").arg(a.first()));
++}
++
++void DashboardManager::cliHelp(const QString &topic)
++{
++    if (!topic.isEmpty()) {
++        for (const CliCmd &c : kCommands) {
++            if (topic == QLatin1String(c.name)) {
++                cliOut(QString("%1 — %2").arg(QString::fromUtf8(c.name), QString::fromUtf8(c.desc)));
++                cliOut("  Cú pháp: " + QString::fromUtf8(c.usage));
++                if (topic == "ac") {
++                    cliOut("  Ví dụ: ac on 120 50   (bật 120 V, 50 Hz)");
++                    cliOut("         ac clear       (reset lỗi/bảo vệ của nguồn: PROT:CLE)");
++                    cliOut("         ac raw MEAS:POW?   (gửi nguyên văn 1 lệnh SCPI bất kỳ, in câu trả lời)");
++                } else if (topic == "dc") {
++                    cliOut("  Ví dụ: dc on 24 2.5   (bật 24 V, giới hạn dòng 2.5 A)");
++                    cliOut("         dc status      (#0 STT? - đọc giá trị cài đặt/trạng thái)");
++                    cliOut("         dc raw OVP 30  (tự thêm \"#0 \" nếu thiếu -> gửi \"#0 OVP 30\")");
++                } else if (topic == "board") {
++                    cliOut("  Gửi lệnh chung tới firmware của board (không phải tới nguồn).");
++                    cliOut("  Firmware hiện chỉ xử lý RESET; lệnh khác chỉ được ACK. Ví dụ: board RESET");
++                }
++                return;
++            }
++        }
++        cliError(QString("Không có lệnh '%1'. Gõ help.").arg(topic));
++        return;
++    }
++    cliOut("──────── LỆNH TERMINAL ────────");
++    for (const CliCmd &c : kCommands)
++        cliOut(QString("%1  —  %2").arg(QString::fromUtf8(c.usage), QString::fromUtf8(c.desc)));
++    cliOut("Lệnh thô tới nguồn (raw): gửi NGUYÊN VĂN 1 lệnh mà danh sách trên không có,");
++    cliOut("  vd: ac raw *IDN?  |  ac raw MEAS:POW?  |  ac raw SYST:LOC  |  dc raw #0 STT?");
++    cliOut("  Lệnh có '?' là câu hỏi -> in câu trả lời của nguồn. Lệnh ghi (không '?') với AC");
++    cliOut("  được kiểm tra bằng SYST:ERR? + OUTP? và báo lại có lỗi hay không.");
++    cliOut("Mẹo: ↑/↓ gọi lại lệnh cũ, Tab hoàn thành lệnh, help <lệnh> xem chi tiết.");
++}
++
++void DashboardManager::cliStatus()
++{
++    cliOut("──────── TRẠNG THÁI ────────");
++    if (!m_serialPort->isOpen()) {
++        cliOut(QString("Kết nối: chưa mở (COM %1, baud %2)").arg(m_comPort.isEmpty() ? "--" : m_comPort,
++                                                                m_baudRate > 0 ? QString::number(m_baudRate) : "--"));
++    } else {
++        cliOut(QString("Kết nối: %1 @ %2 — %3").arg(m_comPort).arg(m_baudRate)
++                   .arg(m_isPortVerified ? "đã xác thực board" : "CHƯA xác thực"));
++        cliOut(QString("Nhận: %1 byte, %2 khung đúng, %3 khung lỗi").arg(m_rxBytes).arg(m_rxFramesOk).arg(m_rxFramesBad));
++        if (!m_isPortVerified)
++            cliOut("Chẩn đoán: " + m_linkDiagnosis);
++    }
++    if (m_haveDiag) {
++        const board_diag_msg_t &d = m_lastDiag;
++        cliOut(QString("Firmware: build %1, chạy %2 s").arg(m_boardFirmware).arg(d.uptime_s));
++        cliOut(QString("AD9361: %1 | Phổ RF: %2 | DMA ok %3, timeout %4 | đỉnh ADC RX1 %5/2047")
++                   .arg(d.ad9361_ok ? QStringLiteral("OK") : QString("LỖI (mã %1)").arg(d.ad9361_status))
++                   .arg(d.rf_stream_ok ? "chạy" : "tắt").arg(d.dma_ok).arg(d.dma_timeout).arg(d.rx1_peak));
++        cliOut(QString("Board nhận từ PC: %1 byte, %2 khung đúng, %3 khung lỗi")
++                   .arg(d.pc_rx_bytes).arg(d.pc_frames_ok).arg(d.pc_frames_bad));
++    } else {
++        cliOut("Firmware: chưa nhận gói DIAG từ board");
++    }
++    auto src = [&](const char *name, BasePowerSource *s) {
++        cliOut(QString("Nguồn %1: %2, lần đọc cuối %3%4 [%5]").arg(QString::fromLatin1(name))
++                   .arg(s->isOn() ? "BẬT" : "TẮT")
++                   .arg(s->lastUpdate().isEmpty() ? QStringLiteral("--") : s->lastUpdate())
++                   .arg(s->hasData() ? QString(" (%1 V, %2 A)").arg(s->voltage(), 0, 'f', 2).arg(s->current(), 0, 'f', 3) : QString())
++                   .arg(s->linkState()));
++    };
++    src("AC", m_acSource);
++    src("DC", m_dcSource);
++}
++
++void DashboardManager::cliAc(const QStringList &a)
++{
++    const QString sub = a.size() > 1 ? a[1].toLower() : QString();
++    if (sub == "on") {
++        if (a.size() >= 4) {
++            double v, f;
++            if (!toNum(a[2], v) || !toNum(a[3], f)) { cliError("Cú pháp: ac on <V> <Hz>, vd: ac on 120 50"); return; }
++            if (v < acVoltMin() || v > acVoltMax()) { cliError(QString("Điện áp AC phải trong %1..%2 V").arg(acVoltMin()).arg(acVoltMax())); return; }
++            if (f < acFreqMin() || f > acFreqMax()) { cliError(QString("Tần số AC phải trong %1..%2 Hz").arg(acFreqMin()).arg(acFreqMax())); return; }
++            setStagedAcVolt(v);
++            setStagedAcFreq(f);
++        } else if (a.size() != 2) {
++            cliError("Cú pháp: ac on <V> <Hz>   (hoặc 'ac on' dùng giá trị đang nhập trên giao diện)");
++            return;
++        }
++        requestAcPower(true);
++    } else if (sub == "off") {
++        requestAcPower(false);
++    } else if (sub == "read") {
++        refreshPower(PWR_DEV_AC);
++    } else if (sub == "clear") {
++        sendRawSupply(PWR_DEV_AC, QString::fromLatin1(AC_PROT_CLEAR));
++    } else if (sub == "err") {
++        sendRawSupply(PWR_DEV_AC, QString::fromLatin1(AC_ERR_QUERY));
++    } else if (sub == "errclear") {
++        sendRawSupply(PWR_DEV_AC, QString::fromLatin1(AC_ERR_CLEAR));
++    } else if (sub == "idn") {
++        sendRawSupply(PWR_DEV_AC, QString::fromLatin1(AC_IDN));
++    } else if (sub == "power") {
++        sendRawSupply(PWR_DEV_AC, QString::fromLatin1(AC_POWER));
++    } else if (sub == "raw") {
++        const QString text = a.mid(2).join(' ');
++        if (text.isEmpty()) { cliError("Cú pháp: ac raw <lệnh SCPI>, vd: ac raw MEAS:POW?"); return; }
++        sendRawSupply(PWR_DEV_AC, text);
++    } else {
++        cliHelp("ac");
++    }
++}
++
++void DashboardManager::cliDc(const QStringList &a)
++{
++    const QString sub = a.size() > 1 ? a[1].toLower() : QString();
++    if (sub == "on") {
++        if (a.size() >= 4) {
++            double v, i;
++            if (!toNum(a[2], v) || !toNum(a[3], i)) { cliError("Cú pháp: dc on <V> <A>, vd: dc on 24 2.5"); return; }
++            if (v < dcVoltMin() || v > dcVoltMax()) { cliError(QString("Điện áp DC phải trong %1..%2 V").arg(dcVoltMin()).arg(dcVoltMax())); return; }
++            if (i < dcCurrentMin() || i > dcCurrentMax()) { cliError(QString("Dòng DC phải trong %1..%2 A").arg(dcCurrentMin()).arg(dcCurrentMax())); return; }
++            setStagedDcVolt(v);
++            setStagedDcCurrent(i);
++        } else if (a.size() != 2) {
++            cliError("Cú pháp: dc on <V> <A>   (hoặc 'dc on' dùng giá trị đang nhập trên giao diện)");
++            return;
++        }
++        requestDcPower(true);
++    } else if (sub == "off") {
++        requestDcPower(false);
++    } else if (sub == "read") {
++        refreshPower(PWR_DEV_DC);
++    } else if (sub == "status") {
++        sendRawSupply(PWR_DEV_DC, QString::fromLatin1(DC_STATUS));
++    } else if (sub == "raw") {
++        QString text = a.mid(2).join(' ');
++        if (text.isEmpty()) { cliError("Cú pháp: dc raw <lệnh>, vd: dc raw #0 STT?"); return; }
++        if (!text.startsWith('#'))
++            text = "#0 " + text;            // địa chỉ đơn vị như mọi lệnh DC khác
++        sendRawSupply(PWR_DEV_DC, text);
++    } else {
++        cliHelp("dc");
++    }
++}
++
++void DashboardManager::cliRead(const QStringList &a)
++{
++    const QString w = a.size() > 1 ? a[1].toLower() : QStringLiteral("all");
++    if (w == "ac") refreshPower(PWR_DEV_AC);
++    else if (w == "dc") refreshPower(PWR_DEV_DC);
++    else if (w == "all") refreshAllPower();
++    else cliError("Cú pháp: read ac|dc|all");
++}
++
++void DashboardManager::cliAtt(const QStringList &a)
++{
++    double ch, db;
++    if (a.size() != 3 || !toNum(a[1], ch) || !toNum(a[2], db) || (ch != 1 && ch != 2 && ch != 3)) {
++        cliError("Cú pháp: att <1-3> <dB>, vd: att 1 12.75");
++        return;
++    }
++    if (db < 0.0 || db > attMax()) {
++        cliError(QString("Suy hao phải trong 0..%1 dB").arg(attMax()));
++        return;
++    }
++    const double q = std::round(db * 4.0) / 4.0;     // F1956 bước 0.25 dB
++    if (q != db)
++        cliOut(QString("  (làm tròn %1 -> %2 dB theo bước 0.25 dB)").arg(db).arg(q, 0, 'f', 2));
++    if (!m_serialPort->isOpen()) {
++        cliError("Chưa kết nối board.");
++        return;
++    }
++    m_rfController->requestSetAtt(static_cast<int>(ch), q, true);
++}
++
++void DashboardManager::cliDelay(const QStringList &a)
++{
++    double ns;
++    if (a.size() != 2 || !toNum(a[1], ns) || (ns != 0 && ns != 100 && ns != 270 && ns != 400)) {
++        cliError("Cú pháp: delay <0|100|270|400>");
++        return;
++    }
++    if (!m_serialPort->isOpen()) {
++        cliError("Chưa kết nối board.");
++        return;
++    }
++    applyDelayTime(static_cast<int>(ns));
++}
++
++void DashboardManager::cliReset(const QStringList &a)
++{
++    const bool yes = a.size() > 1 && a[1].toLower() == "yes";
++    if (yes && m_resetArmed && m_resetArmClock.elapsed() < 30000) {
++        m_resetArmed = false;
++        resetSystem();
++        return;
++    }
++    if (yes) {
++        cliError("Gõ 'reset' trước, rồi 'reset yes' trong vòng 30 s để xác nhận.");
++        return;
++    }
++    m_resetArmed = true;
++    m_resetArmClock.start();
++    cliOut("Đặt lại sẽ TẮT ngõ ra nguồn AC và DC, ATT về 0 dB, giữ chậm về 0 ns, xoá đỉnh kích nổ.");
++    cliOut("Gõ 'reset yes' để xác nhận (trong 30 s).");
++}
++
++void DashboardManager::cliBoard(const QStringList &a, const QString &line)
++{
++    if (a.size() < 2) {
++        cliHelp("board");
++        return;
++    }
++    // sendCommand() giữ đúng định dạng cũ: "TÊN, v1, v2, v3" -> msgid 39.
++    QStringList parts;
++    parts << a[1];
++    for (int i = 2; i < a.size(); ++i)
++        parts << a[i];
++    Q_UNUSED(line);
++    sendCommand(parts.join(", "));
++}
++
++void DashboardManager::cliPing()
++{
++    if (!m_serialPort->isOpen()) {
++        cliError("Chưa kết nối - bấm BẮT ĐẦU PHIÊN trước (hoặc gõ scan để tự tìm cổng).");
++        return;
++    }
++    m_cliPingPending = true;
++    m_cliPingClock.start();
++    sendPingProbe();
++    QTimer::singleShot(PING_TIMEOUT_MS + 100, this, [this] {
++        if (m_cliPingPending) {
++            m_cliPingPending = false;
++            cliError(QString("PING: board không trả lời trong %1 ms. %2").arg(PING_TIMEOUT_MS).arg(m_linkDiagnosis));
++        }
++    });
++}
++
++void DashboardManager::cliMonitor(const QStringList &a)
++{
++    const QString w = a.size() > 1 ? a[1].toLower() : QString();
++    if (w == "on") {
++        m_monitor = true;
++        m_monBytes = m_monOk = m_monBad = 0;
++        m_monTypes.clear();
++        m_monitorTimer->start();
++        cliOut("monitor: BẬT - mỗi giây in số byte/khung nhận được (gõ monitor off để tắt).");
++    } else if (w == "off") {
++        m_monitor = false;
++        m_monitorTimer->stop();
++        cliOut("monitor: TẮT");
++    } else {
++        cliError("Cú pháp: monitor on|off");
++    }
++}
++
++void DashboardManager::monitorTick()
++{
++    QStringList types;
++    for (auto it = m_monTypes.cbegin(); it != m_monTypes.cend(); ++it)
++        types << QString("%1×%2").arg(it.key()).arg(it.value());
++    cliOut(QString("[MON] %1 byte/s, %2 khung đúng, %3 khung lỗi%4%5")
++               .arg(m_monBytes).arg(m_monOk).arg(m_monBad)
++               .arg(types.isEmpty() ? QString() : QStringLiteral(" | ") + types.join(' '))
++               .arg(m_serialPort->isOpen() ? QString() : QStringLiteral(" (cổng chưa mở)")));
++    m_monBytes = m_monOk = m_monBad = 0;
++    m_monTypes.clear();
++}
++
++// ── Lệnh thô tới nguồn (msgid 43 -> 44) ────────────────────────────────────
++void DashboardManager::sendRawSupply(uint8_t dev, const QString &text)
++{
++    const QString name = dev == PWR_DEV_AC ? QStringLiteral("AC") : QStringLiteral("DC");
++    if (!m_serialPort->isOpen()) {
++        cliError("Chưa kết nối board.");
++        return;
++    }
++    const QByteArray t = text.toLatin1();
++    if (t.size() > static_cast<int>(PWR_RAW_TEXT_MAX) - 1) {
++        cliError(QString("Lệnh quá dài (tối đa %1 ký tự).").arg(PWR_RAW_TEXT_MAX - 1));
++        return;
++    }
++    for (char c : t) {
++        if (c < 0x20 || c > 0x7E) {
++            cliError("Lệnh chỉ được chứa ký tự ASCII in được.");
++            return;
++        }
++    }
++    pwr_raw_msg_t m;
++    std::memset(&m, 0, sizeof(m));
++    std::strncpy(m.msg, "RAW", sizeof(m.msg));
++    m.dev = dev;
++    m.len = static_cast<uint8_t>(t.size());
++    std::memcpy(m.text, t.constData(), static_cast<size_t>(t.size()));
++    kria_message_t tx_msg;
++    static uint8_t seq = 0;
++    kria_msg_output_encode(seq++, 43, &m, &tx_msg);
++    sendKriaFrame(tx_msg);
++    appendCommandLog("TX", QString("%1 ← %2").arg(name, text));
++}
++
++void DashboardManager::handlePwrRawReply(const pwr_raw_reply_msg_t &r)
++{
++    const QString name = r.dev == PWR_DEV_AC ? QStringLiteral("AC") : QStringLiteral("DC");
++    const int n = std::min<int>(r.len, PWR_RAW_REPLY_MAX);
++    const QString text = QString::fromLatin1(r.text, n);
++    switch (r.result) {
++    case PWR_RESULT_OK:
++    case PWR_RESULT_DEV_ERROR: {
++        QString line = QString("%1 → %2").arg(name, text.isEmpty() ? QStringLiteral("(đã gửi)") : text);
++        if (r.valid & PWR_VALID_ERR)
++            line += r.dev_err == 0 ? QStringLiteral("  [SYST:ERR? = 0, không lỗi]")
++                                   : QString("  [LỖI SCPI %1]").arg(r.dev_err);
++        if ((r.valid & PWR_VALID_OUTPUT) && r.output <= 1) {
++            line += QString("  [ngõ ra %1]").arg(r.output ? "ON" : "OFF");
++            // Lệnh thô có thể đã bật/tắt ngõ ra -> công tắc theo trạng thái thật.
++            if (r.dev == PWR_DEV_AC)
++                m_acSource->setIsOn(r.output == 1);
++        }
++        appendCommandLog(r.result == PWR_RESULT_OK ? "RX" : "ERR", line);
++        break;
++    }
++    case PWR_RESULT_NO_REPLY:
++        cliError(QString("%1: nguồn không trả lời (lệnh ghi không có câu trả lời là bình thường với DC; kiểm tra cú pháp/cáp).").arg(name));
++        break;
++    case PWR_RESULT_BUSY:
++        cliError(QString("%1: nguồn đang bận (đang xác nhận lệnh/đọc) - thử lại sau 1-2 s.").arg(name));
++        break;
++    case PWR_RESULT_NOT_READY:
++        cliError(QString("%1: UART nguồn trên board chưa khởi tạo.").arg(name));
++        break;
++    default:
++        cliError(QString("%1: kết quả %2").arg(name).arg(r.result));
++        break;
++    }
++}
++
++// ── scan: tự tìm cổng COM + baud có board ───────────────────────────────────
++void DashboardManager::startScan()
++{
++    if (m_scanning) {
++        cliOut("scan đang chạy...");
++        return;
++    }
++    if (m_serialPort->isOpen()) {
++        cliOut("scan: ngắt phiên hiện tại để thử các cổng.");
++        stopSession();
++    }
++    m_scanPorts.clear();
++    // DASHBOARDENV_SCAN_PORTS="a;b": danh sách cổng cố định (máy test).
++    const QString envPorts = qEnvironmentVariable("DASHBOARDENV_SCAN_PORTS");
++    if (!envPorts.isEmpty())
++        m_scanPorts = envPorts.split(';', Qt::SkipEmptyParts);
++    else
++        for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts())
++            m_scanPorts << info.portName();
++    if (m_scanPorts.isEmpty()) {
++        cliError("scan: không tìm thấy cổng COM nào trên máy.");
++        return;
++    }
++    // 115200 là baud của firmware; các baud khác để phát hiện trường hợp
++    // clock UART phía HDL/xparameters lệch làm baud thật của board khác đi.
++    m_scanBauds = { 115200, 230400, 57600, 460800, 921600, 38400, 19200, 9600 };
++    m_scanPortIdx = 0;
++    m_scanBaudIdx = 0;
++    m_scanNotes.clear();
++    m_scanning = true;
++    emit scanningChanged();
++    cliOut(QString("scan: thử %1 cổng × %2 baud, gửi PING và chờ board trả lời...")
++               .arg(m_scanPorts.size()).arg(m_scanBauds.size()));
++    scanNext();
++}
++
++void DashboardManager::scanNext()
++{
++    if (!m_scanning)
++        return;
++    // Thứ tự: mọi cổng ở 115200 trước (trường hợp thường gặp -> tìm thấy
++    // nhanh), rồi mới tới các baud khác. m_scanPortIdx chạy trong 1 baud.
++    if (m_scanPortIdx >= m_scanPorts.size()) {
++        m_scanPortIdx = 0;
++        ++m_scanBaudIdx;
++    }
++    while (m_scanBaudIdx < m_scanBauds.size() && m_scanPortIdx < m_scanPorts.size()
++           && m_scanPorts[m_scanPortIdx].isEmpty()) {      // cổng không mở được: bỏ qua
++        if (++m_scanPortIdx >= m_scanPorts.size()) {
++            m_scanPortIdx = 0;
++            ++m_scanBaudIdx;
++        }
++    }
++    if (m_scanBaudIdx >= m_scanBauds.size()) {
++        scanStop(QStringLiteral("scan: KHÔNG tìm thấy board trên cổng nào.") +
++                 (m_scanNotes.isEmpty() ? QString(" Không cổng nào có dữ liệu về -> kiểm tra board đã chạy firmware, dây RS422 (TX/RX, A/B), bộ chuyển USB-RS422.")
++                                        : QString(" Có dữ liệu nhưng không phải khung hợp lệ ở: ") + m_scanNotes.join("; ")));
++        return;
++    }
++    const QString port = m_scanPorts[m_scanPortIdx];
++    const int baud = m_scanBauds[m_scanBaudIdx];
++
++    delete m_scanPort;
++    m_scanPort = new QSerialPort(this);
++    m_scanPort->setPortName(port);
++    m_scanPort->setBaudRate(baud);
++    m_scanPort->setDataBits(QSerialPort::Data8);
++    m_scanPort->setParity(QSerialPort::NoParity);
++    m_scanPort->setStopBits(QSerialPort::OneStop);
++    m_scanPort->setFlowControl(QSerialPort::NoFlowControl);
++    if (!m_scanPort->open(QIODevice::ReadWrite)) {
++        cliOut(QString("  %1: không mở được (%2) - bỏ qua").arg(port, m_scanPort->errorString()));
++        m_scanPorts[m_scanPortIdx].clear();       // đánh dấu bỏ qua ở các baud sau
++        ++m_scanPortIdx;
++        QTimer::singleShot(0, this, &DashboardManager::scanNext);
++        return;
++    }
++    m_scanPort->setDataTerminalReady(true);
++    m_scanPort->setRequestToSend(true);
++    m_scanPort->clear();
++    VIP_Decode_Init(&m_scanVipStatus);
++    m_scanBytes = 0;
++    connect(m_scanPort, &QSerialPort::readyRead, this, [this] {
++        if (!m_scanPort)
++            return;
++        const QByteArray d = m_scanPort->readAll();
++        m_scanBytes += static_cast<quint64>(d.size());
++        for (char c : d) {
++            if (VIP_Decode(&m_scanVipRx, &m_scanVipStatus, static_cast<uint8_t>(c))
++                && m_scanVipRx.header.frameType == VIP_FRAME_ACK_STD
++                && m_scanVipRx.header.srcId == VIP_NODE_ID_BOARD) {
++                m_scanTimer->stop();
++                scanFinishCandidate(true);
++                return;
++            }
++        }
++    });
++    uint8_t frame[VIP_MAX_FRAME_LEN];
++    const uint32_t len = VIP_Encode_Ping(VIP_NODE_ID_BOARD, VIP_NODE_ID_HOST, VIP_NextTxSeq(), frame, sizeof(frame));
++    m_scanPort->write(reinterpret_cast<const char *>(frame), len);
++    // 900 ms: board có thể đang bận tối đa ~0.5 s (chờ 1 lần chụp DMA).
++    m_scanTimer->start(900);
++}
++
++void DashboardManager::scanFinishCandidate(bool found)
++{
++    if (!m_scanning || !m_scanPort)
++        return;
++    const QString port = m_scanPorts[m_scanPortIdx];
++    const int baud = m_scanBauds[m_scanBaudIdx];
++    const quint64 bytes = m_scanBytes;
++    m_scanPort->close();
++    m_scanPort->deleteLater();
++    m_scanPort = nullptr;
++
++    if (found) {
++        setComPort(port);
++        setBaudRate(baud);
++        scanStop(QString("scan: TÌM THẤY board ở %1 @ %2 baud - đã chọn sẵn, bấm BẮT ĐẦU PHIÊN.%3")
++                     .arg(port).arg(baud)
++                     .arg(baud != 115200 ? QString(" CHÚ Ý: baud thật của board KHÁC 115200 -> clock UART RS422 trong HDL/xparameters đang lệch.") : QString()));
++        return;
++    }
++    if (bytes > 0)
++        m_scanNotes << QString("%1@%2 (%3 byte)").arg(port).arg(baud).arg(bytes);
++    cliOut(QString("  %1 @ %2: không thấy board%3").arg(port).arg(baud)
++               .arg(bytes > 0 ? QString(" (có %1 byte không hợp lệ)").arg(bytes) : QString()));
++    ++m_scanPortIdx;
++    QTimer::singleShot(30, this, &DashboardManager::scanNext);
++}
++
++void DashboardManager::scanStop(const QString &summary)
++{
++    m_scanning = false;
++    m_scanTimer->stop();
++    if (m_scanPort) {
++        m_scanPort->close();
++        m_scanPort->deleteLater();
++        m_scanPort = nullptr;
++    }
++    emit scanningChanged();
++    if (summary.contains("TÌM THẤY")) {
++        appendCommandLog("INFO", summary);
++        emit systemNotification("Success", summary);
++    } else {
++        cliError(summary);
++        emit systemNotification("Error", summary);
++    }
++}
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardmanager.cpp r3/app/backend/dashboardmanager.cpp
+--- /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardmanager.cpp	2026-10-05 09:06:26.000000000 +0000
++++ r3/app/backend/dashboardmanager.cpp	2026-10-05 11:07:29.645671310 +0000
+@@ -54,6 +54,16 @@
+     m_isPortVerified(false),
+     m_pingTimer(new QTimer(this)),
+     m_pingTimeoutTimer(new QTimer(this)),
++    m_rxBytes(0), m_rxFramesOk(0), m_rxFramesBad(0),
++    m_linkDiagTimer(new QTimer(this)),
++    m_unverifiedSeconds(0),
++    m_haveDiag(false),
++    m_notifiedAd9361Fail(false), m_notifiedDmaDead(false), m_notifiedClip(false),
++    m_cliPingPending(false), m_resetArmed(false),
++    m_monitor(false), m_monitorTimer(new QTimer(this)),
++    m_monBytes(0), m_monOk(0), m_monBad(0),
++    m_scanning(false), m_scanPort(nullptr), m_scanTimer(new QTimer(this)),
++    m_scanPortIdx(0), m_scanBaudIdx(0), m_scanBytes(0),
+     m_kichNoPeakV(0.0),
+     m_stagedAcVolt(kNaN),
+     m_stagedAcFreq(kNaN),
+@@ -92,6 +102,21 @@
+     m_waveWatchdog->setInterval(WAVE_WATCHDOG_MS);
+     connect(m_waveWatchdog, &QTimer::timeout, this, &DashboardManager::onWaveWatchdog);
+ 
++    std::memset(&m_lastDiag, 0, sizeof(m_lastDiag));
++    std::memset(&m_scanVipRx, 0, sizeof(m_scanVipRx));
++    VIP_Decode_Init(&m_scanVipStatus);
++    m_monitorTimer->setInterval(1000);
++    connect(m_monitorTimer, &QTimer::timeout, this, &DashboardManager::monitorTick);
++    m_scanTimer->setSingleShot(true);
++    connect(m_scanTimer, &QTimer::timeout, this, [this] { scanFinishCandidate(false); });
++    m_linkDiagTimer->setInterval(1000);
++    connect(m_linkDiagTimer, &QTimer::timeout, this, [this] {
++        m_unverifiedSeconds = m_isPortVerified ? 0 : m_unverifiedSeconds + 1;
++        // Thông báo sau ~4 s không xác thực được (đủ 2 chu kỳ PING) - 1 lần
++        // cho mỗi loại nguyên nhân trong phiên.
++        updateLinkDiagnosis(m_unverifiedSeconds >= 4);
++    });
++
+     m_acPowerTimer->setSingleShot(true);
+     m_acPowerTimer->setInterval(POWER_REPLY_TIMEOUT_MS);
+     connect(m_acPowerTimer, &QTimer::timeout, this, &DashboardManager::onAcPowerTimeout);
+@@ -260,6 +285,16 @@
+         emit isConnectedChanged();
+         return;
+     }
++    // Bật DTR + RTS ngay sau khi mở cổng, giống các phần mềm terminal
++    // (TeraTerm, Hercules...). QSerialPort trên Windows mặc định KHÔNG bật -
++    // trong khi nhiều bộ chuyển USB/RS232 -> RS422/485 lấy nguồn từ DTR/RTS
++    // hoặc dùng RTS để bật bộ phát: khi đó cổng mở được nhưng không có byte
++    // nào đi/về (đèn cam). Firmware cũ từng chạy qua terminal nên không lộ.
++    {
++        const bool dtr = m_serialPort->setDataTerminalReady(true);
++        const bool rts = m_serialPort->setRequestToSend(true);
++        writeToLog(QString("[LINK] DTR %1, RTS %2").arg(dtr ? "ON" : "lỗi", rts ? "ON" : "lỗi"));
++    }
+     emit isConnectedChanged();
+     emit systemNotification("Success",QString("Đã kết nối thành công cổng %1 @ %2 baud").arg(m_comPort).arg(m_baudRate));
+ 
+@@ -283,6 +318,17 @@
+     // UI) - xem sendPingProbe()/onPingTimeout().
+     m_isPortVerified = false;
+     emit isPortVerifiedChanged();
++    m_rxBytes = m_rxFramesOk = m_rxFramesBad = 0;
++    m_unverifiedSeconds = 0;
++    m_linkDiagNotified.clear();
++    m_haveDiag = false;
++    m_notifiedAd9361Fail = m_notifiedDmaDead = m_notifiedClip = false;
++    m_boardFirmware.clear();
++    m_boardDiag.clear();
++    emit boardDiagChanged();
++    m_rfController->setDiag(QString(), QString());
++    updateLinkDiagnosis(false);
++    m_linkDiagTimer->start();
+     startPingCycle();
+ 
+     QString logsDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+@@ -310,6 +356,7 @@
+ 
+ void DashboardManager::stopSession(){
+     stopPingCycle();
++    m_linkDiagTimer->stop();
+     m_waveWatchdog->stop();
+     m_acPowerTimer->stop();
+     m_dcPowerTimer->stop();
+@@ -329,6 +376,8 @@
+         emit systemNotification("Info", "Đã ngắt kết nối cổng " + m_comPort);
+         resetRfState();
+         m_rfController->setWaveSource(QStringLiteral("sim"));
++        m_rfController->setDiag(QString(), QString());
++        updateLinkDiagnosis(false);
+     }
+ 
+     if (m_logStream) {
+@@ -450,6 +499,151 @@
+         emit isPortVerifiedChanged();
+         writeToLog("[PING] Mất xác thực - không còn nhận được phản hồi từ board.");
+     }
++    updateLinkDiagnosis(false);
++}
++
++// ─────────────────────────────────────────────────────────────────────────
++// Chẩn đoán đường truyền + gói DIAG/LOGT của board
++// ─────────────────────────────────────────────────────────────────────────
++void DashboardManager::updateLinkDiagnosis(bool notify)
++{
++    QString kind, text, shortText;
++    if (!m_serialPort->isOpen()) {
++        kind = "closed";
++        text = QStringLiteral("Chưa kết nối");
++    } else if (m_isPortVerified) {
++        kind = "ok";
++        text = QString("Đã xác thực đúng board (%1 byte, %2 khung nhận)").arg(m_rxBytes).arg(m_rxFramesOk);
++    } else if (m_rxBytes == 0) {
++        kind = "nobytes";
++        shortText = QStringLiteral("Không có byte về");
++        text = QString("Cổng %1 đã mở nhưng KHÔNG nhận được byte nào từ board. Kiểm tra: board đã chạy firmware "
++                       "(nếu chạy Debug trong Vitis phải bấm Resume), đúng cổng COM của RS422, dây RS422 (TX/RX, A/B), "
++                       "nguồn board. Gõ 'scan' trong Terminal để tự tìm cổng/baud có board.").arg(m_comPort);
++    } else if (m_rxFramesOk == 0) {
++        kind = "garbage";
++        shortText = QStringLiteral("Sai khung (baud/A-B?)");
++        text = QString("Có nhận %1 byte nhưng không giải mã được khung nào").arg(m_rxBytes);
++        if (m_rxFramesBad > 0)
++            text += QString(" (%1 khung sai CRC)").arg(m_rxFramesBad);
++        text += (m_baudRate != 115200)
++            ? QString(". Thường do SAI BAUD: board dùng 115200, app đang chọn %1.").arg(m_baudRate)
++            : QStringLiteral(". Baud app đã là 115200 -> kiểm tra đảo dây A/B, hoặc baud phía board (clock UART RS422 trong HDL/xparameters).");
++    } else {
++        kind = "noping";
++        shortText = QStringLiteral("Không trả PING");
++        text = QString("Board đang gửi dữ liệu (%1 khung) nhưng không trả lời PING của app: hướng PC → board có vấn đề "
++                       "(dây TX của bộ chuyển USB-RS422 / A-B), hoặc board đang bận.").arg(m_rxFramesOk);
++        if (m_haveDiag)
++            text += QString(" Board báo đã nhận %1 byte, %2 khung đúng, %3 khung lỗi từ PC.")
++                        .arg(m_lastDiag.pc_rx_bytes).arg(m_lastDiag.pc_frames_ok).arg(m_lastDiag.pc_frames_bad);
++    }
++    if (m_linkDiagnosis != text || m_linkDiagnosisShort != shortText) {
++        m_linkDiagnosis = text;
++        m_linkDiagnosisShort = shortText;
++        emit linkDiagnosisChanged();
++    }
++    if (notify && kind != "ok" && kind != "closed" && m_linkDiagNotified != kind) {
++        m_linkDiagNotified = kind;
++        appendCommandLog("ERR", text);
++        writeToLog("[LINK] " + text);
++        emit systemNotification("Error", text);
++    }
++}
++
++void DashboardManager::handleBoardLog(uint8_t level, const QString &text)
++{
++    const QString tag = level == BOARD_LOG_ERROR ? QStringLiteral("BOARD-LỖI")
++                      : level == BOARD_LOG_WARN  ? QStringLiteral("BOARD-CẢNH BÁO")
++                                                 : QStringLiteral("BOARD");
++    appendCommandLog(tag, text);
++    writeToLog(QString("[%1] %2").arg(tag, text));
++    if (level == BOARD_LOG_ERROR)
++        emit systemNotification("Error", "Board: " + text);
++}
++
++void DashboardManager::handleBoardDiag(const board_diag_msg_t &d)
++{
++    const board_diag_msg_t prev = m_lastDiag;
++    const bool hadDiag = m_haveDiag;
++    m_lastDiag = d;
++    m_haveDiag = true;
++
++    char build[sizeof(d.build) + 1];
++    std::memcpy(build, d.build, sizeof(d.build));
++    build[sizeof(d.build)] = '\0';
++    const QString fw = QString::fromLatin1(build).simplified();
++    if (fw != m_boardFirmware) {
++        m_boardFirmware = fw;
++        appendCommandLog("INFO", "Firmware trên board: build " + fw);
++    }
++
++    QVariantMap m;
++    m["ad9361Ok"] = d.ad9361_ok != 0;
++    m["ad9361Status"] = d.ad9361_status;
++    m["rfStreamOk"] = d.rf_stream_ok != 0;
++    m["adc7928Ok"] = d.adc7928_ok != 0;
++    m["attOk"] = d.att_ok != 0;
++    m["delayOk"] = d.odly_ok != 0;
++    m["acUartOk"] = d.ac_uart_ok != 0;
++    m["dcUartOk"] = d.dc_uart_ok != 0;
++    m["uptimeS"] = static_cast<qulonglong>(d.uptime_s);
++    m["dmaOk"] = static_cast<qulonglong>(d.dma_ok);
++    m["dmaTimeout"] = static_cast<qulonglong>(d.dma_timeout);
++    m["dmaStartFail"] = static_cast<qulonglong>(d.dma_start_fail);
++    m["rx1Peak"] = d.rx1_peak;
++    m["pcRxBytes"] = static_cast<qulonglong>(d.pc_rx_bytes);
++    m["pcFramesOk"] = static_cast<qulonglong>(d.pc_frames_ok);
++    m["pcFramesBad"] = static_cast<qulonglong>(d.pc_frames_bad);
++    m["pcRxDropped"] = static_cast<qulonglong>(d.pc_rx_dropped);
++    m["firmware"] = fw;
++    m_boardDiag = m;
++    emit boardDiagChanged();
++
++    // Thông báo các tình trạng cần người vận hành xử lý - 1 lần mỗi phiên.
++    if (!d.ad9361_ok && !m_notifiedAd9361Fail) {
++        m_notifiedAd9361Fail = true;
++        emit systemNotification("Error", QString("AD9361 khởi tạo lỗi (mã %1) - không có phổ RF. AC/DC/ATT/Delay vẫn dùng được.").arg(d.ad9361_status));
++    }
++    const bool dmaStuck = d.rf_stream_ok && d.dma_timeout > 0 && hadDiag
++                          && d.dma_ok == prev.dma_ok && d.dma_timeout > prev.dma_timeout;
++    if (dmaStuck && !m_notifiedDmaDead) {
++        m_notifiedDmaDead = true;
++        emit systemNotification("Error", QString("RX DMA không về dữ liệu (đã timeout %1 lần) - AD9361 đã khởi tạo nhưng luồng mẫu ADC → FPGA → DMA không chạy.").arg(d.dma_timeout));
++    }
++    if (d.rf_stream_ok && d.rx1_peak >= 2040 && !m_notifiedClip) {
++        m_notifiedClip = true;
++        emit systemNotification("Warning", QString("ADC RX1 bão hoà (đỉnh %1/2047) - giảm công suất vào hoặc tăng suy hao; phổ và số dBm sẽ sai.").arg(d.rx1_peak));
++    } else if (d.rx1_peak < 1800) {
++        m_notifiedClip = false;     // hết bão hoà -> lần sau lại báo
++    }
++    updateRfDiagnosis();
++    if (!m_isPortVerified)
++        updateLinkDiagnosis(false);
++}
++
++void DashboardManager::updateRfDiagnosis()
++{
++    if (!m_haveDiag) {
++        m_rfController->setDiag(QString(), QString());
++        return;
++    }
++    const board_diag_msg_t &d = m_lastDiag;
++    if (!d.ad9361_ok) {
++        m_rfController->setDiag(QString("AD9361 khởi tạo lỗi (mã %1) - phổ RF đang tắt.\nXem dòng BOARD-LỖI trong Terminal.").arg(d.ad9361_status), "error");
++    } else if (!d.rf_stream_ok) {
++        m_rfController->setDiag(QStringLiteral("RX DMA (stream_framer) không khởi tạo được - phổ RF đang tắt."), "error");
++    } else if (d.dma_ok == 0 && (d.dma_timeout > 0 || d.dma_start_fail > 0)) {
++        m_rfController->setDiag(QString("RX DMA không về dữ liệu: %1 lần timeout, %2 lần lỗi khởi động.\n"
++                                        "AD9361 đã khởi tạo; kiểm tra HDL: clock/data AD9361 → axi_ad9361 → DMA.")
++                                    .arg(d.dma_timeout).arg(d.dma_start_fail), "error");
++    } else if (d.rx1_peak >= 2040) {
++        m_rfController->setDiag(QString("ADC RX1 bão hoà (đỉnh %1/2047) - giảm công suất vào / tăng suy hao.").arg(d.rx1_peak), "warn");
++    } else if (d.dma_timeout > 0 && d.dma_ok > 0) {
++        m_rfController->setDiag(QString("DMA đôi lúc timeout (%1/%2 lần chụp).").arg(d.dma_timeout).arg(d.dma_ok + d.dma_timeout), "warn");
++    } else {
++        m_rfController->setDiag(QString(), QString());
++    }
+ }
+ 
+ void DashboardManager::sendCommand(const QString &cmd) {
+@@ -827,9 +1021,41 @@
+     for (int i = 0; i < data.size(); ++i) {
+         uint8_t byte_in = static_cast<uint8_t>(data.at(i));
+ 
+-        if (!VIP_Decode(&m_vipRx, &m_vipStatus, byte_in)) {
++        ++m_rxBytes;
++        ++m_monBytes;
++        // VIP_Decode() chỉ GHI last_error khi gặp lỗi CRC/header (rồi tự bắt
++        // đồng bộ lại) -> xoá trước mỗi byte để đếm được số khung lỗi.
++        m_vipStatus.last_error = VIP_ERR_NONE;
++        const bool gotFrame = VIP_Decode(&m_vipRx, &m_vipStatus, byte_in);
++        if (m_vipStatus.last_error != VIP_ERR_NONE) {
++            ++m_rxFramesBad;
++            ++m_monBad;
++        }
++        if (!gotFrame) {
+             continue;
+         }
++        ++m_rxFramesOk;
++        ++m_monOk;
++        if (m_monitor) {
++            QString type;
++            if (m_vipRx.header.frameType == VIP_FRAME_ACK_STD) type = QStringLiteral("ACK_PING");
++            else if (m_vipRx.msg.msgid == 39 && m_vipRx.msg.len >= 4)
++                type = QString::fromLatin1(reinterpret_cast<const char *>(m_vipRx.msg.payload64), 4).trimmed().remove(QChar('\0'));
++            else {
++                switch (m_vipRx.msg.msgid) {
++                case 35: type = QStringLiteral("ACK_AC"); break;
++                case 36: type = QStringLiteral("ACK_DC"); break;
++                case 37: type = QStringLiteral("ACK_DELAY"); break;
++                case 38: type = QStringLiteral("ACK_ATT"); break;
++                case 40: type = QStringLiteral("ADC"); break;
++                case 41: type = QStringLiteral("ACK_READ"); break;
++                case 42: type = QStringLiteral("NGUON"); break;
++                case 44: type = QStringLiteral("RAW"); break;
++                default: type = QString("msg%1").arg(m_vipRx.msg.msgid); break;
++                }
++            }
++            m_monTypes[type] += 1;
++        }
+ 
+         // Xac thuc dung COM: 1 khung ACK_STD that su tu board (dap lai PING
+         // do sendPingProbe() gui) chi co the den tu chinh firmware 5E-HTE -
+@@ -839,10 +1065,15 @@
+         // do "danh cho muc dich tuong lai" - xem vip_helper.c).
+         if (m_vipRx.header.frameType == VIP_FRAME_ACK_STD) {
+             m_pingTimeoutTimer->stop();
++            if (m_cliPingPending) {
++                m_cliPingPending = false;
++                cliOut(QString("PING -> board trả lời sau %1 ms").arg(m_cliPingClock.elapsed()));
++            }
+             if (!m_isPortVerified) {
+                 m_isPortVerified = true;
+                 emit isPortVerifiedChanged();
+                 writeToLog("[PING] Xac thuc dung board 5E-HTE tren cong " + m_comPort);
++                updateLinkDiagnosis(false);
+             }
+             continue;
+         }
+@@ -925,6 +1156,19 @@
+             }
+         }
+ 
++        else if (kmsg.msgid == 44) {
++            if (kmsg.len == sizeof(pwr_raw_reply_msg_t)) {
++                pwr_raw_reply_msg_t r;
++                std::memcpy(&r, kmsg.payload64, sizeof(r));
++                handlePwrRawReply(r);
++            }
++        }
++
++        else if (kmsg.msgid == 43) {
++            if (kmsg.len >= 1 && kmsg.payload64[0] == 0)
++                cliError("Board từ chối lệnh thô (gói sai, hoặc ký tự không hợp lệ).");
++        }
++
+         else if (kmsg.msgid == 42) {
+             if (kmsg.len == sizeof(pwr_status_msg_t)) {
+                 pwr_status_msg_t st;
+@@ -935,7 +1179,27 @@
+ 
+         else if (kmsg.msgid == 39) {
+ 
+-            if (kmsg.len > STREAM_MAGIC_LEN &&
++            if (kmsg.len >= STREAM_MAGIC_LEN + 2 &&
++                std::memcmp(kmsg.payload64, "WAVD", STREAM_MAGIC_LEN) == 0) {
++                // Firmware mới: n điểm int16 = dBFS x 0.01 (thứ tự bin DFT tự
++                // nhiên). Đổi về biên độ tuyến tính |X| = 10^(dB/20)*2048*n để
++                // dùng chung đường xử lý (fftshift, Parseval, hiệu chuẩn).
++                const int n = kmsg.payload64[STREAM_MAGIC_LEN];
++                if (n >= 2 && kmsg.len >= STREAM_MAGIC_LEN + 2 + 2 * n) {
++                    QVector<double> mags;
++                    mags.reserve(n);
++                    const double fullScale = RF_ADC_FULL_SCALE * n;
++                    for (int idx = 0; idx < n; ++idx) {
++                        const int off = STREAM_MAGIC_LEN + 2 + idx * 2;
++                        const int16_t v = static_cast<int16_t>(
++                            static_cast<uint16_t>(kmsg.payload64[off])
++                            | (static_cast<uint16_t>(kmsg.payload64[off + 1]) << 8));
++                        mags.append(std::pow(10.0, (v / 100.0) / 20.0) * fullScale);
++                    }
++                    processWaveMagnitudes(mags, false);
++                }
++            }
++            else if (kmsg.len > STREAM_MAGIC_LEN &&
+                 std::memcmp(kmsg.payload64, "WAVE", STREAM_MAGIC_LEN) == 0) {
+ 
+                 // Payload = 4 byte "WAVE" + N biên độ |X_k| uint32 little-
+@@ -955,6 +1219,20 @@
+                 }
+                 processWaveMagnitudes(mags, false);
+             }
++            else if (kmsg.len == sizeof(board_diag_msg_t) &&
++                     std::memcmp(kmsg.payload64, "DIAG", STREAM_MAGIC_LEN) == 0) {
++                board_diag_msg_t d;
++                std::memcpy(&d, kmsg.payload64, sizeof(d));
++                handleBoardDiag(d);
++            }
++            else if (kmsg.len > STREAM_MAGIC_LEN &&
++                     std::memcmp(kmsg.payload64, "LOGT", STREAM_MAGIC_LEN) == 0) {
++                const uint8_t level = kmsg.payload64[STREAM_MAGIC_LEN];
++                const int textLen = kmsg.len - STREAM_MAGIC_LEN - 1;
++                handleBoardLog(level, textLen > 0
++                    ? QString::fromUtf8(reinterpret_cast<const char *>(&kmsg.payload64[STREAM_MAGIC_LEN + 1]), textLen)
++                    : QString());
++            }
+             else if (kmsg.len == sizeof(rf_status_msg_t) &&
+                      std::memcmp(kmsg.payload64, "RFST", STREAM_MAGIC_LEN) == 0) {
+                 rf_status_msg_t st;
+@@ -1059,16 +1337,16 @@
+     // Phổ MÔ PHỎNG khi chưa kết nối - đi qua ĐÚNG đường xử lý của phổ thật
+     // (processWaveMagnitudes) để giao diện giống hệt lúc chạy thật, nhưng
+     // được đánh dấu "sim" rõ ràng trên giao diện. ~300 ms/lần như firmware.
+-    if (++m_simSpectrumTick >= 38) {
++    if (++m_simSpectrumTick >= 13) {        // ~100 ms, như firmware
+         m_simSpectrumTick = 0;
+-        const int n = 32;
++        const int n = 124;      // như firmware ("WAVD", 124 điểm)
+         QVector<double> mags(n);
+         for (int k = 0; k < n; ++k) {
+             double noise = 40.0 + (std::rand() % 400) / 10.0;     // nền nhiễu
+             mags[k] = noise;
+         }
+         // 1 tone di chuyển chậm quanh bin 5, biên độ ~ -20 dBFS
+-        int toneBin = 5 + static_cast<int>(std::lround(2.0 * std::sin(t * 0.2)));
++        int toneBin = 19 + static_cast<int>(std::lround(8.0 * std::sin(t * 0.2)));
+         mags[(toneBin + n) % n] = RF_ADC_FULL_SCALE * n * 0.1 * (1.0 + 0.05 * std::sin(t));
+         processWaveMagnitudes(mags, true);
+     }
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardmanager.h r3/app/backend/dashboardmanager.h
+--- /tmp/claude-0/prev/DashboardEnv_real/backend/dashboardmanager.h	2026-10-05 09:10:19.000000000 +0000
++++ r3/app/backend/dashboardmanager.h	2026-10-05 11:07:29.646116886 +0000
+@@ -10,7 +10,10 @@
+ #include <QDateTime>
+ #include <QStringList>
+ #include <QVariantList>
++#include <QVariantMap>
+ #include <QSettings>
++#include <QElapsedTimer>
++#include <QMap>
+ #include <cmath>
+ 
+ #include "acsource.h"
+@@ -49,6 +52,18 @@
+     // của nguồn AC/DC qua cùng hub USB cũng mở được, không có nghĩa là board).
+     Q_PROPERTY(bool isPortVerified READ isPortVerified NOTIFY isPortVerifiedChanged FINAL)
+ 
++    // Vì sao chưa xác thực được board - suy ra từ bộ đếm byte/khung nhận
++    // được (đèn cam không còn chỉ là "chưa xác thực"): không có byte nào /
++    // có byte nhưng sai khung (baud, A-B) / có khung nhưng không trả PING...
++    Q_PROPERTY(QString linkDiagnosis READ linkDiagnosis NOTIFY linkDiagnosisChanged FINAL)
++    Q_PROPERTY(QString linkDiagnosisShort READ linkDiagnosisShort NOTIFY linkDiagnosisChanged FINAL)
++    // Thông tin board tự báo (gói "DIAG"): firmware build, trạng thái AD9361,
++    // DMA... - rỗng nếu board chưa gửi (firmware cũ / chưa kết nối).
++    Q_PROPERTY(QString boardFirmware READ boardFirmware NOTIFY boardDiagChanged FINAL)
++    Q_PROPERTY(QVariantMap boardDiag READ boardDiag NOTIFY boardDiagChanged FINAL)
++    // Đang chạy "scan" (tự tìm cổng COM + baud có board) từ Terminal.
++    Q_PROPERTY(bool scanning READ scanning NOTIFY scanningChanged FINAL)
++
+     // Điện áp "kích nổ" ở dạng bắt đỉnh (peak-hold) - xem parseIncomingData()
+     // msgid 40 và resetSystem(). Thay cho việc Detect.qml tự tính lại mỗi lần
+     // (không có bộ nhớ, không phản ánh đúng hành vi peak-detect vật lý).
+@@ -103,6 +118,11 @@
+     QStringList commandLog() const {return m_commandLog;}
+     QVariantList adcChannels() const {return m_adcChannels;}
+     bool isPortVerified() const {return m_isPortVerified;}
++    QString linkDiagnosis() const {return m_linkDiagnosis;}
++    QString linkDiagnosisShort() const {return m_linkDiagnosisShort;}
++    QString boardFirmware() const {return m_boardFirmware;}
++    QVariantMap boardDiag() const {return m_boardDiag;}
++    bool scanning() const {return m_scanning;}
+     double kichNoPeakVoltage() const {return m_kichNoPeakV;}
+ 
+     double stagedAcVolt()    const {return m_stagedAcVolt;}
+@@ -163,6 +183,15 @@
+     Q_INVOKABLE void resetSystem();
+     Q_INVOKABLE void sendCommand(const QString &cmd);
+ 
++    // ── Terminal kiểu CLI (dashboardcli.cpp) ──
++    // 1 dòng người dùng gõ ở ô CMD: help, clear, status, ac/dc/att/delay,
++    // read, ac raw/dc raw (lệnh thô tới nguồn), ping, scan, monitor, reset,
++    // board (lệnh chung kiểu cũ)... - xem "help".
++    Q_INVOKABLE void executeCommand(const QString &line);
++    // Hoàn thành lệnh bằng phím Tab: các lệnh/từ khớp tiền tố.
++    Q_INVOKABLE QStringList cliCompletions(const QString &prefix) const;
++    Q_INVOKABLE void clearCommandLog();
++
+     // Hiệu chuẩn phổ RF dBFS -> dBm: đưa 1 nguồn tín hiệu đã biết công suất
+     // (refDbm, đo tại đầu vào RX1) vào board, chờ phổ ổn định rồi gọi hàm này
+     // - offset = refDbm - tổng công suất dBFS đang đo. Chỉ nhận khi phổ đang
+@@ -182,6 +211,9 @@
+     void commandLogChanged();
+     void adcChannelsChanged();
+     void isPortVerifiedChanged();
++    void linkDiagnosisChanged();
++    void boardDiagChanged();
++    void scanningChanged();
+     void kichNoPeakVoltageChanged();
+     void stagedAcVoltChanged();
+     void stagedAcFreqChanged();
+@@ -231,6 +263,32 @@
+     // chưa fftshift) -> dBFS/dBm, fftshift, trục tần số, đỉnh, tổng công suất.
+     void processWaveMagnitudes(const QVector<double> &mags, bool simulated);
+     void handleRfStatus(const rf_status_msg_t &st);
++    void handleBoardDiag(const board_diag_msg_t &d);
++    void handlePwrRawReply(const pwr_raw_reply_msg_t &r);
++    void sendRawSupply(uint8_t dev, const QString &text);
++
++    // ── CLI (dashboardcli.cpp) ──
++    void cliOut(const QString &text);              // dòng không có giờ
++    void cliError(const QString &text);
++    void cliHelp(const QString &topic);
++    void cliStatus();
++    void cliAc(const QStringList &a);
++    void cliDc(const QStringList &a);
++    void cliAtt(const QStringList &a);
++    void cliDelay(const QStringList &a);
++    void cliRead(const QStringList &a);
++    void cliReset(const QStringList &a);
++    void cliBoard(const QStringList &a, const QString &line);
++    void cliMonitor(const QStringList &a);
++    void cliPing();
++    void startScan();
++    void scanNext();
++    void scanFinishCandidate(bool found);
++    void scanStop(const QString &summary);
++    void monitorTick();
++    void handleBoardLog(uint8_t level, const QString &text);
++    void updateLinkDiagnosis(bool notify);
++    void updateRfDiagnosis();
+     void updateCalibrationState();
+     void resetRfState();
+ 
+@@ -275,7 +333,51 @@
+     QTimer *m_pingTimer;        // lặp lại, gửi 1 PING mỗi PING_INTERVAL_MS
+     QTimer *m_pingTimeoutTimer; // one-shot, hết hạn = chưa/không còn thấy ACK
+     static constexpr int PING_INTERVAL_MS = 2000;
+-    static constexpr int PING_TIMEOUT_MS  = 700;
++    // 1.5 s: board có thể đang bận tối đa ~0.5 s (chờ 1 lần chụp DMA) trước
++    // khi xử lý PING - 700 ms cũ dễ báo mất xác thực giả.
++    static constexpr int PING_TIMEOUT_MS  = 1500;
++
++    // ── Chẩn đoán đường truyền (đếm từ lúc mở cổng) ──
++    quint64 m_rxBytes;
++    quint64 m_rxFramesOk;
++    quint64 m_rxFramesBad;
++    QString m_linkDiagnosis;
++    QString m_linkDiagnosisShort;
++    QString m_linkDiagNotified;     // loại chẩn đoán đã thông báo trong phiên
++    QTimer *m_linkDiagTimer;        // 1 s, chỉ chạy khi đã mở cổng
++    int     m_unverifiedSeconds;
++
++    // ── Gói DIAG của board ──
++    QString     m_boardFirmware;
++    QVariantMap m_boardDiag;
++    bool        m_haveDiag;
++    board_diag_msg_t m_lastDiag;
++    bool        m_notifiedAd9361Fail;
++    bool        m_notifiedDmaDead;
++    bool        m_notifiedClip;
++
++    // ── CLI state ──
++    bool          m_cliPingPending;
++    QElapsedTimer m_cliPingClock;
++    bool          m_resetArmed;
++    QElapsedTimer m_resetArmClock;
++    bool          m_monitor;
++    QTimer       *m_monitorTimer;
++    quint64       m_monBytes, m_monOk, m_monBad;
++    QMap<QString, int> m_monTypes;
++    QByteArray    m_monLastChunk;
++
++    // ── scan (tự tìm cổng + baud) ──
++    bool          m_scanning;
++    QSerialPort  *m_scanPort;
++    QTimer       *m_scanTimer;
++    QStringList   m_scanPorts;
++    QList<int>    m_scanBauds;
++    int           m_scanPortIdx, m_scanBaudIdx;
++    vip_status_t  m_scanVipStatus;
++    vip_msg_t     m_scanVipRx;
++    quint64       m_scanBytes;
++    QStringList   m_scanNotes;
+ 
+     // Kích nổ - bắt đỉnh phần mềm (xem parseIncomingData() msgid 40).
+     double m_kichNoPeakV;
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/backend/kria_helper.h r3/app/backend/kria_helper.h
+--- /tmp/claude-0/prev/DashboardEnv_real/backend/kria_helper.h	2026-10-05 09:10:19.000000000 +0000
++++ r3/app/backend/kria_helper.h	2026-10-05 11:07:29.647040611 +0000
+@@ -85,6 +85,37 @@
+     uint8_t  window;        // 0 = rectangular
+ } rf_status_msg_t;
+ 
++// ── Báo cáo sức khoẻ board (msgid 39, magic "DIAG", ~3 s/lần và ngay khi
++// app (re)connect) - byte-for-byte giống firmware src/kria_helper.h.
++typedef struct __board_diag_msg {
++    char     msg[4];          // "DIAG"
++    uint8_t  version;         // 1
++    uint8_t  ad9361_ok;
++    uint8_t  rf_stream_ok;
++    uint8_t  adc7928_ok;
++    uint8_t  att_ok;
++    uint8_t  odly_ok;
++    uint8_t  ac_uart_ok;
++    uint8_t  dc_uart_ok;
++    int32_t  ad9361_status;   // mã trả về ad9361_init(), 0 = OK
++    uint32_t uptime_s;
++    uint32_t dma_ok;
++    uint32_t dma_timeout;
++    uint32_t dma_start_fail;
++    uint16_t rx1_peak;        // max |I|,|Q| lần chụp gần nhất, 2047 = đầy thang (bão hoà)
++    uint16_t reserved;
++    uint32_t pc_rx_bytes;     // board nhận được từ PC
++    uint32_t pc_frames_ok;
++    uint32_t pc_frames_bad;
++    uint32_t pc_rx_dropped;
++    char     build[24];       // thời điểm build firmware
++} board_diag_msg_t;
++
++// "LOGT" (msgid 39): 4 byte magic, 1 byte mức, rồi chuỗi (không NUL).
++#define BOARD_LOG_INFO          0U
++#define BOARD_LOG_WARN          1U
++#define BOARD_LOG_ERROR         2U
++
+ // ── Đọc ngược nguồn chuẩn AC/DC (byte-for-byte giống firmware src/kria_helper.h)
+ #define PWR_DEV_AC              1U
+ #define PWR_DEV_DC              2U
+@@ -92,6 +123,7 @@
+ #define PWR_REASON_READ         0U  // msgid 41 (nút refresh / F5)
+ #define PWR_REASON_SET          1U  // xác nhận lệnh msgid 35/36
+ #define PWR_REASON_RESET        2U  // xác nhận "RESET" (msgid 39)
++#define PWR_REASON_RAW          3U  // lệnh thô từ Terminal (msgid 43 -> 44)
+ 
+ #define PWR_RESULT_OK           0U
+ #define PWR_RESULT_NO_REPLY     1U  // nguồn không trả lời (cáp/baud/nguồn tắt)
+@@ -100,6 +132,7 @@
+ #define PWR_RESULT_NOT_READY    4U  // UART nguồn trên board chưa khởi tạo
+ #define PWR_RESULT_ABORTED      5U  // bị lệnh mới hơn thay thế
+ #define PWR_RESULT_BAD_REPLY    6U  // phản hồi không đọc được
++#define PWR_RESULT_BUSY         7U  // nguồn đang bận giao dịch khác
+ 
+ #define PWR_VALID_VOLT          0x01U
+ #define PWR_VALID_CURR          0x02U
+@@ -129,6 +162,30 @@
+     int32_t  freq_mhz;
+ } pwr_status_msg_t;
+ 
++// msgid 43, app -> board: lệnh văn bản thô gửi nguyên văn tới 1 nguồn
++// ("ac raw ..." / "dc raw ..." trong Terminal). Có '?' = câu hỏi, câu trả
++// lời về bằng msgid 44.
++#define PWR_RAW_TEXT_MAX        64U
++typedef struct __pwr_raw_msg {
++    char    msg[4];                     // "RAW" + NUL
++    uint8_t dev;
++    uint8_t len;
++    char    text[PWR_RAW_TEXT_MAX];
++} pwr_raw_msg_t;
++
++// msgid 44, board -> app.
++#define PWR_RAW_REPLY_MAX       96U
++typedef struct __pwr_raw_reply_msg {
++    char    msg[4];                     // "RAWR"
++    uint8_t dev;
++    uint8_t result;
++    uint8_t output;                     // 0/1, 0xFF chưa biết (sau lệnh ghi AC)
++    uint8_t valid;                      // PWR_VALID_OUTPUT / PWR_VALID_ERR
++    int16_t dev_err;
++    uint8_t len;
++    char    text[PWR_RAW_REPLY_MAX];
++} pwr_raw_reply_msg_t;
++
+ typedef struct _kria_message {
+     uint8_t seq;
+     uint8_t msgid;
+@@ -148,6 +205,9 @@
+ static_assert(sizeof(cmd_msg_t) == 68, "cmd_msg_t wire size changed");
+ static_assert(sizeof(adc7928_msg_t) == 20, "adc7928_msg_t wire size changed");
+ static_assert(sizeof(rf_status_msg_t) == 28, "rf_status_msg_t wire size changed");
++static_assert(sizeof(board_diag_msg_t) == 76, "board_diag_msg_t wire size changed");
++static_assert(sizeof(pwr_raw_msg_t) == 70, "pwr_raw_msg_t wire size changed");
++static_assert(sizeof(pwr_raw_reply_msg_t) == 107, "pwr_raw_reply_msg_t wire size changed");
+ static_assert(sizeof(pwr_query_msg_t) == 6, "pwr_query_msg_t wire size changed");
+ static_assert(sizeof(pwr_status_msg_t) == 24, "pwr_status_msg_t wire size changed");
+ 
+@@ -247,6 +307,12 @@
+     case 42:
+         msg->len = sizeof(pwr_status_msg_t);
+         break;
++    case 43:
++        msg->len = sizeof(pwr_raw_msg_t);
++        break;
++    case 44:
++        msg->len = sizeof(pwr_raw_reply_msg_t);
++        break;
+     default:
+         return;
+     }
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/backend/rfcontroller.h r3/app/backend/rfcontroller.h
+--- /tmp/claude-0/prev/DashboardEnv_real/backend/rfcontroller.h	2026-10-05 09:06:26.000000000 +0000
++++ r3/app/backend/rfcontroller.h	2026-10-05 11:07:29.647659223 +0000
+@@ -52,6 +52,12 @@
+     // true khi LO/gain hiện tại khác lúc hiệu chuẩn -> số dBm không còn đúng.
+     Q_PROPERTY(bool   calMismatch READ calMismatch NOTIFY calibrationChanged)
+ 
++    // Vì sao chưa/không có phổ, theo gói "DIAG" của board (AD9361 lỗi, DMA
++    // không về dữ liệu, ADC bão hoà...). "" = không có gì để báo.
++    // diagLevel: "" | "warn" | "error".
++    Q_PROPERTY(QString diagText READ diagText NOTIFY diagChanged)
++    Q_PROPERTY(QString diagLevel READ diagLevel NOTIFY diagChanged)
++
+ public:
+     explicit RfController(QObject *parent = nullptr);
+ 
+@@ -92,6 +98,12 @@
+     bool   calibrated() const { return m_calibrated; }
+     double calOffsetDb() const { return m_calOffsetDb; }
+     bool   calMismatch() const { return m_calMismatch; }
++    QString diagText() const { return m_diagText; }
++    QString diagLevel() const { return m_diagLevel; }
++    void setDiag(const QString &text, const QString &level) {
++        if (m_diagText == text && m_diagLevel == level) return;
++        m_diagText = text; m_diagLevel = level; emit diagChanged();
++    }
+ 
+     // Dùng bởi DashboardManager.
+     void setSpectrum(const QVector<QPointF> &points, bool xIsFrequency,
+@@ -117,6 +129,7 @@
+     void waveSourceChanged();
+     void rfStatusChanged();
+     void calibrationChanged();
++    void diagChanged();
+     void attUpdateRequested(int channel, double value);
+ 
+ private:
+@@ -137,6 +150,8 @@
+     bool    m_calibrated;
+     double  m_calOffsetDb;
+     bool    m_calMismatch;
++    QString m_diagText;
++    QString m_diagLevel;
+ };
+ 
+ #endif // RFCONTROLLER_H
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/qml/Main.qml r3/app/qml/Main.qml
+--- /tmp/claude-0/prev/DashboardEnv_real/qml/Main.qml	2026-10-05 09:10:19.000000000 +0000
++++ r3/app/qml/Main.qml	2026-10-05 11:07:29.648825455 +0000
+@@ -223,6 +223,11 @@
+                                     Text{
+                                         text : qsTr("Phiên bản") + " : 98vf8b4" ; font.pixelSize: 10;
+                                     }
++                                    // Firmware đang chạy trên board (gói DIAG) - biết ngay
++                                    // đã nạp đúng bản mới chưa.
++                                    Text{
++                                        text : "FW : " + (dashboard.boardFirmware.length > 0 ? dashboard.boardFirmware : "--") ; font.pixelSize: 10;
++                                    }
+                                     Text{
+                                         text : qsTr("Trung tâm Hệ thống Avionics") ; font.pixelSize: 10;
+                                     }
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/qml/views/CommandLogPanel.qml r3/app/qml/views/CommandLogPanel.qml
+--- /tmp/claude-0/prev/DashboardEnv_real/qml/views/CommandLogPanel.qml	2026-10-05 09:10:19.000000000 +0000
++++ r3/app/qml/views/CommandLogPanel.qml	2026-10-05 11:07:29.650608738 +0000
+@@ -50,16 +50,16 @@
+                 anchors.fill:    parent
+                 anchors.margins: 8
+                 contentHeight:   logContent.implicitHeight
++                // Cuộn xuống dòng cuối SAU KHI contentHeight đã cập nhật (lúc
++                // commandLogChanged chiều cao vẫn là chiều cao cũ -> trước đây
++                // luôn hụt mất dòng cuối).
++                onContentHeightChanged: contentY = Math.max(0, contentHeight - height)
+                 clip:            true
+ 
+                 Column {
+                     id:      logContent
+                     width:   logFlick.width
+                     spacing: 4
+-                    // Cuộn xuống dòng cuối SAU KHI Column đã xếp xong dòng mới
+-                    // (lúc commandLogChanged chiều cao vẫn là chiều cao cũ ->
+-                    // trước đây luôn hụt mất dòng cuối cùng).
+-                    onImplicitHeightChanged: logFlick.contentY = Math.max(0, implicitHeight - logFlick.height)
+ 
+                     Repeater {
+                         model: logOverride.visible ? [] : dashboard.commandLog
+@@ -71,9 +71,11 @@
+                             font.weight: Font.Medium
+                             wrapMode:       Text.WrapAnywhere
+                             color: {
++                                if (modelData.indexOf("[ERR]") !== -1 || modelData.indexOf("[BOARD-LỖI]") !== -1)
++                                    return AppTheme.brandRedPressed
+                                 if (modelData.indexOf("[TX]") !== -1)  return AppTheme.textRed
+-                                if (modelData.indexOf("[RX]") !== -1)  return AppTheme.textDark
+-                                if (modelData.indexOf("[ERR]") !== -1) return AppTheme.brandRedPressed
++                                if (modelData.indexOf("[CMD]") !== -1) return AppTheme.infoNote
++                                if (modelData.indexOf("[BOARD-CẢNH BÁO]") !== -1) return AppTheme.warningNote
+                                 return AppTheme.textDark
+                             }
+                         }
+@@ -118,6 +120,44 @@
+                         Layout.fillWidth: true
+                         Layout.fillHeight: true
+                         color: AppTheme.textDark
++                        placeholderText: qsTr("Gõ help để xem lệnh")
++                        placeholderTextColor: AppTheme.textMuted
++
++                        // Lịch sử lệnh (↑/↓) và hoàn thành bằng Tab.
++                        property var history: []
++                        property int historyPos: -1
++                        property string draft: ""
++
++                        Keys.onUpPressed: {
++                            if (history.length === 0) return
++                            if (historyPos === -1) { draft = text; historyPos = history.length }
++                            if (historyPos > 0) historyPos--
++                            text = history[historyPos]
++                        }
++                        Keys.onDownPressed: {
++                            if (historyPos === -1) return
++                            historyPos++
++                            if (historyPos >= history.length) { historyPos = -1; text = draft }
++                            else text = history[historyPos]
++                        }
++                        Keys.onTabPressed: (event) => {
++                            var opts = dashboard.cliCompletions(text)
++                            if (opts.length === 1) {
++                                text = opts[0] + " "
++                            } else if (opts.length > 1) {
++                                // phần chung dài nhất của các gợi ý
++                                var common = opts[0]
++                                for (var i = 1; i < opts.length; i++) {
++                                    var j = 0
++                                    while (j < common.length && j < opts[i].length && common[j] === opts[i][j]) j++
++                                    common = common.substring(0, j)
++                                }
++                                if (common.length > text.trim().length) text = common
++                                else dashboard.executeCommand("help")
++                            }
++                            cursorPosition = text.length
++                            event.accepted = true
++                        }
+                         background: Rectangle{
+                             Layout.fillWidth: true
+                             Layout.fillHeight: true
+@@ -133,7 +173,13 @@
+                             var trimmed = commandfield.text.trim()
+                             if (trimmed.length === 0) return
+                             logOverride.visible = false
+-                            dashboard.sendCommand(trimmed)
++                            if (history.length === 0 || history[history.length - 1] !== trimmed) {
++                                history.push(trimmed)
++                                if (history.length > 50) history.shift()
++                            }
++                            historyPos = -1
++                            draft = ""
++                            dashboard.executeCommand(trimmed)
+                             commandfield.text = ""
+                         }
+                     }
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/qml/views/ConnectionPanel.qml r3/app/qml/views/ConnectionPanel.qml
+--- /tmp/claude-0/prev/DashboardEnv_real/qml/views/ConnectionPanel.qml	2026-10-05 09:06:26.000000000 +0000
++++ r3/app/qml/views/ConnectionPanel.qml	2026-10-05 11:07:29.650872555 +0000
+@@ -28,7 +28,21 @@
+                 font.bold: true
+                 color :AppTheme.textDark
+             }
+-            Item { Layout.fillWidth: true }
++            // Lý do ngắn gọn khi cổng đã mở mà CHƯA xác thực được board (chi
++            // tiết đầy đủ: rê chuột vào đèn, hoặc thông báo đỏ sau ~4 s).
++            Text {
++                Layout.fillWidth: true
++                horizontalAlignment: Text.AlignRight
++                elide: Text.ElideRight
++                font.pixelSize: 10
++                color: AppTheme.warningNote
++                visible: dashboard.isConnected && !dashboard.isPortVerified
++                text: dashboard.linkDiagnosisShort
++            }
++            Item {
++                Layout.fillWidth: true
++                visible: !(dashboard.isConnected && !dashboard.isPortVerified)
++            }
+ 
+             // Đèn xác thực đúng COM - xanh khi board 5E-HTE thật đã trả lời
+             // PING (dashboard.isPortVerified), xám khi chưa mở cổng, đỏ nhạt
+@@ -43,10 +57,21 @@
+                      : dashboard.isPortVerified ? AppTheme.successNote
+                      : AppTheme.warningNote
+ 
+-                ToolTip.visible: lightHover.containsMouse
+-                ToolTip.text: !dashboard.isConnected ? qsTr("Chưa kết nối")
+-                            : dashboard.isPortVerified ? qsTr("Đã xác thực đúng board")
+-                            : qsTr("Chưa xác thực / có thể nhầm cổng")
++                // Lý do cụ thể (đếm byte/khung nhận được) - xem
++                // DashboardManager::updateLinkDiagnosis().
++                ToolTip {
++                    visible: lightHover.containsMouse
++                    delay: 300
++                    width: 320
++                    contentItem: Text {
++                        wrapMode: Text.WordWrap
++                        font.pixelSize: 11
++                        color: AppTheme.textLight
++                        text: !dashboard.isConnected ? qsTr("Chưa kết nối")
++                              : dashboard.linkDiagnosis
++                    }
++                    background: Rectangle { color: AppTheme.textDark; radius: 6 }
++                }
+ 
+                 MouseArea {
+                     id: lightHover
+diff -ruN '--exclude=build' '--exclude=verify_*' /tmp/claude-0/prev/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml r3/app/qml/views/EnvelopeChartPanel.qml
+--- /tmp/claude-0/prev/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml	2026-10-05 09:06:26.000000000 +0000
++++ r3/app/qml/views/EnvelopeChartPanel.qml	2026-10-05 11:07:29.651336105 +0000
+@@ -59,7 +59,7 @@
+                 implicitHeight: 18
+                 implicitWidth:  statusText.implicitWidth + 16
+                 color: panel.rf.waveSource === "live"    ? AppTheme.successNote
+-                     : panel.rf.waveSource === "waiting" ? AppTheme.warningNote
++                     : panel.rf.waveSource === "waiting" ? (panel.rf.diagLevel === "error" ? AppTheme.brandRed : AppTheme.warningNote)
+                      : AppTheme.textMuted
+                 Text {
+                     id: statusText
+@@ -158,6 +158,27 @@
+                 color: AppTheme.textMuted
+             }
+ 
++            // Đang có phổ nhưng board báo vấn đề (ADC bão hoà, DMA đôi lúc
++            // timeout) - băng cảnh báo nhỏ phía trên đồ thị.
++            Rectangle {
++                visible: panel.rf.waveSource === "live" && panel.rf.diagText.length > 0
++                anchors.top: parent.top
++                anchors.horizontalCenter: parent.horizontalCenter
++                anchors.topMargin: 6
++                width:  liveWarnText.implicitWidth + 20
++                height: liveWarnText.implicitHeight + 8
++                radius: 6
++                color:  panel.rf.diagLevel === "error" ? AppTheme.brandRed : AppTheme.warningNote
++                Text {
++                    id: liveWarnText
++                    anchors.centerIn: parent
++                    font.pixelSize: 10
++                    font.bold: true
++                    color: AppTheme.textLight
++                    text: panel.rf.diagText
++                }
++            }
++
+             // Đã kết nối nhưng chưa/mất luồng WAVE - nói rõ thay vì để trống.
+             Rectangle {
+                 visible: panel.rf.waveSource === "waiting"
+@@ -166,7 +187,7 @@
+                 height: waitText.implicitHeight + 16
+                 radius: 8
+                 color:  AppTheme.panelBg
+-                border.color: AppTheme.warningNote
++                border.color: panel.rf.diagLevel === "error" ? AppTheme.brandRed : AppTheme.warningNote
+                 border.width: 1
+                 Text {
+                     id: waitText
+@@ -174,7 +195,11 @@
+                     horizontalAlignment: Text.AlignHCenter
+                     font.pixelSize: 11
+                     color: AppTheme.textDark
+-                    text: qsTr("Chưa nhận phổ RF (WAVE) từ board.\nKiểm tra firmware đã nạp bản có stream_framer chưa.")
++                    // Lý do cụ thể do chính board báo (gói DIAG): AD9361 lỗi,
++                    // DMA không về dữ liệu... - không cần cắm console.
++                    text: panel.rf.diagText.length > 0 ? panel.rf.diagText
++                          : dashboard.isPortVerified ? qsTr("Chưa nhận phổ RF (WAVE) từ board.")
++                          : qsTr("Chưa nhận phổ RF: board chưa trả lời (xem đèn Kết nối).")
+                 }
+             }
+ 

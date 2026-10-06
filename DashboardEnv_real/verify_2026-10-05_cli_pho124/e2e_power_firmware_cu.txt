@@ -1,0 +1,40 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+      [sim] supplies: AC=ok DC=ok
+PASS  config path override (DASHBOARDENV_CONFIG)
+PASS  first run: COM/baud/delay unset ("--")
+PASS  first run: AC/DC inputs unset ("--")
+PASS  first run: ATT unset ("--")
+PASS  charts empty, no simulated AC/DC data
+PASS  start without COM -> refused with message
+PASS  start without baud -> refused with message
+PASS  opened /dev/pts/0
+PASS  board verified (PING/ACK)
+PASS  init/connect sent NOTHING to the supplies
+PASS  AC ON with empty inputs -> blocked, named fields, switch stays OFF
+PASS  AC ON 120 V / 400 Hz sent
+PASS  switch shows requested ON while waiting
+PASS  DC ON 24 V / 2.35 A sent
+PASS  old fw: ACK only -> ON, marked 'unconfirmed'
+PASS  old fw: DC ON, 'unconfirmed'
+PASS  old fw: refresh pending
+PASS  old fw: refresh times out with clear message
+PASS  cleared AC volt stored as empty ("--")
+PASS  AC freq / DC current stored
+PASS  baud + delay combobox stored
+PASS  ATT + theme stored
+PASS  restart: AC volt '--', others reloaded
+PASS  restart: COM, baud, delay, session name reloaded
+PASS  restart: ATT2 7.25, ATT1 '--'
+PASS  restart: port NOT opened automatically
+
+notifications:
+  Warning: Chưa chọn cổng COM.
+  Warning: Chưa chọn tốc độ baud (board 5E-HTE dùng 115200).
+  Success: Đã kết nối thành công cổng /dev/pts/0 @ 115200 baud
+  Warning: Chưa nhập điện áp và tần số AC - chưa bật nguồn.
+  Error: Board không trả kết quả nguồn AC (mất kết nối, hoặc firmware cũ chưa hỗ trợ đọc nguồn).
+  Info: Giữ chậm: 270 ns
+  Info: ATT 2 cập nhật: 7.25 dB
+  Info: Đã ngắt kết nối cổng /dev/pts/0
+
+RESULT: 26 passed, 0 failed

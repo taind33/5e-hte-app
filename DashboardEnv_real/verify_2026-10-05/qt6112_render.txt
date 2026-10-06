@@ -1,0 +1,4 @@
+Qt 6.11.2 rendered /tmp/claude-0/verify5/qt6112_render.png 1280 x 720
+QML warnings: 0
+Qt 6.11.2 rendered /tmp/claude-0/verify5/qt6112_render_dat_lai.png 1280 x 720
+QML warnings: 0

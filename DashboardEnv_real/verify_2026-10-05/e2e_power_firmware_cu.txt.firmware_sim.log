@@ -1,0 +1,59 @@
+[ODLY] GPIO=0 (0 ns)
+[UART-AC] baud 9600
+[UART-DC] baud 9600
+[UART-PC] baud 115200
+[xil_printf] RS422/PC: RX bang polling (khong co ngat kha dung trong xparameters.h).
+[xil_printf] 5E-HTE board-app (AC/DC/ATT/Delay/ADC7928/RF) san sang.
+[SIM] RX not polled for 1.18 ms
+[SIM] RX not polled for 3.19 ms
+[SIM] RX not polled for 1.36 ms
+[SIM] RX not polled for 1.23 ms
+[SIM] RX not polled for 1.31 ms
+[SIM] RX not polled for 2.23 ms
+[SIM] RX not polled for 2.76 ms
+[SIM] RX not polled for 1.20 ms
+[SUPPLY-AC] <- SYST:REM   (mode ok)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- PROT:MODE AC   (mode ok)
+[UART-AC @9600] PROT:MODE AC
+[SUPPLY-AC] <- NORM:VOLT:AC 120.0   (mode ok)
+[UART-AC @9600] NORM:VOLT:AC 120.0
+[SUPPLY-AC] <- NORM:FREQ 400.0   (mode ok)
+[UART-AC @9600] NORM:FREQ 400.0
+[SUPPLY-AC] <- OUTP ON   (mode ok)
+[UART-AC @9600] OUTP ON
+[SUPPLY-DC] <- #0 REN   (mode ok)
+[UART-DC @9600] #0 REN
+[SIM] RX not polled for 2.12 ms
+[SUPPLY-DC] <- #0 ICN 47.00   (mode ok)
+[UART-DC @9600] #0 ICN 47.00
+[SUPPLY-DC] <- #0 SW1   (mode ok)
+[UART-DC @9600] #0 SW1
+[SIM] RX not polled for 2.43 ms
+[SUPPLY-DC] <- #0 VCN 66.67   (mode ok)
+[UART-DC @9600] #0 VCN 66.67
+[SIM] RX not polled for 1.84 ms
+[SIM] RX not polled for 1.62 ms
+[SIM] RX not polled for 1.12 ms
+[SIM] RX not polled for 1.35 ms
+[SIM] RX not polled for 1.18 ms
+[SIM] RX not polled for 2.11 ms
+[SIM] RX not polled for 1.12 ms
+[SIM] RX not polled for 2.04 ms
+[SIM] RX not polled for 1.28 ms
+[SIM] RX not polled for 2.74 ms
+[SIM] RX not polled for 2.02 ms
+[SIM] RX not polled for 2.47 ms
+[SIM] RX not polled for 1.55 ms
+[SIM] RX not polled for 1.09 ms
+[SIM] RX not polled for 1.05 ms
+[SIM] RX not polled for 1.64 ms
+[SIM] RX not polled for 2.69 ms
+[SIM] RX not polled for 1.46 ms
+[SIM] RX not polled for 1.21 ms
+[SIM] RX not polled for 1.38 ms
+[SIM] RX not polled for 1.28 ms
+[SIM] RX not polled for 2.00 ms
+[SIM] supply AC: 5 cmds (0 queries), board-side RX overruns 0, out=1
+[SIM] supply DC: 4 cmds (0 queries), board-side RX overruns 0, out=1
+[SIM] exit: dma_captures=41 rx_overruns=0 max_rx_poll_gap=3.19ms gaps>1ms=32

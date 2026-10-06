@@ -1,0 +1,1546 @@
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/ad9361_phy.h r3/fw/src/ad9361_phy.h
+--- /tmp/claude-0/prev/5e_hte_app/src/ad9361_phy.h	2026-10-01 09:03:49.000000000 +0000
++++ r3/fw/src/ad9361_phy.h	2026-10-05 09:37:29.209586494 +0000
+@@ -37,4 +37,10 @@
+ /* Defined in main.c. */
+ extern ad9361_rf_status_t g_rf_status;
+ 
++/* AD9361 bring-up result (main.c). A failed bring-up no longer halts the
++ * board: the RS422 link, AC/DC, attenuators and delay keep working, the RF
++ * spectrum is disabled and the app is told why ("DIAG" + boot log). */
++extern uint8_t g_ad9361_ok;          /* 1 = ad9361_init() + setup succeeded */
++extern int32_t g_ad9361_init_status; /* ad9361_init() return code (0 = OK)  */
++
+ #endif /* AD9361_PHY_H */
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/board_app.c r3/fw/src/board_app.c
+--- /tmp/claude-0/prev/5e_hte_app/src/board_app.c	2026-10-05 08:41:50.000000000 +0000
++++ r3/fw/src/board_app.c	2026-10-05 10:52:51.273692206 +0000
+@@ -45,6 +45,8 @@
+ #include <stdint.h>
+ #include <stdbool.h>
+ #include <string.h>
++#include <stdio.h>
++#include <stdarg.h>
+ #include "sleep.h"    /* usleep()/sleep() - Xilinx standalone BSP header, NOT
+                        * POSIX <unistd.h> (bare-metal has no such thing; the
+                        * vendor no-OS code agrees - see
+@@ -68,6 +70,8 @@
+ #include "cmd_dispatcher.h"
+ #include "stream_framer.h"
+ #include "device_power.h"
++#include "ad9361_phy.h"
++#include "kria_helper.h"
+ 
+ #define RAW_SIZE                1
+ 
+@@ -84,13 +88,15 @@
+  * few commands) could delay telemetry/spectrum indefinitely, and its real
+  * period drifted with loop overhead.
+  *  - ADC7928 telemetry: ~1 s (human-facing rate).
+- *  - RF spectrum ("WAVE"): ~300 ms - user-confirmed 200..500 ms range,
+- *    32-point FFT, RX1.
++ *  - RF spectrum ("WAVD", 124-pt): 100 ms (operator request 2026-10-05; a
++ *    274-byte frame takes ~24 ms at 115200 -> ~24 % of the RS422 link),
++ *    RX1.
+  *  - RF config report ("RFST"): every ~3 s, so an app that connects AFTER
+  *    the board booted still learns LO/sample rate within a few seconds. */
+ #define ADC_TELEMETRY_PERIOD_MS    1000U
+-#define RF_WAVE_PERIOD_MS          300U
++#define RF_WAVE_PERIOD_MS          100U
+ #define RF_STATUS_PERIOD_MS        3000U
++#define RF_WAVE_RETRY_MS           2000U    /* after 3 failed captures in a row */
+ #define IDLE_SLEEP_US              20U      /* nothing to do this pass        */
+ #define DELAY_SERVICE_CHUNK_US     50U      /* BoardApp_DelayUs() granularity */
+ 
+@@ -204,72 +210,186 @@
+     return XST_SUCCESS;
+ }
+ 
+-void BoardApp_Init(void)
++/* ---------------- board log + health report (shown in the app) ---------
++ * Boot/runtime messages used to go only to xil_printf (JTAG/UART console).
++ * BoardLog() still prints there, AND keeps the last BOOTLOG_LINES lines and
++ * sends each one to the app ("LOGT"); on every host (re)connect the whole
++ * log is replayed, followed by a "DIAG" health report - so the operator
++ * sees e.g. "AD9361 khoi tao that bai (status=-22)" in the app Terminal
++ * without a console cable. */
++#define BOOTLOG_LINES           24U
++#define HOST_RECONNECT_GAP_MS   5000U
++#define DIAG_PERIOD_MS          3000U
++
++static char    s_log_text[BOOTLOG_LINES][BOARD_LOG_MAX_TEXT + 1U];
++static uint8_t s_log_level[BOOTLOG_LINES];
++static uint32_t s_log_count = 0U;          /* total lines ever logged */
++static XTime   s_boot_tick;
++static XTime   s_last_ping_tick;
++static int     s_seen_ping = 0;
++static int     s_replay_pending = 0;
++static XTime   s_next_diag_tick;
++static int     s_app_ready = 0;            /* BoardApp_Init() finished    */
++static int     s_att_ok = 0, s_odly_ok = 0, s_ac_ok = 0, s_dc_ok = 0;
++
++void BoardLog(uint8_t level, const char *fmt, ...)
+ {
+-    int att_ok, odly_ok, ac_ok, dc_ok;
+-    XTime now;
++    char    line[BOARD_LOG_MAX_TEXT + 1U];
++    va_list ap;
++    uint32_t slot;
++
++    va_start(ap, fmt);
++    (void)vsnprintf(line, sizeof(line), fmt, ap);
++    va_end(ap);
++
++    xil_printf("%s\r\n", line);
++
++    slot = s_log_count % BOOTLOG_LINES;
++    memcpy(s_log_text[slot], line, sizeof(line));
++    s_log_level[slot] = level;
++    s_log_count++;
+ 
+-    /* Order matters for the shared SPI0 controller (see file header): the
+-     * attenuator init must run after Ad9361_Bringup(), which main.c already
+-     * guarantees. Device failures below are NOT fatal any more: the RS422/PC
+-     * link is still brought up so the Qt app can talk to the board and gets
+-     * a NACK for the failed device, instead of the whole board going silent
+-     * (old behaviour: return early -> no PC link at all). Only a PC-link
+-     * failure is fatal, since then nothing can be controlled anyway. */
+-    att_ok = (Attenuator_Init() == XST_SUCCESS);
+-    if (!att_ok) {
+-        xil_printf("Loi: Khoi tao SPI/GPIO suy hao (F1956) - lenh ATT se bi NACK.\r\n");
+-    }
+-    odly_ok = (OpticalDelay_Init() == XST_SUCCESS);
+-    if (!odly_ok) {
+-        xil_printf("Loi: Khoi tao GPIO delay quang - lenh DELAY se bi NACK.\r\n");
++    if (s_pc_link_ready) {
++        CmdDispatcher_SendLog(level, line);
+     }
+-    s_adc_ok = (ADC7928_Init() == XST_SUCCESS);
+-    if (!s_adc_ok) {
+-        xil_printf("Canh bao: Khoi tao ADC7928 that bai, tiep tuc khong co telemetry ADC.\r\n");
++}
++
++void BoardApp_OnHostPing(void)
++{
++    XTime now;
++
++    XTime_GetTime(&now);
++    if (!s_seen_ping || ((now - s_last_ping_tick) > MsToTicks(HOST_RECONNECT_GAP_MS))) {
++        s_replay_pending = 1;      /* app (re)connected: replay in PollOnce */
+     }
+-    /* Must run after Ad9361_Bringup() has brought up the RX AXI-ADC core
+-     * (see stream_framer.h) - always true here. */
+-    s_rf_stream_ok = (StreamFramer_Init() == XST_SUCCESS);
+-    if (!s_rf_stream_ok) {
+-        xil_printf("Canh bao: Khoi tao RX DMA (RF spectrum) that bai, tiep tuc khong co WAVE streaming.\r\n");
+-    }
+-
+-    /* Bench-supply UART baud rates come from board_config.h
+-     * (UART_AC_PWR_BAUDRATE / UART_DC_PWR_BAUDRATE) - previously hardcoded
+-     * 115200 here, so changing the macros had no effect. */
+-    ac_ok = (UART_InitSupply(&UartAcPwr, UART_AC_PWR_DEVICE_ID, UART_AC_PWR_BAUDRATE) == XST_SUCCESS);
+-    if (!ac_ok) {
+-        xil_printf("Loi: Khoi tao UART AC PWR - lenh AC se bi NACK.\r\n");
+-    }
+-    dc_ok = (UART_InitSupply(&UartDcPwr, UART_DC_PWR_DEVICE_ID, UART_DC_PWR_BAUDRATE) == XST_SUCCESS);
+-    if (!dc_ok) {
+-        xil_printf("Loi: Khoi tao UART DC PWR - lenh DC se bi NACK.\r\n");
++    s_seen_ping = 1;
++    s_last_ping_tick = now;
++}
++
++static void SendDiag(void)
++{
++    board_diag_msg_t d;
++    const stream_framer_stats_t *st = StreamFramer_GetStats();
++    XTime now;
++
++    memset(&d, 0, sizeof(d));
++    memcpy(d.msg, "DIAG", 4U);
++    d.version       = 1U;
++    d.ad9361_ok     = g_ad9361_ok;
++    d.rf_stream_ok  = (uint8_t)s_rf_stream_ok;
++    d.adc7928_ok    = (uint8_t)s_adc_ok;
++    d.att_ok        = (uint8_t)s_att_ok;
++    d.odly_ok       = (uint8_t)s_odly_ok;
++    d.ac_uart_ok    = (uint8_t)s_ac_ok;
++    d.dc_uart_ok    = (uint8_t)s_dc_ok;
++    d.ad9361_status = g_ad9361_init_status;
++    XTime_GetTime(&now);
++    d.uptime_s      = (uint32_t)((now - s_boot_tick) / (XTime)COUNTS_PER_SECOND);
++    d.dma_ok         = st->dma_ok;
++    d.dma_timeout    = st->dma_timeout;
++    d.dma_start_fail = st->dma_start_fail;
++    d.rx1_peak       = st->rx1_peak;
++    CmdDispatcher_GetLinkStats(&d.pc_rx_bytes, &d.pc_frames_ok, &d.pc_frames_bad);
++    d.pc_rx_dropped  = s_rx_dropped;
++    (void)snprintf(d.build, sizeof(d.build), "%s %s", __DATE__, __TIME__);
++    CmdDispatcher_SendDiag(&d);
++}
++
++static void ReplayLog(void)
++{
++    uint32_t first = (s_log_count > BOOTLOG_LINES) ? (s_log_count - BOOTLOG_LINES) : 0U;
++    uint32_t i;
++
++    for (i = first; i < s_log_count; i++) {
++        uint32_t slot = i % BOOTLOG_LINES;
++        CmdDispatcher_SendLog(s_log_level[slot], s_log_text[slot]);
+     }
++}
++
++/* Step 1 of boot (main.c, BEFORE Ad9361_Bringup()): RS422/PC link only, so
++ * every boot log line - including the AD9361 bring-up result, or the last
++ * line before it hangs - reaches the app live. Touches no SPI device. */
++void BoardApp_InitLink(void)
++{
++    XTime_GetTime(&s_boot_tick);
+     if (UART_InitPcLink(&UartPc, UART_PC_DEVICE_ID, UART_PC_BAUDRATE) != XST_SUCCESS) {
+         xil_printf("Loi nghiem trong: Khoi tao UART RS422 PC that bai - khong the giao tiep voi app.\r\n");
+         return;
+     }
+-
+ #if UART_PC_HAS_INTR
+     XUartNs550_Recv(&UartPc, g_RxBytePc, RAW_SIZE);
+-    xil_printf("RS422/PC: RX ngat cung (interrupt-driven).\r\n");
+-#else
+-    xil_printf("RS422/PC: RX bang polling (khong co ngat kha dung trong xparameters.h).\r\n");
+ #endif
++    CmdDispatcher_Init(&UartPc);
++    s_pc_link_ready = 1;
++    BoardLog(BOARD_LOG_INFO, "5E-HTE firmware build %s %s - RS422/PC san sang (%s).",
++             __DATE__, __TIME__, UART_PC_HAS_INTR ? "RX ngat" : "RX polling");
++}
+ 
+-    CmdDispatcher_Init(ac_ok ? &UartAcPwr : NULL,
+-                       dc_ok ? &UartDcPwr : NULL,
+-                       &UartPc);
+-    CmdDispatcher_SetDeviceReady(att_ok, odly_ok);
++/* Step 2 of boot (main.c, AFTER Ad9361_Bringup(), whether it succeeded or
++ * not): everything else. Order matters for the shared SPI0 controller (see
++ * file header): the attenuator init must run after Ad9361_Bringup(). Device
++ * failures are NOT fatal: commands for a failed device are NACKed and the
++ * reason is in the app (boot log + "DIAG"). */
++void BoardApp_Init(void)
++{
++    XTime now;
++
++    if (!s_pc_link_ready) {
++        BoardApp_InitLink();
++    }
++
++    s_att_ok = (Attenuator_Init() == XST_SUCCESS);
++    if (!s_att_ok) {
++        BoardLog(BOARD_LOG_ERROR, "Loi: Khoi tao SPI/GPIO suy hao (F1956) - lenh ATT se bi NACK.");
++    }
++    s_odly_ok = (OpticalDelay_Init() == XST_SUCCESS);
++    if (!s_odly_ok) {
++        BoardLog(BOARD_LOG_ERROR, "Loi: Khoi tao GPIO delay quang - lenh DELAY se bi NACK.");
++    }
++    s_adc_ok = (ADC7928_Init() == XST_SUCCESS);
++    if (!s_adc_ok) {
++        BoardLog(BOARD_LOG_WARN, "Canh bao: Khoi tao ADC7928 that bai - khong co telemetry ADC.");
++    }
++    /* RX DMA needs the RX AXI-ADC core that ad9361_init() brings up - skip
++     * it entirely if the AD9361 bring-up failed. */
++    if (g_ad9361_ok) {
++        s_rf_stream_ok = (StreamFramer_Init() == XST_SUCCESS);
++        if (!s_rf_stream_ok) {
++            BoardLog(BOARD_LOG_ERROR, "Loi: Khoi tao RX DMA (pho RF) that bai - khong co WAVE.");
++        }
++    } else {
++        s_rf_stream_ok = 0;
++        BoardLog(BOARD_LOG_ERROR, "Pho RF tat: AD9361 chua khoi tao duoc (status=%d). AC/DC/ATT/Delay van hoat dong.",
++                 (int)g_ad9361_init_status);
++    }
++
++    /* Bench-supply UART baud rates come from board_config.h. */
++    s_ac_ok = (UART_InitSupply(&UartAcPwr, UART_AC_PWR_DEVICE_ID, UART_AC_PWR_BAUDRATE) == XST_SUCCESS);
++    if (!s_ac_ok) {
++        BoardLog(BOARD_LOG_ERROR, "Loi: Khoi tao UART nguon AC - lenh AC se bi NACK.");
++    }
++    s_dc_ok = (UART_InitSupply(&UartDcPwr, UART_DC_PWR_DEVICE_ID, UART_DC_PWR_BAUDRATE) == XST_SUCCESS);
++    if (!s_dc_ok) {
++        BoardLog(BOARD_LOG_ERROR, "Loi: Khoi tao UART nguon DC - lenh DC se bi NACK.");
++    }
++    PowerLink_Init(s_ac_ok ? &UartAcPwr : NULL, s_dc_ok ? &UartDcPwr : NULL);
++    CmdDispatcher_SetDeviceReady(s_att_ok, s_odly_ok);
++
++    if (!s_pc_link_ready) {
++        return;     /* no PC link: nothing can be controlled (logged above) */
++    }
+ 
+     XTime_GetTime(&now);
+     s_next_adc_tick  = now + MsToTicks(ADC_TELEMETRY_PERIOD_MS);
+     s_next_wave_tick = now + MsToTicks(RF_WAVE_PERIOD_MS);
+     s_next_rfst_tick = now;                 /* send the RF config right away */
+-    s_pc_link_ready  = 1;
++    s_next_diag_tick = now;                 /* and the health report         */
++    s_app_ready = 1;
+ 
+-    xil_printf("5E-HTE board-app (AC/DC/ATT/Delay/ADC7928/RF) san sang.\r\n");
++    BoardLog(BOARD_LOG_INFO, "Board san sang: AD9361 %s, pho RF %s, ATT %s, Delay %s, ADC7928 %s, UART AC %s, UART DC %s.",
++             g_ad9361_ok ? "OK" : "LOI", s_rf_stream_ok ? "OK" : "TAT",
++             s_att_ok ? "OK" : "LOI", s_odly_ok ? "OK" : "LOI", s_adc_ok ? "OK" : "LOI",
++             s_ac_ok ? "OK" : "LOI", s_dc_ok ? "OK" : "LOI");
+ }
+ 
+ void BoardApp_ServiceRx(void)
+@@ -312,7 +432,7 @@
+     uint8_t rx_byte = 0U;
+     XTime   now;
+ 
+-    if (!s_pc_link_ready) {
++    if (!s_app_ready) {
+         return;
+     }
+ 
+@@ -328,6 +448,20 @@
+ 
+     XTime_GetTime(&now);
+ 
++    /* App (re)connected: replay the board log, then the health report. */
++    if (s_replay_pending) {
++        s_replay_pending = 0;
++        ReplayLog();
++        s_next_diag_tick = now;
++        return;
++    }
++
++    if (now >= s_next_diag_tick) {
++        s_next_diag_tick = now + MsToTicks(DIAG_PERIOD_MS);
++        SendDiag();
++        return;
++    }
++
+     if (s_adc_ok && (now >= s_next_adc_tick)) {
+         uint16_t codes[ADC7928_NUM_CHANNELS];
+         s_next_adc_tick = now + MsToTicks(ADC_TELEMETRY_PERIOD_MS);
+@@ -345,9 +479,28 @@
+     }
+ 
+     if (s_rf_stream_ok && (now >= s_next_wave_tick)) {
+-        s_next_wave_tick = now + MsToTicks(RF_WAVE_PERIOD_MS);
+-        /* DMA timeout etc. -> skip this tick (see stream_framer.h). */
+-        (void)StreamFramer_CaptureAndSend();
++        static uint32_t fail_streak = 0U;
++        /* DMA timeout etc. -> skip this tick (see stream_framer.h). Each
++         * failed capture blocks up to 500 ms (host bytes are still buffered,
++         * but answered only afterwards): after 3 failures in a row, retry
++         * only every 2 s so PING/commands stay responsive while the RX data
++         * path is broken. Counted in "DIAG" (dma_timeout). */
++        if (StreamFramer_CaptureAndSend() == XST_SUCCESS) {
++            fail_streak = 0U;
++        } else if (fail_streak < 0xFFFFU) {
++            fail_streak++;
++        }
++        XTime_GetTime(&now);
++        if (fail_streak >= 3U) {
++            s_next_wave_tick = now + MsToTicks(RF_WAVE_RETRY_MS);
++        } else {
++            /* Fixed 100 ms grid (not "100 ms after this frame finished",
++             * which drifted to ~124 ms by the ~24 ms frame transmit time). */
++            s_next_wave_tick += MsToTicks(RF_WAVE_PERIOD_MS);
++            if (s_next_wave_tick <= now) {
++                s_next_wave_tick = now + MsToTicks(RF_WAVE_PERIOD_MS);
++            }
++        }
+         return;
+     }
+ 
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/board_app.h r3/fw/src/board_app.h
+--- /tmp/claude-0/prev/5e_hte_app/src/board_app.h	2026-10-01 09:05:59.000000000 +0000
++++ r3/fw/src/board_app.h	2026-10-05 09:38:39.299780298 +0000
+@@ -13,6 +13,7 @@
+ #define BOARD_APP_H
+ 
+ #include <stdint.h>
++#include "kria_helper.h"   /* BOARD_LOG_* levels */
+ 
+ #ifdef __cplusplus
+ extern "C" {
+@@ -29,6 +30,19 @@
+  */
+ void BoardApp_Init(void);
+ 
++/* Call FIRST in main(), before the AD9361 bring-up: brings up only the
++ * RS422/PC link so boot log lines reach the app live (see BoardLog()). */
++void BoardApp_InitLink(void);
++
++/* Log a line to the console (xil_printf) AND to the app ("LOGT"); kept in a
++ * small ring and replayed whenever the app (re)connects. level:
++ * BOARD_LOG_INFO / BOARD_LOG_WARN / BOARD_LOG_ERROR (kria_helper.h).
++ * Call only from main-loop context (it transmits on the PC UART). */
++void BoardLog(uint8_t level, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
++
++/* Called by the dispatcher on every host PING (reconnect detection). */
++void BoardApp_OnHostPing(void);
++
+ /* Call once per pass of main()'s superloop. Non-blocking: services at most
+  * one incoming RS422/PC byte and, on an idle pass, runs whichever periodic
+  * task is due (ADC7928 telemetry ~1 s, RF "WAVE" spectrum ~300 ms, "RFST"
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/board_config.h r3/fw/src/board_config.h
+--- /tmp/claude-0/prev/5e_hte_app/src/board_config.h	2026-10-05 08:38:50.000000000 +0000
++++ r3/fw/src/board_config.h	2026-10-05 09:52:33.834229997 +0000
+@@ -143,11 +143,16 @@
+  *   if the short form is rejected on the bench (SYST:ERR? then reports it
+  *   and the app shows the error code), switch the two macros below.
+  *
+- * DC = Matsusada ("#0 ..." addressed ASCII). Model/command manual not yet
+- * confirmed: readback uses the operator-specified MEAS:VOLT?/MEAS:CURR?
+- * with the same "#0 " address prefix as every other DC command. Replies
+- * are parsed by taking the LAST number in the line, so "12.34", "#0 12.34",
+- * "+1.234E+01" and "12.34V" all work. DC_CMD_QUERY_OUTPUT is left empty
++ * DC = Matsusada ("#0 ..." addressed ASCII). Readback per the command table
++ * the operator supplied (2026-10-05): MVO? = measured output voltage,
++ * MCI? = measured output current, with the same "#0 " address prefix as
++ * every other DC command. Replies are parsed by taking the LAST number in
++ * the line, so "12.34", "#0 12.34", "+1.234E+01" and "12.34V" all work.
++ * NOTE: the set commands are deliberately UNCHANGED (operator decision):
++ * VCN/ICN as % of full scale + SW1/SW0. The same table lists LON/LOF and
++ * VCN/ICN in real volts/amps - switching to that needs the VALUE scaling in
++ * device_power.c changed too, not only the command names (sending the %
++ * value to a volts command would set e.g. 66.67 V instead of 24 V). DC_CMD_QUERY_OUTPUT is left empty
+  * (no output-state query known) -> DC is "confirmed" when it answers the
+  * readback queries right after a set; fill it in (e.g. a status command
+  * answering ON/OFF or 1/0) once the manual is available. */
+@@ -160,8 +165,8 @@
+ #define AC_CMD_MEAS_FREQ        "MEAS:FREQ?"
+ 
+ #define DC_CMD_REMOTE           "#0 REN"
+-#define DC_CMD_MEAS_VOLT        "#0 MEAS:VOLT?"
+-#define DC_CMD_MEAS_CURR        "#0 MEAS:CURR?"
++#define DC_CMD_MEAS_VOLT        "#0 MVO?"
++#define DC_CMD_MEAS_CURR        "#0 MCI?"
+ #define DC_CMD_QUERY_OUTPUT     ""          /* "" = not available */
+ 
+ /* Timing. Per-query reply timeout; the first query that times out ends the
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/cmd_dispatcher.c r3/fw/src/cmd_dispatcher.c
+--- /tmp/claude-0/prev/5e_hte_app/src/cmd_dispatcher.c	2026-10-05 08:41:50.000000000 +0000
++++ r3/fw/src/cmd_dispatcher.c	2026-10-05 10:52:14.185736868 +0000
+@@ -23,13 +23,26 @@
+ 
+ static uint8_t s_tx_frame[VIP_MAX_FRAME_LEN];
+ 
+-void CmdDispatcher_Init(XUartNs550 *ac_uart, XUartNs550 *dc_uart, XUartNs550 *pc_uart)
++static void SendMsg39(const uint8_t *payload, uint8_t len, uint8_t *seq);
++
++/* PC-link health counters (reported in "DIAG"). */
++static uint32_t s_pc_rx_bytes   = 0U;
++static uint32_t s_pc_frames_ok  = 0U;
++static uint32_t s_pc_frames_bad = 0U;
++
++void CmdDispatcher_Init(XUartNs550 *pc_uart)
+ {
+     s_pc_uart = pc_uart;
+-    PowerLink_Init(ac_uart, dc_uart);
+     VIP_Decode_Init(&s_vip_status);
+ }
+ 
++void CmdDispatcher_GetLinkStats(uint32_t *rx_bytes, uint32_t *frames_ok, uint32_t *frames_bad)
++{
++    *rx_bytes   = s_pc_rx_bytes;
++    *frames_ok  = s_pc_frames_ok;
++    *frames_bad = s_pc_frames_bad;
++}
++
+ void CmdDispatcher_SetDeviceReady(int att_ready, int odly_ready)
+ {
+     s_att_ready  = att_ready;
+@@ -111,6 +124,32 @@
+     }
+ }
+ 
++/* msgid 43: raw text command for one supply - answered by msgid 44. */
++static void HandlePwrRaw(const kria_message_t *msg, uint8_t src_id, uint16_t frame_seq)
++{
++    pwr_raw_msg_t r;
++    uint32_t      i;
++
++    if (msg->len != (uint8_t)sizeof(pwr_raw_msg_t)) {
++        SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
++        return;
++    }
++    memcpy(&r, msg->payload64, sizeof(r));
++    r.text[PWR_RAW_TEXT_MAX - 1U] = '\0';
++    /* Printable ASCII only - a raw command must not inject a line break. */
++    for (i = 0U; r.text[i] != '\0'; i++) {
++        if ((r.text[i] < 0x20) || (r.text[i] > 0x7E)) {
++            SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
++            return;
++        }
++    }
++    if (((r.dev != PWR_DEV_AC) && (r.dev != PWR_DEV_DC)) || (r.text[0] == '\0')) {
++        SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
++        return;
++    }
++    PowerLink_StartRaw(r.dev, r.text);
++}
++
+ /* msgid 41: "refresh" - read one supply now. Answered by a msgid 42 status
+  * (no ACK on success); a malformed request is NACKed. */
+ static void HandlePwrQuery(const kria_message_t *msg, uint8_t src_id, uint16_t frame_seq)
+@@ -247,9 +286,20 @@
+ 
+ void CmdDispatcher_HandleByte(uint8_t byte)
+ {
+-    if (!VIP_Decode(&s_vip_rx, &s_vip_status, byte)) {
++    uint8_t got;
++
++    s_pc_rx_bytes++;
++    /* VIP_Decode() only ever WRITES last_error (on a CRC/header error, then
++     * resyncs) - clearing it per byte turns it into a per-frame error flag. */
++    s_vip_status.last_error = VIP_ERR_NONE;
++    got = VIP_Decode(&s_vip_rx, &s_vip_status, byte);
++    if (s_vip_status.last_error != VIP_ERR_NONE) {
++        s_pc_frames_bad++;
++    }
++    if (!got) {
+         return;
+     }
++    s_pc_frames_ok++;
+ 
+     {
+         uint32_t reply_len = 0U;
+@@ -260,6 +310,9 @@
+             /* Auto-ACK for a PING_STD request, already encoded into
+              * s_tx_frame by VIP_Process_Frame(). */
+             UartRaw_Send(s_pc_uart, s_tx_frame, reply_len);
++            /* Host is talking to us: on a (re)connect the board replays its
++             * boot log + health report (board_app.c). */
++            BoardApp_OnHostPing();
+             break;
+ 
+         case VIP_PROCESS_DATA_READY: {
+@@ -284,6 +337,9 @@
+             case 41: /* Supply readback request */
+                 HandlePwrQuery(msg, src_id, frame_seq);
+                 break;
++            case 43: /* Raw supply command (app terminal) */
++                HandlePwrRaw(msg, src_id, frame_seq);
++                break;
+             default:
+                 /* Unknown msgid - silently ignored (no ACK defined). */
+                 break;
+@@ -322,59 +378,28 @@
+     }
+ }
+ 
+-void CmdDispatcher_SendWaveSpectrum(const float *magnitudes, uint32_t count)
++void CmdDispatcher_SendWaveDb(const int16_t *db100, uint32_t count, uint8_t window)
+ {
+-    /* Built by hand rather than via kria_msg_output_encode(): that helper
+-     * hardcodes msg->len = sizeof(cmd_msg_t) (68 bytes, fixed) for msgid 39,
+-     * which cannot represent this variable-length "WAVE" payload (4 + N*4
+-     * bytes) - see stream_framer.h design note. */
+-    kria_message_t  tx_msg;
+-    uint8_t         inner[3 + KRIA_MAX_PAYLOAD_LEN];
+-    uint16_t        inner_len;
+-    uint32_t        frame_len;
+-    uint32_t        i;
+-    uint32_t        max_count;
+-    static uint8_t  seq = 0U;
++    /* "WAVD" (msgid 39): 4-byte magic, n, window, n x int16 LE (dBFS x100).
++     * Built by hand: kria_msg_output_encode() hardcodes msgid 39 to
++     * sizeof(cmd_msg_t). n is clamped to what fits one payload (124). */
++    static uint8_t seq = 0U;
++    uint8_t  buf[KRIA_MAX_PAYLOAD_LEN];
++    uint32_t i;
++    const uint32_t max_count = (KRIA_MAX_PAYLOAD_LEN - 6U) / 2U;
+ 
+-    /* KRIA_MAX_PAYLOAD_LEN=255 bytes total payload, 4 of which are the
+-     * "WAVE" magic, so at most (255-4)/4 = 62 uint32 samples fit in one
+-     * frame - there is no multi-frame reassembly on either end. The chosen
+-     * 32-point FFT (132 bytes) is comfortably under this; the clamp below
+-     * is defensive only, for if this function is ever reused with a larger
+-     * FFT size without re-checking the wire budget. */
+-    max_count = (KRIA_MAX_PAYLOAD_LEN - 4U) / 4U;
+     if (count > max_count) {
+         count = max_count;
+     }
+-
+-    tx_msg.seq   = seq++;
+-    tx_msg.msgid = 39U;
+-    tx_msg.len   = (uint8_t)(4U + count * 4U);
+-
+-    memcpy(&tx_msg.payload64[0], "WAVE", 4U);
++    memcpy(buf, "WAVD", 4U);
++    buf[4] = (uint8_t)count;
++    buf[5] = window;
+     for (i = 0U; i < count; i++) {
+-        /* dashboardmanager.cpp's rawSampleToDbm() does 20*log10(raw) on a
+-         * plain unsigned integer magnitude, NOT a reinterpreted float bit
+-         * pattern - so round to the nearest integer sample here rather than
+-         * memcpy-ing the float's raw bytes. Magnitude is always >= 0
+-         * (sqrtf() of a sum of squares), and with 16-bit signed I/Q inputs
+-         * over only 32 points the worst case is nowhere near UINT32_MAX, so
+-         * no clamp is needed on this end. */
+-        uint32_t sample = (uint32_t)lroundf(magnitudes[i]);
+-        uint32_t off    = 4U + (i * 4U);
+-
+-        tx_msg.payload64[off + 0U] = (uint8_t)(sample & 0xFFU);
+-        tx_msg.payload64[off + 1U] = (uint8_t)((sample >> 8U) & 0xFFU);
+-        tx_msg.payload64[off + 2U] = (uint8_t)((sample >> 16U) & 0xFFU);
+-        tx_msg.payload64[off + 3U] = (uint8_t)((sample >> 24U) & 0xFFU);
+-    }
+-
+-    inner_len = kria_msg_to_send_buffer(inner, &tx_msg);
+-    frame_len = VIP_Encode_Data(VIP_NODE_ID_HOST, VIP_NODE_ID_SELF, VIP_NextTxSeq(),
+-                                 inner, inner_len, s_tx_frame, sizeof(s_tx_frame));
+-    if (frame_len > 0U) {
+-        UartRaw_Send(s_pc_uart, s_tx_frame, frame_len);
++        uint16_t v = (uint16_t)db100[i];
++        buf[6U + 2U * i]      = (uint8_t)(v & 0xFFU);
++        buf[6U + 2U * i + 1U] = (uint8_t)(v >> 8U);
+     }
++    SendMsg39(buf, (uint8_t)(6U + 2U * count), &seq);
+ }
+ 
+ void CmdDispatcher_SendRfStatus(void)
+@@ -460,6 +485,39 @@
+     }
+ }
+ 
++static void SendPwrRawReply(const power_result_t *r)
++{
++    pwr_raw_reply_msg_t m;
++    kria_message_t      tx_msg;
++    uint8_t             inner[3 + sizeof(pwr_raw_reply_msg_t)];
++    uint16_t            inner_len;
++    uint32_t            frame_len;
++    static uint8_t      seq = 0U;
++
++    memset(&m, 0, sizeof(m));
++    memcpy(m.msg, "RAWR", 4U);
++    m.dev     = r->dev;
++    m.result  = r->result;
++    m.output  = r->output;
++    m.valid   = r->valid;
++    m.dev_err = r->dev_err;
++    if (r->has_raw_reply) {
++        size_t n = strlen(r->raw_reply);
++        if (n > (PWR_RAW_REPLY_MAX - 1U)) {
++            n = PWR_RAW_REPLY_MAX - 1U;
++        }
++        memcpy(m.text, r->raw_reply, n);
++        m.len = (uint8_t)n;
++    }
++    kria_msg_output_encode((int)seq++, 44, &m, &tx_msg);
++    inner_len = kria_msg_to_send_buffer(inner, &tx_msg);
++    frame_len = VIP_Encode_Data(VIP_NODE_ID_HOST, VIP_NODE_ID_SELF, VIP_NextTxSeq(),
++                                 inner, inner_len, s_tx_frame, sizeof(s_tx_frame));
++    if (frame_len > 0U) {
++        UartRaw_Send(s_pc_uart, s_tx_frame, frame_len);
++    }
++}
++
+ void CmdDispatcher_PollPower(void)
+ {
+     power_result_t r;
+@@ -469,6 +527,10 @@
+          * the confirmed output state when it processes the ACK. A
+          * superseded (aborted) transaction carries no data - only its ACK
+          * (as a failure) goes out. */
++        if (r.reason == PWR_REASON_RAW) {
++            SendPwrRawReply(&r);
++            continue;
++        }
+         if (r.result != PWR_RESULT_ABORTED) {
+             SendPwrStatus(&r);
+         }
+@@ -478,3 +540,53 @@
+         }
+     }
+ }
++
++/* Builds a device->host frame on msgid 39 with an arbitrary payload (the
++ * "RFST"/"DIAG"/"LOGT" streams - kria_msg_output_encode() hardcodes msgid 39
++ * to sizeof(cmd_msg_t), so these are built by hand). */
++static void SendMsg39(const uint8_t *payload, uint8_t len, uint8_t *seq)
++{
++    kria_message_t  tx_msg;
++    uint8_t         inner[3 + KRIA_MAX_PAYLOAD_LEN];
++    uint16_t        inner_len;
++    uint32_t        frame_len;
++
++    tx_msg.seq   = (*seq)++;
++    tx_msg.msgid = 39U;
++    tx_msg.len   = len;
++    memcpy(tx_msg.payload64, payload, len);
++    inner_len = kria_msg_to_send_buffer(inner, &tx_msg);
++    frame_len = VIP_Encode_Data(VIP_NODE_ID_HOST, VIP_NODE_ID_SELF, VIP_NextTxSeq(),
++                                 inner, inner_len, s_tx_frame, sizeof(s_tx_frame));
++    if (frame_len > 0U) {
++        UartRaw_Send(s_pc_uart, s_tx_frame, frame_len);
++    }
++}
++
++void CmdDispatcher_SendDiag(const board_diag_msg_t *d)
++{
++    static uint8_t seq = 0U;
++
++    if (s_pc_uart == NULL) {
++        return;
++    }
++    SendMsg39((const uint8_t *)d, (uint8_t)sizeof(*d), &seq);
++}
++
++void CmdDispatcher_SendLog(uint8_t level, const char *text)
++{
++    static uint8_t seq = 0U;
++    uint8_t  buf[5U + BOARD_LOG_MAX_TEXT];
++    uint32_t n = (uint32_t)strlen(text);
++
++    if (s_pc_uart == NULL) {
++        return;
++    }
++    if (n > BOARD_LOG_MAX_TEXT) {
++        n = BOARD_LOG_MAX_TEXT;
++    }
++    memcpy(buf, "LOGT", 4U);
++    buf[4] = level;
++    memcpy(&buf[5], text, n);
++    SendMsg39(buf, (uint8_t)(5U + n), &seq);
++}
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/cmd_dispatcher.h r3/fw/src/cmd_dispatcher.h
+--- /tmp/claude-0/prev/5e_hte_app/src/cmd_dispatcher.h	2026-10-05 08:41:38.000000000 +0000
++++ r3/fw/src/cmd_dispatcher.h	2026-10-05 10:51:33.811672727 +0000
+@@ -21,17 +21,26 @@
+ #define CMD_DISPATCHER_H
+ 
+ #include "xuartns550.h"
++#include "kria_helper.h"
+ #include <stdint.h>
+ 
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
+-/* ac_uart/dc_uart: RS232 links to the AC/DC bench supplies.
+- * pc_uart: RS422 link to the Qt host - both received bytes are fed in via
++/* pc_uart: RS422 link to the Qt host - received bytes are fed in via
+  * CmdDispatcher_HandleByte() and ACK/telemetry frames are transmitted back
+- * out on this same UART. */
+-void CmdDispatcher_Init(XUartNs550 *ac_uart, XUartNs550 *dc_uart, XUartNs550 *pc_uart);
++ * out on this same UART. Called FIRST at boot (BoardApp_InitLink(), before
++ * the AD9361 bring-up) so boot log lines reach the app live. The AC/DC
++ * supply UARTs are owned by device_power.c (PowerLink_Init()). */
++void CmdDispatcher_Init(XUartNs550 *pc_uart);
++
++/* PC-link health counters for the "DIAG" report. */
++void CmdDispatcher_GetLinkStats(uint32_t *rx_bytes, uint32_t *frames_ok, uint32_t *frames_bad);
++
++/* "DIAG" health report and "LOGT" log line (msgid 39 streams). */
++void CmdDispatcher_SendDiag(const board_diag_msg_t *d);
++void CmdDispatcher_SendLog(uint8_t level, const char *text);
+ 
+ /* Tells the dispatcher which SPI/GPIO devices initialized. Commands for a
+  * device that did not (ATT / optical delay) are NACKed instead of being
+@@ -50,17 +59,11 @@
+  * (e.g. every ~200 ms) - see main.cpp. */
+ void CmdDispatcher_SendAdcTelemetry(const uint16_t codes[8]);
+ 
+-/* Builds a "WAVE" streaming frame (msgid 39, device->host) from an RF FFT
+- * magnitude spectrum and sends it VIP-wrapped to the host - see
+- * stream_framer.c, which calls this once per capture. Payload layout is
+- * 4-byte ASCII "WAVE" magic followed by `count` little-endian uint32
+- * samples (App/backend/dashboardmanager.cpp parseIncomingData() decodes
+- * this exact layout and feeds it through rawSampleToDbm(), which expects a
+- * plain unsigned integer magnitude - NOT a reinterpreted float bit
+- * pattern). `count` is silently clamped to whatever fits under
+- * KRIA_MAX_PAYLOAD_LEN (255 bytes: 4 magic + up to 62 uint32 samples) since
+- * there is no fragmentation scheme on either end of this link. */
+-void CmdDispatcher_SendWaveSpectrum(const float *magnitudes, uint32_t count);
++/* RF spectrum frame "WAVD" (msgid 39, device->host): 4-byte magic, n,
++ * window (0 = rectangular), then n little-endian int16 bins in dBFS x 0.01,
++ * natural DFT bin order (not fftshifted). n is clamped to 124 (one payload).
++ * See stream_framer.h. Replaces the old 32-point uint32 "WAVE" frame. */
++void CmdDispatcher_SendWaveDb(const int16_t *db100, uint32_t count, uint8_t window);
+ 
+ /* Sends the cached AD9361 RX configuration (g_rf_status, filled once by
+  * main.c's Ad9361_Bringup()) as an "RFST" frame (msgid 39, rf_status_msg_t)
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/device_power.c r3/fw/src/device_power.c
+--- /tmp/claude-0/prev/5e_hte_app/src/device_power.c	2026-10-05 08:58:50.000000000 +0000
++++ r3/fw/src/device_power.c	2026-10-05 10:52:14.184901801 +0000
+@@ -14,7 +14,7 @@
+ #include <string.h>
+ #include <math.h>
+ 
+-#define PL_CMD_MAX      40U
++#define PL_CMD_MAX      72U   /* raw commands up to 63 chars + NUL */
+ #define PL_LINE_MAX     96U
+ #define PL_MAX_STEPS    14U
+ #define PL_RESULTQ_LEN  4U
+@@ -31,7 +31,8 @@
+     F_OUTPUT,               /* ON/OFF                                       */
+     F_VOLT,
+     F_CURR,
+-    F_FREQ
++    F_FREQ,
++    F_RAW                   /* raw reply text, stored unparsed          */
+ } pl_field_t;
+ 
+ typedef struct {
+@@ -405,6 +406,40 @@
+     c->expect_output = 1;
+ }
+ 
++void PowerLink_StartRaw(uint8_t dev, const char *text)
++{
++    pl_ctx_t *c = CtxFor(dev);
++    power_result_t r;
++
++    if (c == NULL) {
++        return;
++    }
++    if ((c->uart != NULL) && (c->st != ST_IDLE)) {
++        /* Never abort a set/refresh for a manual raw command: report busy. */
++        memset(&r, 0, sizeof(r));
++        r.dev = dev;
++        r.reason = PWR_REASON_RAW;
++        r.result = PWR_RESULT_BUSY;
++        r.output = 0xFFU;
++        ResultPush(&r);
++        return;
++    }
++    c = Begin(dev, PWR_REASON_RAW, NULL);
++    if (c == NULL) {
++        return;     /* NOT_READY already queued */
++    }
++    if (strchr(text, '?') != NULL) {
++        AddStep(c, STEP_QUERY, F_RAW, 0U, text);
++    } else {
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, text);
++        if (dev == PWR_DEV_AC) {
++            /* Was it accepted, and what is the output now? */
++            AddStep(c, STEP_QUERY, F_ERR, 0U, AC_CMD_QUERY_ERROR);
++            AddStep(c, STEP_QUERY, F_OUTPUT, 0U, AC_CMD_QUERY_OUTPUT);
++        }
++    }
++}
++
+ void PowerLink_StartOff(uint8_t dev)
+ {
+     pl_ctx_t *c = Begin(dev, PWR_REASON_RESET, NULL);
+@@ -512,6 +547,10 @@
+         c->res.output = onoff;
+         c->res.valid |= PWR_VALID_OUTPUT;
+         return 1;
++    case F_RAW:
++        (void)snprintf(c->res.raw_reply, sizeof(c->res.raw_reply), "%s", c->reply);
++        c->res.has_raw_reply = 1U;
++        return 1;
+     case F_VOLT:
+     case F_CURR:
+     case F_FREQ:
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/device_power.h r3/fw/src/device_power.h
+--- /tmp/claude-0/prev/5e_hte_app/src/device_power.h	2026-10-05 08:58:50.000000000 +0000
++++ r3/fw/src/device_power.h	2026-10-05 10:52:14.185160508 +0000
+@@ -54,6 +54,8 @@
+     float           curr;       /* A                                         */
+     float           freq;       /* Hz                                        */
+     power_ack_ctx_t ack;        /* copied from the start call                */
++    uint8_t         has_raw_reply;
++    char            raw_reply[96]; /* raw query reply (PWR_REASON_RAW)       */
+ } power_result_t;
+ 
+ /* Raw string send, "\r\n" NOT appended (kept for compatibility). */
+@@ -81,6 +83,12 @@
+  * DC: ICN 0, SW0, VCN 0 as before. */
+ void PowerLink_StartOff(uint8_t dev);
+ 
++/* Raw text command from the app terminal ("ac raw ..."/"dc raw ...").
++ * Contains '?' -> query, reply line returned unparsed. Otherwise written;
++ * AC writes are followed by SYST:ERR? + OUTP?. Never aborts a running
++ * transaction: completes with PWR_RESULT_BUSY instead. */
++void PowerLink_StartRaw(uint8_t dev, const char *text);
++
+ /* Drain both supply UART RX FIFOs into the line assemblers. Cheap, never
+  * sends anything - safe to call from any wait loop (BoardApp_ServiceRx()). */
+ void PowerLink_ServiceRx(void);
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/kria_helper.h r3/fw/src/kria_helper.h
+--- /tmp/claude-0/prev/5e_hte_app/src/kria_helper.h	2026-10-05 08:39:05.000000000 +0000
++++ r3/fw/src/kria_helper.h	2026-10-05 10:51:50.266890134 +0000
+@@ -27,11 +27,17 @@
+  *                                 compatibility - see HandleAtt().
+  *            39  cmd_msg_t        Generic/diag command (host->device) and
+  *                                 device->host streams identified by a
+- *                                 4-byte magic: "WAVE" (RF FFT spectrum) and
+- *                                 "RFST" (rf_status_msg_t, AD9361 RX config)
++ *                                 4-byte magic: "WAVE" (RF FFT spectrum),
++ *                                 "RFST" (rf_status_msg_t, AD9361 RX config),
++ *                                 "DIAG" (board_diag_msg_t, health counters)
++ *                                 and "LOGT" (board log line, text)
+  *            40  adc7928_msg_t    ADC7928 8-channel telemetry (device->host)
+  *            41  pwr_query_msg_t  host->device: read one bench supply now
+  *                                 ("refresh" button / F5 in the app)
++ *            43  pwr_raw_msg_t    host->device: send one raw text command to a
++ *                                 supply ("ac raw ..." / "dc raw ..." in the
++ *                                 app terminal), reply returned in 44
++ *            44  pwr_raw_reply_msg_t device->host: the supply's reply line
+  *            42  pwr_status_msg_t device->host: result of a supply
+  *                                 transaction (refresh, set-confirmation or
+  *                                 RESET): confirmed output state + measured
+@@ -125,6 +131,41 @@
+     uint8_t  window;        /* 0 = rectangular (no window)                   */
+ } rf_status_msg_t;
+ 
++/* Board health report (device -> host), msgid 39 with 4-byte magic "DIAG",
++ * every ~3 s and right after the host (re)connects. Lets the app say WHY
++ * there is no spectrum (AD9361 init failed / RX DMA never completes / ADC
++ * clipping...) without a JTAG/UART console. */
++typedef struct __board_diag_msg {
++    char     msg[4];          /* "DIAG"                                     */
++    uint8_t  version;         /* 1                                          */
++    uint8_t  ad9361_ok;       /* 1 = ad9361_init() + setup succeeded         */
++    uint8_t  rf_stream_ok;    /* 1 = RX DMA (stream_framer) initialized      */
++    uint8_t  adc7928_ok;
++    uint8_t  att_ok;
++    uint8_t  odly_ok;
++    uint8_t  ac_uart_ok;
++    uint8_t  dc_uart_ok;
++    int32_t  ad9361_status;   /* ad9361_init() return code, 0 = OK          */
++    uint32_t uptime_s;
++    uint32_t dma_ok;          /* RX captures completed                      */
++    uint32_t dma_timeout;     /* RX captures that never completed (500 ms)  */
++    uint32_t dma_start_fail;  /* axi_dmac_transfer_start() errors           */
++    uint16_t rx1_peak;        /* max |I|,|Q| of the last capture; 12-bit ADC
++                                 sign-extended -> 2047 = full scale (clip)  */
++    uint16_t reserved;
++    uint32_t pc_rx_bytes;     /* bytes received from the PC (RS422)         */
++    uint32_t pc_frames_ok;    /* valid VIP frames received from the PC      */
++    uint32_t pc_frames_bad;   /* VIP frames dropped (CRC/header errors)     */
++    uint32_t pc_rx_dropped;   /* bytes lost because the RX ring was full    */
++    char     build[24];       /* firmware build time, __DATE__ " " __TIME__ */
++} board_diag_msg_t;
++
++/* "LOGT" (msgid 39): 4-byte magic, 1 byte level, then the text (no NUL). */
++#define BOARD_LOG_INFO          0U
++#define BOARD_LOG_WARN          1U
++#define BOARD_LOG_ERROR         2U
++#define BOARD_LOG_MAX_TEXT      200U
++
+ /* Bench-supply identifiers used by msgid 41/42. */
+ #define PWR_DEV_AC              1U
+ #define PWR_DEV_DC              2U
+@@ -133,6 +174,7 @@
+ #define PWR_REASON_READ         0U  /* msgid 41 refresh request            */
+ #define PWR_REASON_SET          1U  /* confirmation of an msgid 35/36 set  */
+ #define PWR_REASON_RESET        2U  /* confirmation of a "RESET" (msgid 39) */
++#define PWR_REASON_RAW          3U  /* raw text command (msgid 43 -> 44)   */
+ 
+ /* pwr_status_msg_t.result */
+ #define PWR_RESULT_OK           0U  /* supply answered; for SET/RESET also no
+@@ -143,6 +185,7 @@
+ #define PWR_RESULT_NOT_READY    4U  /* supply UART failed to initialize      */
+ #define PWR_RESULT_ABORTED      5U  /* superseded by a newer command         */
+ #define PWR_RESULT_BAD_REPLY    6U  /* reply could not be parsed             */
++#define PWR_RESULT_BUSY         7U  /* supply busy with another transaction  */
+ 
+ /* pwr_status_msg_t.valid bits */
+ #define PWR_VALID_VOLT          0x01U
+@@ -174,6 +217,31 @@
+     int32_t  freq_mhz;      /* measured frequency, mHz (AC only)             */
+ } pwr_status_msg_t;
+ 
++/* msgid 43, host -> device: raw text command for one supply (no "\r\n").
++ * A command containing '?' is a query: the reply line comes back in 44.
++ * Otherwise it is written; for AC the firmware then asks SYST:ERR? and
++ * OUTP? so the app learns whether it was accepted and the output state. */
++#define PWR_RAW_TEXT_MAX        64U
++typedef struct __pwr_raw_msg {
++    char    msg[4];                     /* "RAW" + NUL                     */
++    uint8_t dev;                        /* PWR_DEV_AC / PWR_DEV_DC          */
++    uint8_t len;                        /* text length (<= 63)              */
++    char    text[PWR_RAW_TEXT_MAX];     /* NUL-terminated                   */
++} pwr_raw_msg_t;
++
++/* msgid 44, device -> host. */
++#define PWR_RAW_REPLY_MAX       96U
++typedef struct __pwr_raw_reply_msg {
++    char    msg[4];                     /* "RAWR"                          */
++    uint8_t dev;
++    uint8_t result;                     /* PWR_RESULT_*                    */
++    uint8_t output;                     /* 0/1, 0xFF unknown (AC writes)   */
++    uint8_t valid;                      /* PWR_VALID_OUTPUT / PWR_VALID_ERR */
++    int16_t dev_err;                    /* SYST:ERR? after an AC write     */
++    uint8_t len;                        /* reply text length               */
++    char    text[PWR_RAW_REPLY_MAX];    /* reply line (query), NUL-padded  */
++} pwr_raw_reply_msg_t;
++
+ typedef struct _kria_message {
+     uint8_t seq;
+     uint8_t msgid;
+@@ -193,6 +261,9 @@
+ _Static_assert(sizeof(cmd_msg_t) == 68, "cmd_msg_t wire size changed");
+ _Static_assert(sizeof(adc7928_msg_t) == 20, "adc7928_msg_t wire size changed");
+ _Static_assert(sizeof(rf_status_msg_t) == 28, "rf_status_msg_t wire size changed");
++_Static_assert(sizeof(board_diag_msg_t) == 76, "board_diag_msg_t wire size changed");
++_Static_assert(sizeof(pwr_raw_msg_t) == 70, "pwr_raw_msg_t wire size changed");
++_Static_assert(sizeof(pwr_raw_reply_msg_t) == 107, "pwr_raw_reply_msg_t wire size changed");
+ _Static_assert(sizeof(pwr_query_msg_t) == 6, "pwr_query_msg_t wire size changed");
+ _Static_assert(sizeof(pwr_status_msg_t) == 24, "pwr_status_msg_t wire size changed");
+ 
+@@ -295,6 +366,12 @@
+     case 42:
+         msg->len = (uint8_t)sizeof(pwr_status_msg_t);
+         break;
++    case 43:
++        msg->len = (uint8_t)sizeof(pwr_raw_msg_t);
++        break;
++    case 44:
++        msg->len = (uint8_t)sizeof(pwr_raw_reply_msg_t);
++        break;
+     default:
+         return;
+     }
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/main.c r3/fw/src/main.c
+--- /tmp/claude-0/prev/5e_hte_app/src/main.c	2026-10-01 09:04:02.000000000 +0000
++++ r3/fw/src/main.c	2026-10-05 09:38:39.311277072 +0000
+@@ -30,10 +30,11 @@
+  *               run FIRST: it owns PSU_SPI_0 (the AD9361 chip select)
+  *               before BoardApp_Init() reclaims that same physical SPI
+  *               controller for the F1956 attenuators - see board_app.c's
+- *               SHARED-SPI-BUS NOTE. A failure here is fatal (there is no
+- *               reasonable way to run the board-control app with a
+- *               half-configured AD9361 sitting unconfigured on a shared
+- *               bus), so main() halts rather than continuing.
++ *               SHARED-SPI-BUS NOTE. A failure here is NOT fatal any more
++ *               (2026-10-05): the RF spectrum is disabled, everything else
++ *               keeps running and the reason is reported to the app.
++ *            0) BoardApp_InitLink() runs before all of this - RS422/PC link
++ *               only, so the boot log reaches the app live.
+  *            2) BoardApp_Init()  - AC/DC power, F1956 attenuators, optical
+  *               delay, ADC7928, RS422/PC link (VIP+kria protocol).
+  *            3) BoardApp_PollOnce() in a superloop - services the RS422/PC
+@@ -399,12 +400,13 @@
+ /* See ad9361_phy.h. */
+ struct ad9361_rf_phy *g_ad9361_phy = NULL;
+ ad9361_rf_status_t    g_rf_status  = { 0 };
++uint8_t               g_ad9361_ok  = 0U;
++int32_t               g_ad9361_init_status = 0;
+ 
+ /* AD9361 bring-up. Local to main.c on purpose (see file header) - not a
+- * separate module. Returns XST_SUCCESS/XST_FAILURE. On failure, does not
+- * touch the shared SPI0 controller's config again - main() below treats it
+- * as fatal rather than continuing into BoardApp_Init() with a
+- * half-configured AD9361 sitting on the bus. */
++ * separate module. Returns XST_SUCCESS/XST_FAILURE and records the result
++ * in g_ad9361_ok / g_ad9361_init_status. On failure main() continues with
++ * the RF spectrum disabled (see main()). */
+ static int Ad9361_Bringup(void)
+ {
+     int32_t status;
+@@ -423,9 +425,14 @@
+     default_init_param.gpio_cal_sw1.number = -1;
+     default_init_param.gpio_cal_sw2.number = -1;
+ 
++    BoardLog(BOARD_LOG_INFO, "AD9361: bat dau khoi tao (ad9361_init)...");
+     status = ad9361_init(&g_ad9361_phy, &default_init_param);
++    g_ad9361_init_status = status;
+     if (status < 0 || g_ad9361_phy == NULL) {
+-        xil_printf("Loi: ad9361_init() that bai (status=%d)\r\n", (int)status);
++        BoardLog(BOARD_LOG_ERROR, "Loi: ad9361_init() that bai (status=%d)", (int)status);
++        if (g_ad9361_init_status == 0) {
++            g_ad9361_init_status = -1;   /* NULL phy with status 0 */
++        }
+         return XST_FAILURE;
+     }
+ 
+@@ -458,17 +465,17 @@
+      * frequencies here are well under 4.29 GHz so the cast to unsigned int
+      * is safe. */
+     ad9361_get_tx_lo_power(g_ad9361_phy, &lo_state);
+-    xil_printf("AD9361: LO TX %s\r\n", lo_state ? "ON" : "OFF");
++    BoardLog(BOARD_LOG_INFO, "AD9361: LO TX %s", lo_state ? "ON" : "OFF");
+     ad9361_get_rx_lo_freq(g_ad9361_phy, &lo_freq);
+-    xil_printf("AD9361: LO RX frequency = %u Hz\r\n", (unsigned int)lo_freq);
++    BoardLog(BOARD_LOG_INFO, "AD9361: LO RX = %u Hz", (unsigned int)lo_freq);
+     ad9361_get_rx_rf_gain(g_ad9361_phy, 0, &rx_gain);
+-    xil_printf("AD9361: RX1 gain = %d dB\r\n", (int)rx_gain);
++    BoardLog(BOARD_LOG_INFO, "AD9361: RX1 gain = %d dB", (int)rx_gain);
+     ad9361_get_tx_sampling_freq(g_ad9361_phy, &samp_freq);
+-    xil_printf("AD9361: TX sampling frequency = %u Hz\r\n", (unsigned int)samp_freq);
++    BoardLog(BOARD_LOG_INFO, "AD9361: TX Fs = %u Hz", (unsigned int)samp_freq);
+     ad9361_get_rx_rf_bandwidth(g_ad9361_phy, &bandwidth);
+-    xil_printf("AD9361: RX RF bandwidth = %u Hz\r\n", (unsigned int)bandwidth);
++    BoardLog(BOARD_LOG_INFO, "AD9361: RX RF BW = %u Hz", (unsigned int)bandwidth);
+     ad9361_get_rx_sampling_freq(g_ad9361_phy, &rx_samp_freq);
+-    xil_printf("AD9361: RX sampling frequency = %u Hz\r\n", (unsigned int)rx_samp_freq);
++    BoardLog(BOARD_LOG_INFO, "AD9361: RX Fs = %u Hz", (unsigned int)rx_samp_freq);
+     rx_gain_mode = 0U;
+     ad9361_get_rx_gain_control_mode(g_ad9361_phy, 0, &rx_gain_mode);
+ 
+@@ -482,7 +489,8 @@
+     g_rf_status.gain_mode   = rx_gain_mode;
+     g_rf_status.valid       = 1U;
+ 
+-    xil_printf("AD9361: khoi tao xong.\r\n");
++    BoardLog(BOARD_LOG_INFO, "AD9361: khoi tao xong.");
++    g_ad9361_ok = 1U;
+ 
+     return XST_SUCCESS;
+ }
+@@ -521,14 +529,22 @@
+ //}
+ int main(void)
+ {
+-	if (Ad9361_Bringup() != XST_SUCCESS) {
+-        xil_printf("Loi nghiem trong: AD9361 khoi tao that bai, dung lai.\r\n");
+-        while (1) {
+-            /* Halt - see file header for why this is fatal rather than
+-             * falling through to BoardApp_Init() anyway. */
+-        }
++    /* 1) RS422/PC link first - boot log lines (incl. the AD9361 result, or
++     *    the last line before a hang) reach the app live. */
++    BoardApp_InitLink();
++
++    /* 2) AD9361. A failure is NO LONGER fatal (used to halt here, which
++     *    also killed the PC link - the app then only saw an orange light
++     *    and no spectrum, with the reason visible only on the JTAG/UART
++     *    console). Now: RF spectrum disabled, everything else keeps
++     *    working, and the reason is reported to the app (boot log +
++     *    "DIAG"). The F1956 init in BoardApp_Init() reclaims the shared
++     *    SPI0 controller either way. */
++    if (Ad9361_Bringup() != XST_SUCCESS) {
++        BoardLog(BOARD_LOG_ERROR, "Loi: AD9361 khoi tao that bai - tat pho RF, cac chuc nang khac van chay.");
+     }
+ 
++    /* 3) everything else */
+     BoardApp_Init();
+ 
+     while (1) {
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/stream_framer.c r3/fw/src/stream_framer.c
+--- /tmp/claude-0/prev/5e_hte_app/src/stream_framer.c	2026-10-01 09:24:21.000000000 +0000
++++ r3/fw/src/stream_framer.c	2026-10-05 10:51:33.798271944 +0000
+@@ -1,8 +1,8 @@
+ /*******************************************************************************
+  * @file    stream_framer.c
+  * @brief   See stream_framer.h for the full design note. Short version:
+- *          DMA-capture 32 RX1 I/Q samples -> 32-point complex FFT ->
+- *          magnitude -> CmdDispatcher_SendWaveSpectrum().
++ *          DMA-capture 124 RX1 I/Q samples -> 124-point complex DFT ->
++ *          dBFS -> CmdDispatcher_SendWaveDb() ("WAVD").
+  ******************************************************************************/
+ #include "stream_framer.h"
+ #include "cmd_dispatcher.h"
+@@ -16,27 +16,35 @@
+ #include <string.h>
+ #include <math.h>
+ 
+-#define RF_FFT_SIZE                     STREAM_FRAMER_FFT_SIZE   /* points, complex - see stream_framer.h */
+-#define RF_FFT_LOG2N                    STREAM_FRAMER_FFT_LOG2N  /* log2(32) */
++#define RF_FFT_SIZE                     STREAM_FRAMER_FFT_SIZE   /* points (DFT), see stream_framer.h */
+ #define RF_RX_CHANNELS                  4U    /* I1,Q1,I2,Q2 interleaved - 2R2T mode, rx_adc_init.num_channels in main.c */
+ #define RF_BYTES_PER_SAMPLE_COMPONENT   2U    /* 16-bit signed per I or per Q, matches ADI's AD9361_ADC_DAC_BYTES_PER_SAMPLE */
+-#define RF_CAPTURE_BYTES                (RF_FFT_SIZE * RF_RX_CHANNELS * RF_BYTES_PER_SAMPLE_COMPONENT) /* 32*4*2 = 256 */
++#define RF_CAPTURE_BYTES                (RF_FFT_SIZE * RF_RX_CHANNELS * RF_BYTES_PER_SAMPLE_COMPONENT) /* 124*4*2 = 992 */
++/* Buffer rounded up to whole 32-byte cache lines so the cache maintenance
++ * around the DMA never touches a line shared with another variable. */
++#define RF_CAPTURE_BUF_BYTES            ((RF_CAPTURE_BYTES + 31U) & ~31U)
+ 
+ #define RF_FFT_PI                       3.14159265358979323846f
+ #define RF_DMA_TIMEOUT_MS               500U
++#define RF_FULL_SCALE                   2048.0f   /* 12-bit ADC, complex full-scale sine */
++#define RF_DB_FLOOR                     (-200.0f)
+ 
+-/* DMA capture destination. NOT a dedicated DDR scratch region (this
+- * trimmed-down project's src/parameters.h has no ADC_DDR_BASEADDR, unlike
+- * ADI's reference ad9361/src/main.c) - a plain static buffer instead, which
+- * the linker places in .bss (DDR on every memory map seen in this project;
+- * nothing here uses OCM/TCM). 32-byte aligned to match the Cortex-A53 cache
+- * line size, per the ADI reference's own comment on this exact DMA+cache
+- * pattern ("size of the capture and the start address must be aligned to
+- * the size of the cache line"). */
+-static uint8_t s_rx_capture[RF_CAPTURE_BYTES] __attribute__((aligned(32)));
++/* DMA capture destination: plain static buffer (.bss, DDR), cache-line
++ * aligned - see the cache maintenance in StreamFramer_CaptureAndSend(). */
++static uint8_t s_rx_capture[RF_CAPTURE_BUF_BYTES] __attribute__((aligned(32)));
++
++/* DFT twiddles: e^{-j 2 pi m / N} = cos - j sin, m = 0..N-1. */
++static float s_cos[RF_FFT_SIZE];
++static float s_sin[RF_FFT_SIZE];
+ 
+ static struct axi_dmac *s_rx_dmac = NULL;
+ static int              s_ready   = 0;
++static stream_framer_stats_t s_stats;
++
++const stream_framer_stats_t *StreamFramer_GetStats(void)
++{
++    return &s_stats;
++}
+ 
+ int StreamFramer_Init(void)
+ {
+@@ -53,54 +61,38 @@
+         s_ready = 0;
+         return XST_FAILURE;
+     }
++    {
++        uint32_t m;
++        for (m = 0U; m < RF_FFT_SIZE; m++) {
++            float a = 2.0f * RF_FFT_PI * (float)m / (float)RF_FFT_SIZE;
++            s_cos[m] = cosf(a);
++            s_sin[m] = sinf(a);
++        }
++    }
+     s_ready = 1;
+     return XST_SUCCESS;
+ }
+ 
+-/* In-place iterative radix-2 decimation-in-time FFT, textbook form: bit-
+- * reversal permutation followed by log2n butterfly stages. re[]/im[] hold
+- * RF_FFT_SIZE points each on entry (im[] = 0 for our real ADC input paired
+- * per-channel as I/Q here it's genuinely complex, I=re, Q=im) and the
+- * complex spectrum on return, in natural (not bit-reversed) bin order. */
+-static void StreamFramer_Fft(float *re, float *im)
++/* Direct N-point complex DFT (N = 124 is not a power of two):
++ *   X[k] = sum_n x[n] * e^{-j 2 pi k n / N}
++ * with a precomputed twiddle table; (k*n) mod N advanced incrementally. */
++static void StreamFramer_Dft(const float *xr, const float *xi, float *mag)
+ {
+-    uint32_t i, j, k, stage, m, half_m;
+-
+-    /* Bit-reversal reorder. */
+-    for (i = 0U; i < RF_FFT_SIZE; i++) {
+-        j = 0U;
+-        for (k = 0U; k < RF_FFT_LOG2N; k++) {
+-            j = (j << 1U) | ((i >> k) & 1U);
+-        }
+-        if (j > i) {
+-            float tmp;
+-            tmp = re[i]; re[i] = re[j]; re[j] = tmp;
+-            tmp = im[i]; im[i] = im[j]; im[j] = tmp;
+-        }
+-    }
++    uint32_t k, n;
+ 
+-    /* Butterfly stages. */
+-    for (stage = 1U; stage <= RF_FFT_LOG2N; stage++) {
+-        m = 1U << stage;
+-        half_m = m >> 1U;
+-        float theta = -2.0f * RF_FFT_PI / (float)m;
+-
+-        for (i = 0U; i < RF_FFT_SIZE; i += m) {
+-            for (j = 0U; j < half_m; j++) {
+-                float wr = cosf(theta * (float)j);
+-                float wi = sinf(theta * (float)j);
+-                uint32_t idx_lo = i + j;
+-                uint32_t idx_hi = idx_lo + half_m;
+-
+-                float tr = wr * re[idx_hi] - wi * im[idx_hi];
+-                float ti = wr * im[idx_hi] + wi * re[idx_hi];
+-
+-                re[idx_hi] = re[idx_lo] - tr;
+-                im[idx_hi] = im[idx_lo] - ti;
+-                re[idx_lo] += tr;
+-                im[idx_lo] += ti;
++    for (k = 0U; k < RF_FFT_SIZE; k++) {
++        float    sr = 0.0f, si = 0.0f;
++        uint32_t idx = 0U;
++        for (n = 0U; n < RF_FFT_SIZE; n++) {
++            /* (xr + j xi) * (cos - j sin) */
++            sr += xr[n] * s_cos[idx] + xi[n] * s_sin[idx];
++            si += xi[n] * s_cos[idx] - xr[n] * s_sin[idx];
++            idx += k;
++            if (idx >= RF_FFT_SIZE) {
++                idx -= RF_FFT_SIZE;
+             }
+         }
++        mag[k] = sqrtf(sr * sr + si * si);
+     }
+ }
+ 
+@@ -111,6 +103,7 @@
+     float    re[RF_FFT_SIZE];
+     float    im[RF_FFT_SIZE];
+     float    mag[RF_FFT_SIZE];
++    int16_t  db100[RF_FFT_SIZE];
+     uint32_t i;
+     const int16_t *samples;
+ 
+@@ -130,7 +123,7 @@
+     /* Clean+invalidate BEFORE the DMA writes the buffer, so no dirty cache
+      * line covering it (e.g. from the .bss zero-fill at boot) can be
+      * evicted on top of fresh DMA data later. Invalidate again after. */
+-    Xil_DCacheFlushRange((INTPTR)s_rx_capture, RF_CAPTURE_BYTES);
++    Xil_DCacheFlushRange((INTPTR)s_rx_capture, RF_CAPTURE_BUF_BYTES);
+ 
+     memset(&rx_transfer, 0, sizeof(rx_transfer));
+     rx_transfer.size         = RF_CAPTURE_BYTES;
+@@ -141,6 +134,7 @@
+ 
+     status = axi_dmac_transfer_start(s_rx_dmac, &rx_transfer);
+     if (status != 0) {
++        s_stats.dma_start_fail++;
+         return XST_FAILURE;
+     }
+     /* Own completion poll instead of axi_dmac_transfer_wait_completion():
+@@ -163,6 +157,7 @@
+             BoardApp_ServiceRx();
+             XTime_GetTime(&now);
+             if ((now - t0) > timeout) {
++                s_stats.dma_timeout++;
+                 return XST_FAILURE;
+             }
+         }
+@@ -172,22 +167,41 @@
+ 
+     /* DMA writes bypass the CPU cache - invalidate before reading, exactly
+      * as ADI's own reference capture example does for this same core. */
+-    Xil_DCacheInvalidateRange((INTPTR)s_rx_capture, RF_CAPTURE_BYTES);
++    Xil_DCacheInvalidateRange((INTPTR)s_rx_capture, RF_CAPTURE_BUF_BYTES);
+ 
+     /* Buffer layout: RF_RX_CHANNELS (4) interleaved 16-bit little-endian
+      * signed words per sample-set = I1,Q1,I2,Q2 - RX1 is components 0/1. */
+     samples = (const int16_t *)s_rx_capture;
+-    for (i = 0U; i < RF_FFT_SIZE; i++) {
+-        re[i] = (float)samples[i * RF_RX_CHANNELS + 0U]; /* RX1 I */
+-        im[i] = (float)samples[i * RF_RX_CHANNELS + 1U]; /* RX1 Q */
++    {
++        uint16_t peak = 0U;
++        for (i = 0U; i < RF_FFT_SIZE; i++) {
++            int32_t vi = samples[i * RF_RX_CHANNELS + 0U]; /* RX1 I */
++            int32_t vq = samples[i * RF_RX_CHANNELS + 1U]; /* RX1 Q */
++            uint32_t ai = (uint32_t)((vi < 0) ? -vi : vi);
++            uint32_t aq = (uint32_t)((vq < 0) ? -vq : vq);
++            if (ai > peak) peak = (uint16_t)((ai > 0xFFFFU) ? 0xFFFFU : ai);
++            if (aq > peak) peak = (uint16_t)((aq > 0xFFFFU) ? 0xFFFFU : aq);
++            re[i] = (float)vi;
++            im[i] = (float)vq;
++        }
++        s_stats.dma_ok++;
++        s_stats.rx1_peak = peak;   /* 2047 = 12-bit full scale -> clipping */
+     }
+ 
+-    StreamFramer_Fft(re, im);
++    StreamFramer_Dft(re, im, mag);
+ 
++    /* |X_k| -> dBFS x100 (0 dBFS = full-scale complex sine, |X| = 2048*N). */
+     for (i = 0U; i < RF_FFT_SIZE; i++) {
+-        mag[i] = sqrtf(re[i] * re[i] + im[i] * im[i]);
++        float db = RF_DB_FLOOR;
++        if (mag[i] > 0.0f) {
++            db = 20.0f * log10f(mag[i] / (RF_FULL_SCALE * (float)RF_FFT_SIZE));
++            if (db < RF_DB_FLOOR) {
++                db = RF_DB_FLOOR;
++            }
++        }
++        db100[i] = (int16_t)lroundf(db * 100.0f);   /* -20000..~+600 fits int16 */
+     }
+ 
+-    CmdDispatcher_SendWaveSpectrum(mag, RF_FFT_SIZE);
++    CmdDispatcher_SendWaveDb(db100, RF_FFT_SIZE, (uint8_t)STREAM_FRAMER_WINDOW_RECT);
+     return XST_SUCCESS;
+ }
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/src/stream_framer.h r3/fw/src/stream_framer.h
+--- /tmp/claude-0/prev/5e_hte_app/src/stream_framer.h	2026-10-01 09:06:10.000000000 +0000
++++ r3/fw/src/stream_framer.h	2026-10-05 10:51:03.718327908 +0000
+@@ -1,60 +1,41 @@
+ /*******************************************************************************
+  * @file    stream_framer.h
+- * @brief   RF spectrum capture for the AD9361 RX1 input: captures a short
+- *          burst of raw I/Q samples via the AXI-DMAC RX channel, computes a
+- *          32-point complex FFT magnitude spectrum, and hands it to
+- *          cmd_dispatcher.c to send as a "WAVE" msgid-39 frame.
++ * @brief   RF spectrum of the AD9361 RX1 input: DMA-captures a burst of raw
++ *          I/Q samples, computes an N-point complex DFT, converts each bin to
++ *          dBFS and hands it to cmd_dispatcher.c to send as a "WAVD"
++ *          msgid-39 frame every RF_WAVE_PERIOD_MS (board_app.c, 100 ms).
+  *
+- *          This is the firmware half of a wire format that already existed
+- *          on the Qt side before this file did: App/backend/dashboard-
+- *          manager.cpp's parseIncomingData() has handled "WAVE" payloads
+- *          (4-byte magic + N little-endian uint32 magnitude samples) and
+- *          fed them to EnvelopeChartPanel.qml since the codec-wiring pass,
+- *          with a comment literally pointing here ("xem stream_framer.c
+- *          phia PS") - that file simply never existed until now (added
+- *          2026-09-11, after the user confirmed: 32-point FFT, continuous
+- *          background streaming every ~300ms, RX1 channel).
++ *          2026-10-05 (operator decision "phuong an B"): as many points as
++ *          ONE kria message can carry. One payload is capped at
++ *          KRIA_MAX_PAYLOAD_LEN = 255 bytes:
++ *            "WAVD"(4) + n(1) + window(1) + n * int16 dBFS x100  -> n <= 124
++ *          so N = 124 (was 32 points as uint32 linear magnitudes, "WAVE").
++ *          124 is not a power of two -> direct DFT with precomputed
++ *          twiddles: 124*124 complex MACs per frame, well under 1 ms on the
++ *          Cortex-A53 at 10 frames/s. Bin spacing = Fs/124 (0.484 MHz at
++ *          60 MSPS, was 1.875 MHz).
+  *
+- *          Wire format/size constraint (see cmd_dispatcher.h
+- *          CmdDispatcher_SendWaveSpectrum()): one kria_message_t payload is
+- *          capped at KRIA_MAX_PAYLOAD_LEN=255 bytes, and the Qt side
+- *          replaces its whole waveform on every single WAVE frame (no
+- *          multi-frame reassembly) - so this drop deliberately stays at a
+- *          32-point FFT (4 + 32*4 = 132 bytes, comfortably under the cap)
+- *          rather than a larger size that would need a fragmentation
+- *          scheme on both ends.
++ *          Per-bin value sent: 20*log10(|X_k| / (2048*N)) in 0.01 dB units
++ *          (int16, -327.68..+327.67 dB). 0 dBFS = full-scale complex sine of
++ *          the 12-bit ADC (2048, sign-extended to 16 bit by axi_adc). The
++ *          app converts back to linear for its band-power (Parseval) sum.
+  *
+- *          Sample buffer layout (see StreamFramer_CaptureAndSend()):
+- *          rx_adc_init in main.c configures num_channels=4 (I1,Q1,I2,Q2
+- *          interleaved, 16-bit signed each, 2R2T mode per
+- *          two_rx_two_tx_mode_enable=1) - this matches AD9361_ADC_DAC_
+- *          BYTES_PER_SAMPLE=2 from ADI's own reference ad9361/src/main.c.
+- *          RX1 is channel index 0 (I) / 1 (Q) of every 4-channel sample
+- *          set.
++ *          Sample buffer layout: rx_adc_init in main.c configures
++ *          num_channels=4 (I1,Q1,I2,Q2 interleaved, 16-bit signed each, 2R2T
++ *          mode). RX1 = components 0 (I) / 1 (Q) of every 4-channel set.
+  *
+- *          NOT windowed (rectangular window / no windowing applied before
+- *          the FFT) - acceptable for a first working spectrum display, but
+- *          expect spectral leakage/smeared peaks; a Hann window would be a
+- *          natural follow-up if peak sharpness matters later.
+- *
+- *          dBm calibration: the Qt side's rawSampleToDbm() (dashboard-
+- *          manager.cpp) does 20*log10(magnitude) - kDbmOffset, with
+- *          kDbmOffset a TODO placeholder (=90.0, "hiệu chỉnh theo nguồn tín
+- *          hiệu tham chiếu đã biết") - this firmware sends the raw linear
+- *          magnitude untouched, same "no scaling on this end" convention
+- *          already used for ADC7928 (see board_config.h) - calibrate on
+- *          the Qt side once a known reference signal is available.
++ *          NOT windowed (rectangular) - a Hann window would be a natural
++ *          follow-up if peak sharpness matters later ("window" byte in the
++ *          frame reports it, 0 = rectangular).
+  ******************************************************************************/
+ #ifndef STREAM_FRAMER_H
+ #define STREAM_FRAMER_H
+ 
+ #include "xstatus.h"
++#include <stdint.h>
+ 
+-/* Points per "WAVE" frame (also reported in "RFST" so the app knows the
+- * bin count without guessing). Must stay a power of two (radix-2 FFT) and
+- * <= 62 (wire budget, see cmd_dispatcher.h). */
+-#define STREAM_FRAMER_FFT_SIZE      32U
+-#define STREAM_FRAMER_FFT_LOG2N     5U
++/* Points per "WAVD" frame (also reported in "RFST"). <= 124 (wire budget). */
++#define STREAM_FRAMER_FFT_SIZE      124U
+ #define STREAM_FRAMER_ADC_BITS      12U   /* AD9361 ADC, sign-extended to 16 bit by axi_adc */
+ #define STREAM_FRAMER_WINDOW_RECT   0U
+ 
+@@ -62,23 +43,24 @@
+ extern "C" {
+ #endif
+ 
+-/* Sets up the AXI-DMAC RX channel descriptor. Call once, AFTER
+- * Ad9361_Bringup() has succeeded (the RX AXI-ADC core + its DMA channel are
+- * brought up as part of ad9361_init(), see main.c) - BoardApp_Init() already
+- * runs after that point, so call it from there. Returns XST_SUCCESS/
+- * XST_FAILURE; on failure, StreamFramer_CaptureAndSend() below is a
+- * harmless no-op (same non-fatal pattern as ADC7928_Init() failing). */
++/* Sets up the AXI-DMAC RX channel + DFT twiddle table. Call once, AFTER a
++ * successful Ad9361_Bringup() (BoardApp_Init() does). On failure
++ * StreamFramer_CaptureAndSend() is a harmless no-op. */
+ int StreamFramer_Init(void);
+ 
+-/* Captures one 32-sample RX1 I/Q burst, computes its FFT magnitude
+- * spectrum, and sends it as a "WAVE" frame via
+- * CmdDispatcher_SendWaveSpectrum(). Call periodically from the main
+- * superloop's idle branch (e.g. every ~300ms) - see board_app.c
+- * BoardApp_PollOnce(). Returns XST_SUCCESS/XST_FAILURE (DMA timeout etc.);
+- * on failure the caller should just skip this tick and retry next time,
+- * same as the ADC7928 telemetry tick. */
++/* One capture -> DFT -> "WAVD" frame. XST_FAILURE on DMA timeout etc.;
++ * the caller just retries on a later tick (see board_app.c backoff). */
+ int StreamFramer_CaptureAndSend(void);
+ 
++/* Health counters for the "DIAG" report (cmd_dispatcher.c). */
++typedef struct {
++    uint32_t dma_ok;          /* captures completed                       */
++    uint32_t dma_timeout;     /* captures that never completed (500 ms)   */
++    uint32_t dma_start_fail;  /* axi_dmac_transfer_start() errors         */
++    uint16_t rx1_peak;        /* max |I|,|Q| of the last capture          */
++} stream_framer_stats_t;
++const stream_framer_stats_t *StreamFramer_GetStats(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff -ruN '--exclude=Debug' '--exclude=__pycache__' '--exclude=*.md' /tmp/claude-0/prev/5e_hte_app/tools/vip_test_client.py r3/fw/tools/vip_test_client.py
+--- /tmp/claude-0/prev/5e_hte_app/tools/vip_test_client.py	2026-10-05 08:43:34.000000000 +0000
++++ r3/fw/tools/vip_test_client.py	2026-10-05 10:53:14.920566258 +0000
+@@ -19,6 +19,7 @@
+     python3 vip_test_client.py --port COM5 att 2 15
+     python3 vip_test_client.py --port COM5 delay 270
+     python3 vip_test_client.py --port COM5 pwq ac        # read AC supply now
++    python3 vip_test_client.py --port COM5 raw ac "PROT:CLE"   # raw command to AC
+     python3 vip_test_client.py --port COM5 ping
+     python3 vip_test_client.py --port COM5 listen        # just print frames
+ """
+@@ -127,7 +128,13 @@
+ 
+ 
+ PWR_RESULTS = {0: "OK", 1: "NO_REPLY", 2: "DEV_ERROR", 3: "OUT_MISMATCH",
+-               4: "NOT_READY", 5: "ABORTED", 6: "BAD_REPLY"}
++               4: "NOT_READY", 5: "ABORTED", 6: "BAD_REPLY", 7: "BUSY"}
++
++
++def build_raw(dev: str, text: str) -> bytes:
++    """msgid 43 pwr_raw_msg_t: "RAW\\0", dev, len, text[64] (NUL padded)."""
++    t = text.encode("ascii")[:63]
++    return b"RAW\x00" + struct.pack("<BB", 1 if dev == "ac" else 2, len(t)) + t.ljust(64, b"\x00")
+ PWR_REASONS = {0: "READ", 1: "SET", 2: "RESET"}
+ 
+ 
+@@ -176,12 +183,34 @@
+             line = line.split(" raw=")[0] + (f" PWS dev={'AC' if dev == 1 else 'DC'} reason={PWR_REASONS.get(reason, reason)}"
+                                              f" result={PWR_RESULTS.get(result, result)} out={outs} valid=0x{valid:02x}"
+                                              f" err={err} V={mv/1000:.3f} I={ma/1000:.3f} F={mhz/1000:.3f})")
+-        elif msgid in (35, 36, 37, 38, 41) and len(body) >= 1:
++        elif msgid in (35, 36, 37, 38, 41, 43) and len(body) >= 1:
+             line += f" ACK success={body[0]}"
+         elif msgid == 39 and body[:4] == b"WAVE":
+             mags = struct.unpack("<%dI" % ((len(body) - 4) // 4), body[4:4 + ((len(body) - 4) // 4) * 4])
+             k = max(range(len(mags)), key=lambda i: mags[i]) if mags else 0
+             line = line.split(" raw=")[0] + f" WAVE n={len(mags)} peak_bin={k} |X|={mags[k] if mags else 0})"
++        elif msgid == 39 and body[:4] == b"WAVD" and len(body) >= 6:
++            cnt = body[4]
++            vals = struct.unpack("<%dh" % cnt, body[6:6 + 2 * cnt])
++            k = max(range(cnt), key=lambda i: vals[i]) if cnt else 0
++            line = line.split(" inner(")[0] + f" WAVD n={cnt} peak_bin={k} ({vals[k] / 100:.2f} dBFS)"
++        elif msgid == 44 and len(body) >= 11:
++            dev, res, out, valid, err, ln = struct.unpack("<BBBBhB", body[4:11])
++            txt = body[11:11 + ln].decode("ascii", "replace")
++            line = line.split(" inner(")[0] + (f" RAW-REPLY dev={'AC' if dev == 1 else 'DC'} result={PWR_RESULTS.get(res, res)}"
++                                              f" reply='{txt}'" + (f" err={err}" if valid & 0x10 else "")
++                                              + (f" out={'ON' if out == 1 else 'OFF'}" if valid & 0x08 else ""))
++        elif msgid == 39 and body[:4] == b"LOGT" and len(body) >= 5:
++            lvl = {0: "INFO", 1: "WARN", 2: "LOI"}.get(body[4], "?")
++            line = line.split(" inner(")[0] + f" BOARD-LOG [{lvl}] " + body[5:].decode("utf-8", "replace")
++        elif msgid == 39 and body[:4] == b"DIAG" and len(body) >= 76:
++            (ver, ad_ok, rf_ok, adc_ok, att_ok, odly_ok, ac_ok, dc_ok, ad_st, up, d_ok, d_to, d_sf,
++             peak, _res, pc_b, pc_ok, pc_bad, pc_drop) = struct.unpack("<8BiIIIIHHIIII", body[4:52])
++            build = body[52:76].split(b"\0")[0].decode("ascii", "replace")
++            line = line.split(" inner(")[0] + (f" DIAG fw='{build}' up={up}s AD9361={'OK' if ad_ok else 'LOI(%d)' % ad_st}"
++                                              f" RFstream={'OK' if rf_ok else 'TAT'} DMA ok={d_ok} timeout={d_to} startfail={d_sf}"
++                                              f" RX1peak={peak}/2047 PC rx={pc_b}B frames ok={pc_ok} bad={pc_bad} drop={pc_drop}"
++                                              f" ATT={att_ok} DLY={odly_ok} ADC={adc_ok} AC={ac_ok} DC={dc_ok}")
+         elif msgid == 39 and body[:4] == b"RFST" and len(body) >= 28:
+             lo, fs, bw, gain, mode, nfft, bits, win = struct.unpack("<QIIiBBBB", body[4:28])
+             line = line.split(" raw=")[0] + f" RFST LO={lo/1e6:.3f}MHz Fs={fs/1e6:.3f}MSPS BW={bw/1e6:.3f}MHz gain={gain}dB mode={mode} fft={nfft})"
+@@ -220,6 +249,10 @@
+     p.add_argument("name")
+     p.add_argument("values", nargs="*", type=int, default=[])
+ 
++    p = sub.add_parser("raw", help="Raw text command to a supply (msgid 43): raw ac \"MEAS:POW?\"")
++    p.add_argument("dev", choices=["ac", "dc"])
++    p.add_argument("text")
++
+     p = sub.add_parser("pwq", help="Read one supply now (msgid 41): ac | dc")
+     p.add_argument("dev", choices=["ac", "dc"])
+ 
+@@ -249,6 +282,9 @@
+     elif args.cmd == "cmd":
+         inner = kria_encode(seq, 39, build_cmd(args.name, args.values))
+         frame = vip_encode_data(NODE_FW, NODE_HOST, seq, inner)
++    elif args.cmd == "raw":
++        inner = kria_encode(seq, 43, build_raw(args.dev, args.text))
++        frame = vip_encode_data(NODE_FW, NODE_HOST, seq, inner)
+     elif args.cmd == "pwq":
+         inner = kria_encode(seq, 41, build_pwq(args.dev))
+         frame = vip_encode_data(NODE_FW, NODE_HOST, seq, inner)

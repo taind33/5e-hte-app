@@ -1,0 +1,1316 @@
+diff -ruN -x Debug r3_base/fw/README.md r3/fw/README.md
+--- r3_base/fw/README.md	2026-10-01 09:38:24.818267573 +0000
++++ r3/fw/README.md	2026-10-05 09:06:18.275147021 +0000
+@@ -1,3 +1,5 @@
++> **CẬP NHẬT 2026-10-05 — đọc ngược nguồn AC/DC:** UART nguồn AC/DC giờ đọc cả phản hồi. Mỗi lệnh bật/tắt được chính nguồn xác nhận (`SYST:ERR?` + `OUTP?` với AC), app có thể yêu cầu đọc số đo tức thời (msgid 41 → msgid 42). Toàn bộ chuỗi lệnh gửi nguồn và timeout nằm trong `src/board_config.h` (mục "AC/DC supply READBACK"). Thử nhanh bằng `tools/vip_test_client.py --port COMx pwq ac`. Chi tiết: `DONG_BO_NGUON_2026-10-05.md` (báo cáo đi kèm).
++
+ > **CẬP NHẬT 2026-10-01:** README này viết ngày 08/09 và đã LỖI THỜI ở các chỗ ghi "AD9361 RF sampling/FFT là Phase 2" và "ATT chỉ dB nguyên". Phổ RF (stream_framer.c, WAVE + RFST), ATT bước 0,25 dB, RX ring buffer và lịch XTime đã có - xem `verify_sync/DONG_BO_FW_APP_2026-10-01.md`.
+ 
+ # 5E-HTE Firmware - Phase 1 (AC/DC pwr + F1956 ATT + Optical Delay + ADC7928 + protocol)
+diff -ruN -x Debug r3_base/fw/src/board_app.c r3/fw/src/board_app.c
+--- r3_base/fw/src/board_app.c	2026-10-01 09:05:41.363967395 +0000
++++ r3/fw/src/board_app.c	2026-10-05 08:41:50.372766525 +0000
+@@ -15,9 +15,10 @@
+  *          the 3 UartNs550 cores to the GIC (only the two AD9361 DMA IRQs
+  *          are connected), unlike what src_att_pwr_odly/main.cpp assumed.
+  *          This file therefore:
+- *            - initializes the AC/DC supply UARTs TX-only, no interrupt at
+- *              all (this firmware never reads a reply from them, so they
+- *              never needed one);
++ *            - initializes the AC/DC supply UARTs without interrupt; their
++ *              replies (readback / set confirmation, device_power.c) are
++ *              polled from BoardApp_ServiceRx() - at 9600 baud the 16-byte
++ *              RX FIFO holds ~16 ms, far more than any gap between polls;
+  *            - initializes the RS422/PC link with interrupt-driven RX when
+  *              UART_PC_HAS_INTR==1 (byte -> circular buffer -> main loop,
+  *              same architecture as the validated reference code), or
+@@ -66,6 +67,7 @@
+ #include "device_adc7928.h"
+ #include "cmd_dispatcher.h"
+ #include "stream_framer.h"
++#include "device_power.h"
+ 
+ #define RAW_SIZE                1
+ 
+@@ -156,9 +158,9 @@
+ static int  UartNs550SetupIntrSystem(XScuGic *IntcInstancePtr, XUartNs550 *UartInstancePtr, u16 UartIntrId);
+ #endif
+ 
+-/* TX-only init for the AC/DC bench-supply UARTs: no interrupt is set up
+- * (this firmware never reads a reply from these two links). */
+-static int UART_InitTxOnly(XUartNs550 *UartInstancePtr, u16 UartDeviceId, u32 baud)
++/* AC/DC bench-supply UART init: FIFOs on, no interrupt - RX (supply
++ * replies) is polled by PowerLink_ServiceRx() via BoardApp_ServiceRx(). */
++static int UART_InitSupply(XUartNs550 *UartInstancePtr, u16 UartDeviceId, u32 baud)
+ {
+     int Status;
+ 
+@@ -236,11 +238,11 @@
+     /* Bench-supply UART baud rates come from board_config.h
+      * (UART_AC_PWR_BAUDRATE / UART_DC_PWR_BAUDRATE) - previously hardcoded
+      * 115200 here, so changing the macros had no effect. */
+-    ac_ok = (UART_InitTxOnly(&UartAcPwr, UART_AC_PWR_DEVICE_ID, UART_AC_PWR_BAUDRATE) == XST_SUCCESS);
++    ac_ok = (UART_InitSupply(&UartAcPwr, UART_AC_PWR_DEVICE_ID, UART_AC_PWR_BAUDRATE) == XST_SUCCESS);
+     if (!ac_ok) {
+         xil_printf("Loi: Khoi tao UART AC PWR - lenh AC se bi NACK.\r\n");
+     }
+-    dc_ok = (UART_InitTxOnly(&UartDcPwr, UART_DC_PWR_DEVICE_ID, UART_DC_PWR_BAUDRATE) == XST_SUCCESS);
++    dc_ok = (UART_InitSupply(&UartDcPwr, UART_DC_PWR_DEVICE_ID, UART_DC_PWR_BAUDRATE) == XST_SUCCESS);
+     if (!dc_ok) {
+         xil_printf("Loi: Khoi tao UART DC PWR - lenh DC se bi NACK.\r\n");
+     }
+@@ -272,6 +274,10 @@
+ 
+ void BoardApp_ServiceRx(void)
+ {
++    /* Supply replies (AC/DC RS232): always polled, both modes. Only reads
++     * bytes into line buffers - never transmits, so it is safe from inside
++     * any wait loop. */
++    PowerLink_ServiceRx();
+ #if !UART_PC_HAS_INTR
+     /* Polled mode: move everything the UART FIFO holds into the software
+      * ring. Called from the main loop AND from every blocking wait in this
+@@ -311,6 +317,10 @@
+     }
+ 
+     BoardApp_ServiceRx();
++    /* AC/DC supply transactions (non-blocking): sends the next command of a
++     * set/refresh sequence when due and reports finished ones (msgid 42 +
++     * the deferred msgid 35/36 ACK). */
++    CmdDispatcher_PollPower();
+     if (RxRing_Pop(&rx_byte)) {
+         CmdDispatcher_HandleByte(rx_byte);
+         return;                 /* drain host bytes first, tasks next pass */
+diff -ruN -x Debug r3_base/fw/src/board_config.h r3/fw/src/board_config.h
+--- r3_base/fw/src/board_config.h	2026-09-09 09:22:24.000000000 +0000
++++ r3/fw/src/board_config.h	2026-10-05 08:38:50.122192329 +0000
+@@ -96,9 +96,10 @@
+  * it builds and runs either way - but please confirm which is actually
+  * true for your board, because polling is adequate but strictly less
+  * robust than interrupt-driven RX for a CRC-framed binary protocol under
+- * CPU load. The AC/DC supply UARTs are TX-only in this design (firmware
+- * only ever sends SCPI/"#0 ..." commands, never reads a reply), so they
+- * are initialized without any interrupt regardless. */
++ * CPU load. The AC/DC supply UARTs are initialized without interrupt; their
++ * replies (readback/confirmation, see "AC/DC supply READBACK" below) are
++ * read by polling from BoardApp_ServiceRx() - at 9600 baud the 16-byte RX
++ * FIFO lasts ~16 ms, far longer than any gap between polls. */
+ #define UART_AC_PWR_DEVICE_ID    XPAR_RS232_AC_PWR_DEVICE_ID
+ #define UART_DC_PWR_DEVICE_ID    XPAR_RS232_DC_PWR_DEVICE_ID
+ #define UART_PC_DEVICE_ID        XPAR_RS422_PC_DEVICE_ID
+@@ -126,6 +127,54 @@
+ #define DC_OVP_LIMIT        50.00f
+ #define DC_OCP_LIMIT        3.00f
+ 
++/* ---------------- AC/DC supply READBACK / confirmation -------------------
++ * Every string the firmware sends to the two bench supplies lives here, so
++ * a syntax difference found on the bench is a one-line change + rebuild.
++ * Terminator "\r\n" is appended by device_power.c - do NOT add it here.
++ *
++ * AC = ITECH IT-M7700 (SCPI). Set sequence (unchanged, bench-verified):
++ *   SYST:REM, PROT:MODE AC, NORM:VOLT:AC <v>, NORM:FREQ <f>, OUTP ON|OFF.
++ * Confirmation after a set / on a "refresh" request:
++ *   SYST:ERR?  -> "<code>,<text>" (or "+0"); code 0 = no error. The queue is
++ *                 drained BEFORE a set so an old error cannot fail a new one.
++ *   OUTP?      -> ON|OFF (1|0 also accepted) - must equal the requested state.
++ *   MEAS:VOLT? / MEAS:CURR? (operator-specified) and MEAS:FREQ? -> number.
++ *   The IT-M7700 programming guide also lists MEAS:VOLT:AC? / MEAS:CURR:AC?;
++ *   if the short form is rejected on the bench (SYST:ERR? then reports it
++ *   and the app shows the error code), switch the two macros below.
++ *
++ * DC = Matsusada ("#0 ..." addressed ASCII). Model/command manual not yet
++ * confirmed: readback uses the operator-specified MEAS:VOLT?/MEAS:CURR?
++ * with the same "#0 " address prefix as every other DC command. Replies
++ * are parsed by taking the LAST number in the line, so "12.34", "#0 12.34",
++ * "+1.234E+01" and "12.34V" all work. DC_CMD_QUERY_OUTPUT is left empty
++ * (no output-state query known) -> DC is "confirmed" when it answers the
++ * readback queries right after a set; fill it in (e.g. a status command
++ * answering ON/OFF or 1/0) once the manual is available. */
++#define AC_CMD_REMOTE           "SYST:REM"
++#define AC_CMD_MODE             "PROT:MODE AC"
++#define AC_CMD_QUERY_ERROR      "SYST:ERR?"
++#define AC_CMD_QUERY_OUTPUT     "OUTP?"
++#define AC_CMD_MEAS_VOLT        "MEAS:VOLT?"
++#define AC_CMD_MEAS_CURR        "MEAS:CURR?"
++#define AC_CMD_MEAS_FREQ        "MEAS:FREQ?"
++
++#define DC_CMD_REMOTE           "#0 REN"
++#define DC_CMD_MEAS_VOLT        "#0 MEAS:VOLT?"
++#define DC_CMD_MEAS_CURR        "#0 MEAS:CURR?"
++#define DC_CMD_QUERY_OUTPUT     ""          /* "" = not available */
++
++/* Timing. Per-query reply timeout; the first query that times out ends the
++ * transaction (result "no reply") instead of waiting out every remaining
++ * one. IT-M7700 rule: the complete reply must be received before the next
++ * command is sent - the firmware never has more than one query in flight
++ * per supply. */
++#define PWR_REPLY_TIMEOUT_MS    500U
++#define PWR_INTER_CMD_GAP_MS    20U     /* after a reply, before next command */
++#define PWR_WRITE_GAP_MS        50U     /* after a write-only command (same
++                                         * pacing as the verified sequence)  */
++#define PWR_ERR_DRAIN_MAX       20U     /* IT-M7700 error queue depth (20)   */
++
+ /* ---------------- F1956 attenuator (datasheet-confirmed) ----------------
+  * Renesas/IDT F1956, 7-bit, 0.25 dB/step, 0..31.75 dB, LE min pulse 30 ns,
+  * data/LE setup & hold 10 ns. See device_attenuator.c for the serial
+diff -ruN -x Debug r3_base/fw/src/cmd_dispatcher.c r3/fw/src/cmd_dispatcher.c
+--- r3_base/fw/src/cmd_dispatcher.c	2026-10-01 09:07:26.649756993 +0000
++++ r3/fw/src/cmd_dispatcher.c	2026-10-05 08:41:50.372207771 +0000
+@@ -10,10 +10,10 @@
+ #include "stream_framer.h"
+ #include <string.h>
+ #include <math.h>
++#include <stdint.h>
+ 
+-/* NULL = that bench-supply UART failed to initialize -> its commands NACK. */
+-static XUartNs550 *s_ac_uart;
+-static XUartNs550 *s_dc_uart;
++/* Bench-supply UARTs are owned by device_power.c (PowerLink_Init()); NULL
++ * there = that supply's UART failed to initialize -> its commands NACK. */
+ static XUartNs550 *s_pc_uart;
+ static int         s_att_ready  = 0;
+ static int         s_odly_ready = 0;
+@@ -25,9 +25,8 @@
+ 
+ void CmdDispatcher_Init(XUartNs550 *ac_uart, XUartNs550 *dc_uart, XUartNs550 *pc_uart)
+ {
+-    s_ac_uart = ac_uart;
+-    s_dc_uart = dc_uart;
+     s_pc_uart = pc_uart;
++    PowerLink_Init(ac_uart, dc_uart);
+     VIP_Decode_Init(&s_vip_status);
+ }
+ 
+@@ -79,8 +78,8 @@
+ 
+ static void HandleFwi(const kria_message_t *msg, uint8_t src_id, uint16_t frame_seq)
+ {
+-    fwi_msg_t fwi;
+-    uint8_t   success = 0U;
++    fwi_msg_t       fwi;
++    power_ack_ctx_t ack;
+ 
+     if (msg->len != (uint8_t)sizeof(fwi_msg_t)) {
+         SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
+@@ -88,29 +87,46 @@
+     }
+     memcpy(&fwi, msg->payload64, sizeof(fwi_msg_t));
+ 
++    /* The ACK is NOT sent here any more: it goes out from
++     * CmdDispatcher_PollPower() once the supply itself has confirmed the
++     * new state (SYST:ERR? clean + OUTP? == requested for AC; replied for
++     * DC), together with a msgid 42 status carrying the measured values.
++     * A supply whose UART failed to initialize completes immediately with
++     * PWR_RESULT_NOT_READY -> NACK, as before. */
++    ack.has_ack   = 1U;
++    ack.des_id    = src_id;
++    ack.inner_seq = msg->seq;
++    ack.msgid     = msg->msgid;
++    ack.frame_seq = frame_seq;
++
+     if (strncmp(fwi.isAC, "AC", 2) == 0) {
+-        if (s_ac_uart == NULL) {
+-            SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
+-            return;
+-        }
+-        Device_ControlACPwr(s_ac_uart, (float)fwi.voltage, (float)fwi.frequency, fwi.state);
+-        success = 1U;
++        PowerLink_StartAcSet((float)fwi.voltage, (float)fwi.frequency, fwi.state, &ack);
+     } else if (strncmp(fwi.isAC, "DC", 2) == 0) {
+-        if (s_dc_uart == NULL) {
+-            SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
+-            return;
+-        }
+         /* The Qt app packs DC current into the same "frequency" field of
+          * fwi_msg_t (see dashboardmanager.cpp setDcPower()) as fixed-point
+-         * x100 (centiamps), e.g. 2.35 A -> 235, to avoid the old
+-         * integer-truncation bug (was: whole amps only). Decode by
+-         * dividing back down here. */
+-        Device_ControlDCPwr(s_dc_uart, (float)fwi.voltage, (float)fwi.frequency / 100.0f, fwi.state);
+-        success = 1U;
++         * x100 (centiamps), e.g. 2.35 A -> 235. */
++        PowerLink_StartDcSet((float)fwi.voltage, (float)fwi.frequency / 100.0f, fwi.state, &ack);
+     } else {
+-        success = 0U;
++        SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
+     }
+-    SendAck(src_id, frame_seq, msg->seq, msg->msgid, success);
++}
++
++/* msgid 41: "refresh" - read one supply now. Answered by a msgid 42 status
++ * (no ACK on success); a malformed request is NACKed. */
++static void HandlePwrQuery(const kria_message_t *msg, uint8_t src_id, uint16_t frame_seq)
++{
++    pwr_query_msg_t q;
++
++    if (msg->len != (uint8_t)sizeof(pwr_query_msg_t)) {
++        SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
++        return;
++    }
++    memcpy(&q, msg->payload64, sizeof(q));
++    if ((q.dev != PWR_DEV_AC) && (q.dev != PWR_DEV_DC)) {
++        SendAck(src_id, frame_seq, msg->seq, msg->msgid, 0U);
++        return;
++    }
++    PowerLink_StartRead(q.dev);
+ }
+ 
+ static void HandleDelay(const kria_message_t *msg, uint8_t src_id, uint16_t frame_seq)
+@@ -201,16 +217,17 @@
+             /* Only touch devices that initialized; report failure if any
+              * output could not be returned to its safe default. */
+             success = 1U;
+-            if (s_ac_uart != NULL) {
+-                Device_ControlACPwr(s_ac_uart, 0.0f, 0.0f, 0);
+-            } else {
++            /* Supplies: output OFF as a confirmed transaction each - the
++             * app gets a msgid 42 per supply (reason RESET) with the real
++             * output state once the supply has answered. */
++            if (!PowerLink_IsReady(PWR_DEV_AC)) {
+                 success = 0U;
+             }
+-            if (s_dc_uart != NULL) {
+-                Device_ControlDCPwr(s_dc_uart, 0.0f, 0.0f, 0);
+-            } else {
++            PowerLink_StartOff(PWR_DEV_AC);
++            if (!PowerLink_IsReady(PWR_DEV_DC)) {
+                 success = 0U;
+             }
++            PowerLink_StartOff(PWR_DEV_DC);
+             if (s_att_ready) {
+                 Attenuator_SetDb(1, 0.0f);
+                 Attenuator_SetDb(2, 0.0f);
+@@ -264,6 +281,9 @@
+             case 39: /* Generic/diag */
+                 HandleGenericCmd(msg, src_id, frame_seq);
+                 break;
++            case 41: /* Supply readback request */
++                HandlePwrQuery(msg, src_id, frame_seq);
++                break;
+             default:
+                 /* Unknown msgid - silently ignored (no ACK defined). */
+                 break;
+@@ -395,3 +415,66 @@
+         UartRaw_Send(s_pc_uart, s_tx_frame, frame_len);
+     }
+ }
++
++static int32_t ToMilli(float v)
++{
++    float m = v * 1000.0f;
++
++    if (m > 2.0e9f) {
++        return INT32_MAX;
++    }
++    if (m < -2.0e9f) {
++        return INT32_MIN;
++    }
++    return (int32_t)lroundf(m);
++}
++
++static void SendPwrStatus(const power_result_t *r)
++{
++    pwr_status_msg_t st;
++    kria_message_t   tx_msg;
++    uint8_t          inner[3 + sizeof(pwr_status_msg_t)];
++    uint16_t         inner_len;
++    uint32_t         frame_len;
++    static uint8_t   seq = 0U;
++
++    memset(&st, 0, sizeof(st));
++    memcpy(st.msg, "PWS", 4U);
++    st.dev      = r->dev;
++    st.reason   = r->reason;
++    st.result   = r->result;
++    st.output   = r->output;
++    st.valid    = r->valid;
++    st.req_seq  = r->ack.has_ack ? r->ack.inner_seq : 0U;
++    st.dev_err  = r->dev_err;
++    st.volt_mv  = ToMilli(r->volt);
++    st.curr_ma  = ToMilli(r->curr);
++    st.freq_mhz = ToMilli(r->freq);
++
++    kria_msg_output_encode((int)seq++, 42, &st, &tx_msg);
++    inner_len = kria_msg_to_send_buffer(inner, &tx_msg);
++    frame_len = VIP_Encode_Data(VIP_NODE_ID_HOST, VIP_NODE_ID_SELF, VIP_NextTxSeq(),
++                                 inner, inner_len, s_tx_frame, sizeof(s_tx_frame));
++    if (frame_len > 0U) {
++        UartRaw_Send(s_pc_uart, s_tx_frame, frame_len);
++    }
++}
++
++void CmdDispatcher_PollPower(void)
++{
++    power_result_t r;
++
++    while (PowerLink_Poll(&r)) {
++        /* Status first, then the ACK it confirms, so the app already holds
++         * the confirmed output state when it processes the ACK. A
++         * superseded (aborted) transaction carries no data - only its ACK
++         * (as a failure) goes out. */
++        if (r.result != PWR_RESULT_ABORTED) {
++            SendPwrStatus(&r);
++        }
++        if (r.ack.has_ack) {
++            SendAck(r.ack.des_id, r.ack.frame_seq, r.ack.inner_seq, r.ack.msgid,
++                    (r.result == PWR_RESULT_OK) ? 1U : 0U);
++        }
++    }
++}
+diff -ruN -x Debug r3_base/fw/src/cmd_dispatcher.h r3/fw/src/cmd_dispatcher.h
+--- r3_base/fw/src/cmd_dispatcher.h	2026-10-01 09:07:26.650585008 +0000
++++ r3/fw/src/cmd_dispatcher.h	2026-10-05 08:41:38.870222310 +0000
+@@ -3,8 +3,8 @@
+  * @brief   Binary command dispatcher for the RS422/PC link: feeds received
+  *          bytes through the VIP framing decoder (vip_helper.c), unwraps
+  *          the inner kria_message_t (kria_helper.h), dispatches msgid
+- *          35/36/37/38/39 to the AC/DC/attenuator/optical-delay/generic
+- *          device drivers, sends device->host telemetry/streams (ADC7928
++ *          35/36/37/38/39/41 to the AC/DC/attenuator/optical-delay/generic/
++ *          supply-readback handlers, sends device->host telemetry/streams (ADC7928
+  *          msgid 40, "WAVE" and "RFST" on msgid 39), and sends back the
+  *          VIP-wrapped ACK frames the
+  *          Qt dashboard app already expects (payload64[0] = 1 success / 0
+@@ -68,6 +68,13 @@
+  * access. No-op if bring-up never filled the cache. */
+ void CmdDispatcher_SendRfStatus(void);
+ 
++/* Drives the AC/DC supply transactions (device_power.c PowerLink_*) and
++ * reports every finished one to the host: a msgid 42 pwr_status_msg_t
++ * (confirmed output state + measured V/I/F, or why it failed), followed by
++ * the msgid 35/36 ACK when the transaction was a set command. Call once per
++ * superloop pass (BoardApp_PollOnce()). */
++void CmdDispatcher_PollPower(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff -ruN -x Debug r3_base/fw/src/device_power.c r3/fw/src/device_power.c
+--- r3_base/fw/src/device_power.c	2026-10-01 09:05:59.687385796 +0000
++++ r3/fw/src/device_power.c	2026-10-05 08:58:50.867714602 +0000
+@@ -1,9 +1,102 @@
++/*******************************************************************************
++ * @file    device_power.c
++ * @brief   AC/DC bench-supply control + readback as non-blocking
++ *          transactions - see device_power.h for the design.
++ ******************************************************************************/
+ #include "device_power.h"
+ #include "board_config.h"
+-#include "board_app.h" /* BoardApp_DelayUs()/BoardApp_ServiceRx() - waits below
+-                         * keep draining the RS422/PC RX FIFO (polled mode), a
+-                         * full AC sequence blocks ~250 ms otherwise */
++#include "board_app.h"   /* BoardApp_ServiceRx(): keep the RS422/PC RX FIFO
++                          * drained while a supply command is being sent */
++#include "kria_helper.h" /* PWR_DEV_* / PWR_REASON_* / PWR_RESULT_* / PWR_VALID_* */
++#include "xtime_l.h"
+ #include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <math.h>
++
++#define PL_CMD_MAX      40U
++#define PL_LINE_MAX     96U
++#define PL_MAX_STEPS    14U
++#define PL_RESULTQ_LEN  4U
++
++typedef enum {
++    STEP_WRITE = 0,         /* send command, then wait gap_ms              */
++    STEP_QUERY              /* send command, wait for one reply line       */
++} pl_step_kind_t;
++
++typedef enum {
++    F_NONE = 0,
++    F_ERR_DRAIN,            /* SYST:ERR? repeated until 0 - before a set    */
++    F_ERR,                  /* SYST:ERR? after a set - result is reported   */
++    F_OUTPUT,               /* ON/OFF                                       */
++    F_VOLT,
++    F_CURR,
++    F_FREQ
++} pl_field_t;
++
++typedef struct {
++    uint8_t  kind;
++    uint8_t  field;
++    uint16_t gap_ms;
++    char     cmd[PL_CMD_MAX];
++} pl_step_t;
++
++typedef enum {
++    ST_IDLE = 0,
++    ST_NEXT,                /* ready to run steps[idx]                     */
++    ST_WAIT_REPLY,          /* query sent, waiting for a reply line        */
++    ST_GAP                  /* pacing pause, then ST_NEXT                  */
++} pl_state_t;
++
++typedef struct {
++    XUartNs550     *uart;
++    uint8_t         dev;
++    volatile pl_state_t st;
++
++    pl_step_t       steps[PL_MAX_STEPS];
++    uint8_t         nsteps;
++    uint8_t         idx;
++    uint8_t         drain_count;
++    int8_t          expect_output;      /* -1 = do not check              */
++    XTime           deadline;
++
++    /* RX line assembly (filled by PowerLink_ServiceRx) */
++    char            line[PL_LINE_MAX];
++    uint8_t         line_len;
++    char            reply[PL_LINE_MAX];
++    volatile uint8_t reply_ready;
++
++    power_result_t  res;
++} pl_ctx_t;
++
++static pl_ctx_t       s_ctx[2];         /* [0] = AC, [1] = DC              */
++static power_result_t s_resq[PL_RESULTQ_LEN];
++static uint8_t        s_resq_head = 0U;
++static uint8_t        s_resq_count = 0U;
++
++/* ------------------------------------------------------------------------ */
++static XTime MsToTicks(uint32_t ms)
++{
++    return ((XTime)COUNTS_PER_SECOND / 1000U) * (XTime)ms;
++}
++
++static XTime Now(void)
++{
++    XTime t;
++    XTime_GetTime(&t);
++    return t;
++}
++
++static pl_ctx_t *CtxFor(uint8_t dev)
++{
++    if (dev == PWR_DEV_AC) {
++        return &s_ctx[0];
++    }
++    if (dev == PWR_DEV_DC) {
++        return &s_ctx[1];
++    }
++    return NULL;
++}
+ 
+ void Device_UartSendString(XUartNs550 *instance, const char *str)
+ {
+@@ -19,51 +112,506 @@
+     }
+ }
+ 
+-void Device_ControlACPwr(XUartNs550 *ac_uart, float voltage, float freq, int state)
++static void SendLine(XUartNs550 *u, const char *cmd)
++{
++    Device_UartSendString(u, cmd);
++    Device_UartSendString(u, "\r\n");
++}
++
++/* ---------------- result queue ------------------------------------------ */
++static void ResultPush(const power_result_t *r)
++{
++    uint8_t slot;
++
++    if (s_resq_count == PL_RESULTQ_LEN) {
++        /* Cannot happen with 2 supplies (at most one aborted + one finished
++         * each), but never block: drop the oldest. */
++        s_resq_head = (uint8_t)((s_resq_head + 1U) % PL_RESULTQ_LEN);
++        s_resq_count--;
++    }
++    slot = (uint8_t)((s_resq_head + s_resq_count) % PL_RESULTQ_LEN);
++    s_resq[slot] = *r;
++    s_resq_count++;
++}
++
++static int ResultPop(power_result_t *out)
++{
++    if (s_resq_count == 0U) {
++        return 0;
++    }
++    *out = s_resq[s_resq_head];
++    s_resq_head = (uint8_t)((s_resq_head + 1U) % PL_RESULTQ_LEN);
++    s_resq_count--;
++    return 1;
++}
++
++/* ---------------- reply parsing ----------------------------------------- */
++static int IsNumStart(const char *p)
++{
++    if ((*p >= '0') && (*p <= '9')) {
++        return 1;
++    }
++    if ((*p == '+') || (*p == '-') || (*p == '.')) {
++        const char *q = p + 1;
++        if (*q == '.') {
++            q++;
++        }
++        return (*q >= '0') && (*q <= '9');
++    }
++    return 0;
++}
++
++/* first != 0: first number in the line, else the last one. */
++static int ParseNumber(const char *line, int first, double *out)
++{
++    const char *p = line;
++    int found = 0;
++
++    while (*p != '\0') {
++        if (IsNumStart(p)) {
++            char  *end = NULL;
++            double v = strtod(p, &end);
++            if ((end != NULL) && (end > p)) {
++                *out = v;
++                found = 1;
++                if (first) {
++                    return 1;
++                }
++                p = end;
++                continue;
++            }
++        }
++        p++;
++    }
++    return found;
++}
++
++static int ParseOnOff(const char *line, uint8_t *out)
++{
++    const char *p = line;
++    double v;
++
++    while ((*p == ' ') || (*p == '\t')) {
++        p++;
++    }
++    if (((p[0] == 'O') || (p[0] == 'o')) && ((p[1] == 'N') || (p[1] == 'n'))) {
++        *out = 1U;
++        return 1;
++    }
++    if (((p[0] == 'O') || (p[0] == 'o')) && ((p[1] == 'F') || (p[1] == 'f'))) {
++        *out = 0U;
++        return 1;
++    }
++    if (ParseNumber(line, 0, &v)) {
++        *out = (v != 0.0) ? 1U : 0U;
++        return 1;
++    }
++    return 0;
++}
++
++/* ---------------- transaction building ---------------------------------- */
++static void AddStep(pl_ctx_t *c, uint8_t kind, uint8_t field, uint16_t gap_ms, const char *cmd)
++{
++    pl_step_t *s;
++
++    if ((c->nsteps >= PL_MAX_STEPS) || (cmd == NULL) || (cmd[0] == '\0')) {
++        return;     /* "" = command not available (e.g. DC_CMD_QUERY_OUTPUT) */
++    }
++    s = &c->steps[c->nsteps++];
++    s->kind   = kind;
++    s->field  = field;
++    s->gap_ms = gap_ms;
++    (void)snprintf(s->cmd, sizeof(s->cmd), "%s", cmd);
++}
++
++static void Finish(pl_ctx_t *c, uint8_t result)
++{
++    c->res.result = result;
++    if (result == PWR_RESULT_OK) {
++        if (((c->res.valid & PWR_VALID_ERR) != 0U) && (c->res.dev_err != 0)) {
++            c->res.result = PWR_RESULT_DEV_ERROR;
++        } else if ((c->expect_output >= 0) && ((c->res.valid & PWR_VALID_OUTPUT) != 0U)
++                   && (c->res.output != (uint8_t)c->expect_output)) {
++            c->res.result = PWR_RESULT_OUT_MISMATCH;
++        }
++    }
++    ResultPush(&c->res);
++    c->st = ST_IDLE;
++    c->nsteps = 0U;
++    c->idx = 0U;
++}
++
++/* Prepare ctx for a new transaction. Returns NULL if the supply is not
++ * ready (a NOT_READY result has then already been queued). */
++static pl_ctx_t *Begin(uint8_t dev, uint8_t reason, const power_ack_ctx_t *ack)
++{
++    pl_ctx_t *c = CtxFor(dev);
++    int settle = 0;
++
++    if (c == NULL) {
++        return NULL;
++    }
++    if (c->st != ST_IDLE) {
++        /* Superseded: report the old one (its ACK, if any, goes out as a
++         * failure). If it was waiting for a reply, let that late reply
++         * arrive and be discarded before the new transaction talks. */
++        settle = (c->st == ST_WAIT_REPLY);
++        Finish(c, PWR_RESULT_ABORTED);
++    }
++
++    memset(&c->res, 0, sizeof(c->res));
++    c->res.dev    = dev;
++    c->res.reason = reason;
++    c->res.output = 0xFFU;
++    if (ack != NULL) {
++        c->res.ack = *ack;
++    }
++    c->nsteps        = 0U;
++    c->idx           = 0U;
++    c->drain_count   = 0U;
++    c->expect_output = -1;
++    c->reply_ready   = 0U;
++    c->line_len      = 0U;
++
++    if (c->uart == NULL) {
++        c->res.result = PWR_RESULT_NOT_READY;
++        ResultPush(&c->res);
++        c->st = ST_IDLE;
++        return NULL;
++    }
++
++    if (settle) {
++        c->st = ST_GAP;
++        c->deadline = Now() + MsToTicks(PWR_REPLY_TIMEOUT_MS);
++    } else {
++        c->st = ST_NEXT;
++    }
++    return c;
++}
++
++static void AddAcReadback(pl_ctx_t *c)
++{
++    AddStep(c, STEP_QUERY, F_ERR,    0U, AC_CMD_QUERY_ERROR);
++    AddStep(c, STEP_QUERY, F_OUTPUT, 0U, AC_CMD_QUERY_OUTPUT);
++    AddStep(c, STEP_QUERY, F_VOLT,   0U, AC_CMD_MEAS_VOLT);
++    AddStep(c, STEP_QUERY, F_CURR,   0U, AC_CMD_MEAS_CURR);
++    AddStep(c, STEP_QUERY, F_FREQ,   0U, AC_CMD_MEAS_FREQ);
++}
++
++static void AddDcReadback(pl_ctx_t *c)
+ {
+-    char volt_cmd[32];
+-    char freq_cmd[32];
++    AddStep(c, STEP_QUERY, F_OUTPUT, 0U, DC_CMD_QUERY_OUTPUT);   /* "" -> skipped */
++    AddStep(c, STEP_QUERY, F_VOLT,   0U, DC_CMD_MEAS_VOLT);
++    AddStep(c, STEP_QUERY, F_CURR,   0U, DC_CMD_MEAS_CURR);
++}
++
++void PowerLink_StartRead(uint8_t dev)
++{
++    pl_ctx_t *c = CtxFor(dev);
++
++    if ((c != NULL) && (c->st != ST_IDLE)) {
++        return;     /* merged: the running transaction reports values too */
++    }
++    c = Begin(dev, PWR_REASON_READ, NULL);
++    if (c == NULL) {
++        return;
++    }
++    if (dev == PWR_DEV_AC) {
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, AC_CMD_REMOTE);
++        AddAcReadback(c);
++    } else {
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, DC_CMD_REMOTE);
++        AddDcReadback(c);
++    }
++}
++
++void PowerLink_StartAcSet(float voltage, float freq, int state, const power_ack_ctx_t *ack)
++{
++    pl_ctx_t *c;
++    char      cmd[PL_CMD_MAX];
++    long      v10, f10;
++
++    c = Begin(PWR_DEV_AC, PWR_REASON_SET, ack);
++    if (c == NULL) {
++        return;
++    }
++
++    if (!state) {
++        /* OFF = output off only. The voltage/frequency fields of an OFF
++         * command are not sent: they carry nothing meaningful (the app
++         * sends 0/0 when its inputs are empty "--"), and the old path
++         * turned 0 V into NORM:VOLT:AC 80.0 (UVP clamp) + NORM:FREQ 0.0. */
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, AC_CMD_REMOTE);
++        AddStep(c, STEP_QUERY, F_ERR_DRAIN, 0U, AC_CMD_QUERY_ERROR);
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "OUTP OFF");
++        AddAcReadback(c);
++        c->expect_output = 0;
++        return;
++    }
+ 
+     if (voltage > AC_OVP_LIMIT)   voltage = AC_OVP_LIMIT;
+     if (voltage < AC_UVP_VOLTAGE) voltage = AC_UVP_VOLTAGE;
++    if (freq < 0.0f)              freq = 0.0f;
++    /* Same "%d.%d" text as the verified code, but rounded to 0.1 as a whole
++     * (old split int/frac could print e.g. "99.10" for 99.96). Integer
++     * inputs - all the app sends - produce identical strings. */
++    v10 = lroundf(voltage * 10.0f);
++    f10 = lroundf(freq * 10.0f);
+ 
+-    int v_int  = (int)voltage;
+-    int v_frac = (int)((voltage - v_int) * 10 + 0.5f);
+-    if (v_frac < 0) v_frac = -v_frac;
+-
+-    int f_int  = (int)freq;
+-    int f_frac = (int)((freq - f_int) * 10 + 0.5f);
+-    if (f_frac < 0) f_frac = -f_frac;
+-
+-    Device_UartSendString(ac_uart, "SYST:REM\r\n");
+-    BoardApp_DelayUs(50000);
+-    Device_UartSendString(ac_uart, "PROT:MODE AC\r\n");
+-    BoardApp_DelayUs(50000);
+-    snprintf(volt_cmd, sizeof(volt_cmd), "NORM:VOLT:AC %d.%d\r\n", v_int, v_frac);
+-    Device_UartSendString(ac_uart, volt_cmd);
+-    BoardApp_DelayUs(50000);
+-    snprintf(freq_cmd, sizeof(freq_cmd), "NORM:FREQ %d.%d\r\n", f_int, f_frac);
+-    Device_UartSendString(ac_uart, freq_cmd);
+-    BoardApp_DelayUs(50000);
+-    Device_UartSendString(ac_uart, state ? "OUTP ON\r\n" : "OUTP OFF\r\n");
+-    BoardApp_DelayUs(50000);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, AC_CMD_REMOTE);
++    AddStep(c, STEP_QUERY, F_ERR_DRAIN, 0U, AC_CMD_QUERY_ERROR);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, AC_CMD_MODE);
++    (void)snprintf(cmd, sizeof(cmd), "NORM:VOLT:AC %ld.%ld", v10 / 10, v10 % 10);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, cmd);
++    (void)snprintf(cmd, sizeof(cmd), "NORM:FREQ %ld.%ld", f10 / 10, f10 % 10);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, cmd);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "OUTP ON");
++    AddAcReadback(c);
++    c->expect_output = 1;
+ }
+ 
+-void Device_ControlDCPwr(XUartNs550 *dc_uart, float voltage, float current, int state)
++void PowerLink_StartDcSet(float voltage, float current, int state, const power_ack_ctx_t *ack)
+ {
+-    char curr_cmd[32];
+-    char volt_cmd[32];
++    pl_ctx_t *c;
++    char      cmd[PL_CMD_MAX];
++
++    c = Begin(PWR_DEV_DC, PWR_REASON_SET, ack);
++    if (c == NULL) {
++        return;
++    }
++
++    if (!state) {
++        /* OFF = "#0 SW0" only (see the AC case above). */
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, DC_CMD_REMOTE);
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "#0 SW0");
++        AddDcReadback(c);
++        c->expect_output = 0;
++        return;
++    }
+ 
+     if (voltage > DC_MAX_VOLTAGE) voltage = DC_MAX_VOLTAGE;
++    if (voltage < 0.0f)           voltage = 0.0f;
+     if (current > DC_MAX_CURRENT) current = DC_MAX_CURRENT;
++    if (current < 0.0f)           current = 0.0f;
++
++    /* Order and pacing exactly as the verified sequence. */
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, DC_CMD_REMOTE);
++    (void)snprintf(cmd, sizeof(cmd), "#0 ICN %.2f", (double)((current / DC_MAX_CURRENT) * 100.0f));
++    AddStep(c, STEP_WRITE, F_NONE, 10U, cmd);
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "#0 SW1");
++    (void)snprintf(cmd, sizeof(cmd), "#0 VCN %.2f", (double)((voltage / DC_MAX_VOLTAGE) * 100.0f));
++    AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, cmd);
++    AddDcReadback(c);
++    c->expect_output = 1;
++}
++
++void PowerLink_StartOff(uint8_t dev)
++{
++    pl_ctx_t *c = Begin(dev, PWR_REASON_RESET, NULL);
++
++    if (c == NULL) {
++        return;
++    }
++    if (dev == PWR_DEV_AC) {
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, AC_CMD_REMOTE);
++        AddStep(c, STEP_QUERY, F_ERR_DRAIN, 0U, AC_CMD_QUERY_ERROR);
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "OUTP OFF");
++        AddAcReadback(c);
++    } else {
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, DC_CMD_REMOTE);
++        AddStep(c, STEP_WRITE, F_NONE, 10U, "#0 ICN 0.00");
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "#0 SW0");
++        AddStep(c, STEP_WRITE, F_NONE, PWR_WRITE_GAP_MS, "#0 VCN 0.00");
++        AddDcReadback(c);
++    }
++    c->expect_output = 0;
++}
++
++/* ---------------- runtime ----------------------------------------------- */
++void PowerLink_Init(XUartNs550 *ac_uart, XUartNs550 *dc_uart)
++{
++    memset(s_ctx, 0, sizeof(s_ctx));
++    s_ctx[0].uart = ac_uart;
++    s_ctx[0].dev  = PWR_DEV_AC;
++    s_ctx[1].uart = dc_uart;
++    s_ctx[1].dev  = PWR_DEV_DC;
++    s_resq_head = 0U;
++    s_resq_count = 0U;
++}
++
++int PowerLink_IsReady(uint8_t dev)
++{
++    pl_ctx_t *c = CtxFor(dev);
++    return (c != NULL) && (c->uart != NULL);
++}
+ 
+-    Device_UartSendString(dc_uart, "#0 REN\r\n");
+-    BoardApp_DelayUs(50000);
+-    snprintf(curr_cmd, sizeof(curr_cmd), "#0 ICN %.2f\r\n", (current / DC_MAX_CURRENT) * 100.0f);
+-    Device_UartSendString(dc_uart, curr_cmd);
+-    BoardApp_DelayUs(10000);
+-    Device_UartSendString(dc_uart, state ? "#0 SW1\r\n" : "#0 SW0\r\n");
+-    BoardApp_DelayUs(50000);
+-    snprintf(volt_cmd, sizeof(volt_cmd), "#0 VCN %.2f\r\n", (voltage / DC_MAX_VOLTAGE) * 100.0f);
+-    Device_UartSendString(dc_uart, volt_cmd);
++void PowerLink_ServiceRx(void)
++{
++    uint32_t k;
++
++    for (k = 0U; k < 2U; k++) {
++        pl_ctx_t *c = &s_ctx[k];
++
++        if (c->uart == NULL) {
++            continue;
++        }
++        while (XUartNs550_IsReceiveData(c->uart->BaseAddress)) {
++            char ch = (char)XUartNs550_ReadReg(c->uart->BaseAddress, XUN_RBR_OFFSET);
++
++            if ((c->st != ST_WAIT_REPLY) || c->reply_ready) {
++                c->line_len = 0U;       /* unsolicited / late byte: discard */
++                continue;
++            }
++            if ((ch == '\r') || (ch == '\n')) {
++                if (c->line_len == 0U) {
++                    continue;           /* empty line, e.g. LF after CR      */
++                }
++                c->line[c->line_len] = '\0';
++                c->line_len = 0U;
++                /* Some instruments echo the command line - skip the echo. */
++                if (strcmp(c->line, c->steps[c->idx].cmd) == 0) {
++                    continue;
++                }
++                memcpy(c->reply, c->line, sizeof(c->reply));
++                c->reply_ready = 1U;
++            } else if (c->line_len < (PL_LINE_MAX - 1U)) {
++                c->line[c->line_len++] = ch;
++            }
++        }
++    }
++}
++
++/* Handle a received reply for the current query step. Returns 0 if the
++ * transaction finished (Finish() called), 1 to continue. */
++static int ApplyReply(pl_ctx_t *c)
++{
++    pl_step_t *s = &c->steps[c->idx];
++    double     v = 0.0;
++    uint8_t    onoff = 0U;
++
++    switch (s->field) {
++    case F_ERR_DRAIN:
++        if (ParseNumber(c->reply, 1, &v) && (v != 0.0) && (c->drain_count < PWR_ERR_DRAIN_MAX)) {
++            c->drain_count++;
++            return 2;                   /* repeat this same step */
++        }
++        return 1;                       /* queue empty (or unparsable): go on */
++    case F_ERR:
++        if (!ParseNumber(c->reply, 1, &v)) {
++            Finish(c, PWR_RESULT_BAD_REPLY);
++            return 0;
++        }
++        c->res.dev_err = (int16_t)v;
++        c->res.valid |= PWR_VALID_ERR;
++        return 1;
++    case F_OUTPUT:
++        if (!ParseOnOff(c->reply, &onoff)) {
++            Finish(c, PWR_RESULT_BAD_REPLY);
++            return 0;
++        }
++        c->res.output = onoff;
++        c->res.valid |= PWR_VALID_OUTPUT;
++        return 1;
++    case F_VOLT:
++    case F_CURR:
++    case F_FREQ:
++        if (!ParseNumber(c->reply, 0, &v)) {
++            Finish(c, PWR_RESULT_BAD_REPLY);
++            return 0;
++        }
++        if (s->field == F_VOLT) {
++            c->res.volt = (float)v;
++            c->res.valid |= PWR_VALID_VOLT;
++        } else if (s->field == F_CURR) {
++            c->res.curr = (float)v;
++            c->res.valid |= PWR_VALID_CURR;
++        } else {
++            c->res.freq = (float)v;
++            c->res.valid |= PWR_VALID_FREQ;
++        }
++        return 1;
++    default:
++        return 1;
++    }
++}
++
++static void Step(pl_ctx_t *c)
++{
++    XTime now = Now();
++
++    switch (c->st) {
++    case ST_IDLE:
++        return;
++
++    case ST_GAP:
++        if (now >= c->deadline) {
++            c->st = ST_NEXT;
++        }
++        return;
++
++    case ST_NEXT: {
++        pl_step_t *s;
++
++        if (c->idx >= c->nsteps) {
++            Finish(c, PWR_RESULT_OK);
++            return;
++        }
++        s = &c->steps[c->idx];
++        if (s->kind == STEP_WRITE) {
++            SendLine(c->uart, s->cmd);
++            c->idx++;
++            c->st = ST_GAP;
++            c->deadline = Now() + MsToTicks(s->gap_ms);
++        } else {
++            /* Flush anything stale, then arm the reply wait BEFORE sending
++             * so an echo / fast reply is assembled, not discarded. */
++            PowerLink_ServiceRx();
++            c->line_len = 0U;
++            c->reply_ready = 0U;
++            c->st = ST_WAIT_REPLY;
++            c->deadline = Now() + MsToTicks(PWR_REPLY_TIMEOUT_MS);
++            SendLine(c->uart, s->cmd);
++        }
++        return;
++    }
++
++    case ST_WAIT_REPLY:
++        if (c->reply_ready) {
++            int r = ApplyReply(c);
++            if (r == 0) {
++                return;                 /* finished */
++            }
++            if (r == 1) {
++                c->idx++;
++            }
++            c->reply_ready = 0U;
++            c->st = ST_GAP;
++            c->deadline = Now() + MsToTicks(PWR_INTER_CMD_GAP_MS);
++            return;
++        }
++        if (now >= c->deadline) {
++            if (c->steps[c->idx].field == F_ERR_DRAIN) {
++                /* No answer to the pre-set error drain: still send the set
++                 * commands (never block operator control on readback); the
++                 * confirmation queries after it will report "no reply". */
++                c->idx++;
++                c->st = ST_NEXT;
++                return;
++            }
++            Finish(c, PWR_RESULT_NO_REPLY);
++        }
++        return;
++
++    default:
++        c->st = ST_IDLE;
++        return;
++    }
++}
++
++int PowerLink_Poll(power_result_t *out)
++{
++    PowerLink_ServiceRx();
++    Step(&s_ctx[0]);
++    Step(&s_ctx[1]);
++    return ResultPop(out);
+ }
+diff -ruN -x Debug r3_base/fw/src/device_power.h r3/fw/src/device_power.h
+--- r3_base/fw/src/device_power.h	2026-09-08 17:38:24.000000000 +0000
++++ r3/fw/src/device_power.h	2026-10-05 08:58:50.868286905 +0000
+@@ -1,22 +1,30 @@
+ /*******************************************************************************
+  * @file    device_power.h
+- * @brief   AC (IT-M77xx style, SCPI-ish ASCII) and DC (Matsusada-style,
+- *          "#0 ..." ASCII) bench power-supply control over RS232, using the
+- *          XUartNs550 16550-compatible UART core.
++ * @brief   AC (ITECH IT-M7700, SCPI ASCII) and DC (Matsusada, "#0 ..." ASCII)
++ *          bench power-supply control over RS232 (XUartNs550, polled), WITH
++ *          readback: every set is confirmed by the supply itself, and the
++ *          app can ask for the live measured values at any time.
+  *
+- *          Ported unchanged in behaviour from the validated
+- *          src_att_pwr_odly/main.cpp (Device_ControlACPwr /
+- *          Device_ControlDCPwr) - these functions still speak the exact
+- *          same ASCII command strings to the AC/DC supplies (that part of
+- *          the design was already bench-verified against the real
+- *          instruments and is out of scope to change). What changed is how
+- *          they are *invoked*: previously from an ASCII line parsed off the
+- *          RS422/PC UART (Parser_ExecutePacket); now from the binary
+- *          VIP+kria command dispatcher (cmd_dispatcher.c).
++ *          The set command strings and their pacing are unchanged from the
++ *          bench-verified src_att_pwr_odly/main.cpp sequence. What is new:
++ *
++ *          - Everything runs as a NON-BLOCKING transaction per supply
++ *            (PowerLink_*): a list of steps "write command / wait" and
++ *            "send query / wait for reply line". PowerLink_Poll() advances
++ *            it from the main superloop, so the RF spectrum, ADC telemetry
++ *            and PC commands keep running while a supply is answering.
++ *          - One query in flight per supply at a time (IT-M7700 rule: the
++ *            whole reply must be received before the next command).
++ *          - Results (confirmed output state, measured V/I/F, SCPI error
++ *            code, or "no reply") come back through PowerLink_Poll() and are
++ *            reported to the app by cmd_dispatcher.c as msgid 42.
++ *
++ *          All supply command strings and timeouts: board_config.h.
+  ******************************************************************************/
+ #ifndef DEVICE_POWER_H
+ #define DEVICE_POWER_H
+ 
++#include <stdint.h>
+ #include "xuartns550.h"
+ #include "xuartns550_i.h"
+ 
+@@ -24,16 +32,66 @@
+ extern "C" {
+ #endif
+ 
++/* Who to ACK (msgid 35/36 set commands) once the supply has confirmed. */
++typedef struct {
++    uint8_t  has_ack;
++    uint8_t  des_id;
++    uint8_t  inner_seq;
++    uint8_t  msgid;
++    uint16_t frame_seq;
++} power_ack_ctx_t;
++
++/* One finished transaction. Values only meaningful where `valid` says so
++ * (PWR_VALID_* in kria_helper.h). */
++typedef struct {
++    uint8_t         dev;        /* PWR_DEV_AC / PWR_DEV_DC                   */
++    uint8_t         reason;     /* PWR_REASON_*                              */
++    uint8_t         result;     /* PWR_RESULT_*                              */
++    uint8_t         output;     /* 0 OFF, 1 ON, 0xFF unknown                 */
++    uint8_t         valid;      /* PWR_VALID_*                               */
++    int16_t         dev_err;    /* SCPI error code (AC), 0 = none            */
++    float           volt;       /* V                                         */
++    float           curr;       /* A                                         */
++    float           freq;       /* Hz                                        */
++    power_ack_ctx_t ack;        /* copied from the start call                */
++} power_result_t;
++
++/* Raw string send, "\r\n" NOT appended (kept for compatibility). */
+ void Device_UartSendString(XUartNs550 *instance, const char *str);
+ 
+-/* voltage/freq clamped to AC_UVP_VOLTAGE..AC_OVP_LIMIT per board_config.h.
+- * state: 0 = OUTP OFF, nonzero = OUTP ON. */
+-void Device_ControlACPwr(XUartNs550 *ac_uart, float voltage, float freq, int state);
+-
+-/* voltage/current clamped to DC_MAX_VOLTAGE/DC_MAX_CURRENT per
+- * board_config.h (percent-of-full-scale command set, "#0 VCN"/"#0 ICN").
+- * state: 0 = "#0 SW0" (off), nonzero = "#0 SW1" (on). */
+-void Device_ControlDCPwr(XUartNs550 *dc_uart, float voltage, float current, int state);
++/* NULL uart = that supply's UART failed to initialize: every request for it
++ * completes immediately with PWR_RESULT_NOT_READY. */
++void PowerLink_Init(XUartNs550 *ac_uart, XUartNs550 *dc_uart);
++
++/* Start a transaction. A new SET/RESET aborts whatever that supply was
++ * doing (the aborted one is reported with PWR_RESULT_ABORTED); a READ while
++ * a transaction is already running is merged into it (that transaction
++ * reports measured values anyway), so repeated refresh presses never queue
++ * up traffic on the supply. */
++void PowerLink_StartRead(uint8_t dev);
++/* AC: state ON -> full verified sequence, voltage clamped to
++ * AC_UVP_VOLTAGE..AC_OVP_LIMIT, same "%d.%d" formatting as before.
++ * state OFF -> "OUTP OFF" only (voltage/freq ignored). */
++void PowerLink_StartAcSet(float voltage, float freq, int state, const power_ack_ctx_t *ack);
++/* DC: state ON -> REN, ICN, SW1, VCN as before (% of full scale, clamped to
++ * DC_MAX_VOLTAGE/DC_MAX_CURRENT). state OFF -> "#0 SW0" only. */
++void PowerLink_StartDcSet(float voltage, float current, int state, const power_ack_ctx_t *ack);
++/* "RESET": output OFF only (AC: no voltage/frequency is sent any more - the
++ * old reset path pushed NORM:VOLT:AC 80.0 / NORM:FREQ 0.0 to the supply).
++ * DC: ICN 0, SW0, VCN 0 as before. */
++void PowerLink_StartOff(uint8_t dev);
++
++/* Drain both supply UART RX FIFOs into the line assemblers. Cheap, never
++ * sends anything - safe to call from any wait loop (BoardApp_ServiceRx()). */
++void PowerLink_ServiceRx(void);
++
++/* Advance both state machines. Returns 1 and fills *out when a transaction
++ * finished (call again until it returns 0). May transmit a command to a
++ * supply (a few ms at 9600 baud, PC RX keeps being serviced meanwhile). */
++int PowerLink_Poll(power_result_t *out);
++
++/* 1 if the supply UART initialized. */
++int PowerLink_IsReady(uint8_t dev);
+ 
+ #ifdef __cplusplus
+ }
+diff -ruN -x Debug r3_base/fw/src/kria_helper.h r3/fw/src/kria_helper.h
+--- r3_base/fw/src/kria_helper.h	2026-10-01 09:11:48.630011323 +0000
++++ r3/fw/src/kria_helper.h	2026-10-05 08:39:05.058718008 +0000
+@@ -30,6 +30,12 @@
+  *                                 4-byte magic: "WAVE" (RF FFT spectrum) and
+  *                                 "RFST" (rf_status_msg_t, AD9361 RX config)
+  *            40  adc7928_msg_t    ADC7928 8-channel telemetry (device->host)
++ *            41  pwr_query_msg_t  host->device: read one bench supply now
++ *                                 ("refresh" button / F5 in the app)
++ *            42  pwr_status_msg_t device->host: result of a supply
++ *                                 transaction (refresh, set-confirmation or
++ *                                 RESET): confirmed output state + measured
++ *                                 V/I/F read back from the supply itself
+  ******************************************************************************/
+ #ifndef KRIA_HELPER_H
+ #define KRIA_HELPER_H
+@@ -119,6 +125,55 @@
+     uint8_t  window;        /* 0 = rectangular (no window)                   */
+ } rf_status_msg_t;
+ 
++/* Bench-supply identifiers used by msgid 41/42. */
++#define PWR_DEV_AC              1U
++#define PWR_DEV_DC              2U
++
++/* pwr_status_msg_t.reason */
++#define PWR_REASON_READ         0U  /* msgid 41 refresh request            */
++#define PWR_REASON_SET          1U  /* confirmation of an msgid 35/36 set  */
++#define PWR_REASON_RESET        2U  /* confirmation of a "RESET" (msgid 39) */
++
++/* pwr_status_msg_t.result */
++#define PWR_RESULT_OK           0U  /* supply answered; for SET/RESET also no
++                                       SCPI error and output == requested    */
++#define PWR_RESULT_NO_REPLY     1U  /* a query timed out (cable/baud/power)  */
++#define PWR_RESULT_DEV_ERROR    2U  /* SYST:ERR? reported an error (dev_err) */
++#define PWR_RESULT_OUT_MISMATCH 3U  /* OUTP? differs from requested ON/OFF   */
++#define PWR_RESULT_NOT_READY    4U  /* supply UART failed to initialize      */
++#define PWR_RESULT_ABORTED      5U  /* superseded by a newer command         */
++#define PWR_RESULT_BAD_REPLY    6U  /* reply could not be parsed             */
++
++/* pwr_status_msg_t.valid bits */
++#define PWR_VALID_VOLT          0x01U
++#define PWR_VALID_CURR          0x02U
++#define PWR_VALID_FREQ          0x04U
++#define PWR_VALID_OUTPUT        0x08U
++#define PWR_VALID_ERR           0x10U
++
++/* msgid 41, host -> device: read one supply now. */
++typedef struct __pwr_query_msg {
++    char    msg[4];         /* "PWQ" + NUL                                  */
++    uint8_t dev;            /* PWR_DEV_AC / PWR_DEV_DC                       */
++    uint8_t flags;          /* reserved, 0                                   */
++} pwr_query_msg_t;
++
++/* msgid 42, device -> host. Fixed-point integers (not float) so both ends
++ * agree on the bytes without relying on float layout. */
++typedef struct __pwr_status_msg {
++    char     msg[4];        /* "PWS" + NUL                                  */
++    uint8_t  dev;           /* PWR_DEV_AC / PWR_DEV_DC                       */
++    uint8_t  reason;        /* PWR_REASON_*                                  */
++    uint8_t  result;        /* PWR_RESULT_*                                  */
++    uint8_t  output;        /* 0 = OFF, 1 = ON, 0xFF = unknown               */
++    uint8_t  valid;         /* PWR_VALID_* bits: which fields below are real */
++    uint8_t  req_seq;       /* kria seq of the triggering command (SET), 0   */
++    int16_t  dev_err;       /* SCPI error code from SYST:ERR? (AC), 0 = none */
++    int32_t  volt_mv;       /* measured voltage, mV                          */
++    int32_t  curr_ma;       /* measured current, mA                          */
++    int32_t  freq_mhz;      /* measured frequency, mHz (AC only)             */
++} pwr_status_msg_t;
++
+ typedef struct _kria_message {
+     uint8_t seq;
+     uint8_t msgid;
+@@ -138,6 +193,8 @@
+ _Static_assert(sizeof(cmd_msg_t) == 68, "cmd_msg_t wire size changed");
+ _Static_assert(sizeof(adc7928_msg_t) == 20, "adc7928_msg_t wire size changed");
+ _Static_assert(sizeof(rf_status_msg_t) == 28, "rf_status_msg_t wire size changed");
++_Static_assert(sizeof(pwr_query_msg_t) == 6, "pwr_query_msg_t wire size changed");
++_Static_assert(sizeof(pwr_status_msg_t) == 24, "pwr_status_msg_t wire size changed");
+ 
+ typedef enum {
+     KRIA_STATE_IDLE = 0,
+@@ -232,6 +289,12 @@
+     case 40:
+         msg->len = (uint8_t)sizeof(adc7928_msg_t);
+         break;
++    case 41:
++        msg->len = (uint8_t)sizeof(pwr_query_msg_t);
++        break;
++    case 42:
++        msg->len = (uint8_t)sizeof(pwr_status_msg_t);
++        break;
+     default:
+         return;
+     }
+diff -ruN -x Debug r3_base/fw/tools/vip_test_client.py r3/fw/tools/vip_test_client.py
+--- r3_base/fw/tools/vip_test_client.py	2026-10-01 09:19:39.168210929 +0000
++++ r3/fw/tools/vip_test_client.py	2026-10-05 08:43:34.344003250 +0000
+@@ -18,6 +18,7 @@
+     python3 vip_test_client.py --port COM5 dc 24 1.5 1
+     python3 vip_test_client.py --port COM5 att 2 15
+     python3 vip_test_client.py --port COM5 delay 270
++    python3 vip_test_client.py --port COM5 pwq ac        # read AC supply now
+     python3 vip_test_client.py --port COM5 ping
+     python3 vip_test_client.py --port COM5 listen        # just print frames
+ """
+@@ -120,6 +121,16 @@
+     return name_b + bytes(v & 0xFF for v in vals)
+ 
+ 
++def build_pwq(dev: str) -> bytes:
++    """msgid 41 pwr_query_msg_t: "PWQ\\0", dev (1=AC, 2=DC), flags=0."""
++    return b"PWQ\x00" + struct.pack("<BB", 1 if dev.lower() == "ac" else 2, 0)
++
++
++PWR_RESULTS = {0: "OK", 1: "NO_REPLY", 2: "DEV_ERROR", 3: "OUT_MISMATCH",
++               4: "NOT_READY", 5: "ABORTED", 6: "BAD_REPLY"}
++PWR_REASONS = {0: "READ", 1: "SET", 2: "RESET"}
++
++
+ def parse_vip_stream(buf: bytearray):
+     """Very small non-streaming parser for printing whatever comes back
+     (good enough for a bring-up tool; not the production decoder)."""
+@@ -159,7 +170,13 @@
+         if msgid == 40 and len(body) >= 4 + 16:
+             codes = struct.unpack("<8H", body[4:4 + 16])
+             line += f" ADC7928 codes={codes}"
+-        elif msgid in (35, 36, 37, 38) and len(body) >= 1:
++        elif msgid == 42 and len(body) >= 24:
++            dev, reason, result, out, valid, req_seq, err, mv, ma, mhz = struct.unpack("<BBBBBBhiii", body[4:24])
++            outs = {0: "OFF", 1: "ON"}.get(out, "?")
++            line = line.split(" raw=")[0] + (f" PWS dev={'AC' if dev == 1 else 'DC'} reason={PWR_REASONS.get(reason, reason)}"
++                                             f" result={PWR_RESULTS.get(result, result)} out={outs} valid=0x{valid:02x}"
++                                             f" err={err} V={mv/1000:.3f} I={ma/1000:.3f} F={mhz/1000:.3f})")
++        elif msgid in (35, 36, 37, 38, 41) and len(body) >= 1:
+             line += f" ACK success={body[0]}"
+         elif msgid == 39 and body[:4] == b"WAVE":
+             mags = struct.unpack("<%dI" % ((len(body) - 4) // 4), body[4:4 + ((len(body) - 4) // 4) * 4])
+@@ -203,6 +220,9 @@
+     p.add_argument("name")
+     p.add_argument("values", nargs="*", type=int, default=[])
+ 
++    p = sub.add_parser("pwq", help="Read one supply now (msgid 41): ac | dc")
++    p.add_argument("dev", choices=["ac", "dc"])
++
+     sub.add_parser("ping", help="Send a VIP PING_STD and wait for ACK")
+     sub.add_parser("listen", help="Just print any VIP frames received")
+ 
+@@ -229,6 +249,9 @@
+     elif args.cmd == "cmd":
+         inner = kria_encode(seq, 39, build_cmd(args.name, args.values))
+         frame = vip_encode_data(NODE_FW, NODE_HOST, seq, inner)
++    elif args.cmd == "pwq":
++        inner = kria_encode(seq, 41, build_pwq(args.dev))
++        frame = vip_encode_data(NODE_FW, NODE_HOST, seq, inner)
+     elif args.cmd == "ping":
+         frame = vip_encode_ping(NODE_FW, NODE_HOST, seq)
+     elif args.cmd == "listen":

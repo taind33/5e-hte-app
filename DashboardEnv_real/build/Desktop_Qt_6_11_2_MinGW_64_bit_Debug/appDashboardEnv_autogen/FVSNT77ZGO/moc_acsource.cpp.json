@@ -1,0 +1,118 @@
+{
+    "classes": [
+        {
+            "className": "ACsource",
+            "lineNumber": 8,
+            "object": true,
+            "properties": [
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 0,
+                    "lineNumber": 11,
+                    "name": "freq",
+                    "notify": "freqChanged",
+                    "override": false,
+                    "read": "freq",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 1,
+                    "lineNumber": 12,
+                    "name": "freqHistory",
+                    "notify": "freqHistoryChanged",
+                    "override": false,
+                    "read": "freqHistory",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 2,
+                    "lineNumber": 13,
+                    "name": "freqMax",
+                    "notify": "freqMaxChanged",
+                    "override": false,
+                    "read": "freqMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 3,
+                    "lineNumber": 14,
+                    "name": "freqMin",
+                    "notify": "freqMinChanged",
+                    "override": false,
+                    "read": "freqMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                }
+            ],
+            "qualifiedClassName": "ACsource",
+            "signals": [
+                {
+                    "access": "public",
+                    "index": 0,
+                    "lineNumber": 29,
+                    "name": "freqChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 1,
+                    "lineNumber": 30,
+                    "name": "freqHistoryChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 2,
+                    "lineNumber": 31,
+                    "name": "freqMaxChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 3,
+                    "lineNumber": 32,
+                    "name": "freqMinChanged",
+                    "returnType": "void"
+                }
+            ],
+            "superClasses": [
+                {
+                    "access": "public",
+                    "name": "BasePowerSource"
+                }
+            ]
+        }
+    ],
+    "inputFile": "acsource.h",
+    "outputRevision": 69
+}

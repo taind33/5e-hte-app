@@ -1,0 +1,24 @@
+<RCC>
+  <qresource prefix="/qt/qml/DashboardEnv/">
+    <file alias="assets/typography/FSMagistral-Medium.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/FSMagistral-Medium.ttf</file>
+    <file alias="assets/typography/FSMagistral-Bold.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/FSMagistral-Bold.ttf</file>
+    <file alias="assets/typography/FSMagistral-Light.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/FSMagistral-Light.ttf</file>
+    <file alias="assets/typography/FSMagistral-ExtraBold.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/FSMagistral-ExtraBold.ttf</file>
+    <file alias="assets/typography/FSMagistral-Book.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/FSMagistral-Book.ttf</file>
+    <file alias="assets/typography/7seg.ttf">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/typography/7seg.ttf</file>
+    <file alias="assets/images/ACicon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/ACicon.png</file>
+    <file alias="assets/images/ATTIcon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/ATTIcon.png</file>
+    <file alias="assets/images/Connected.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/Connected.png</file>
+    <file alias="assets/images/DCicon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/DCicon.png</file>
+    <file alias="assets/images/DelayIcon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/DelayIcon.png</file>
+    <file alias="assets/images/SendIcon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/SendIcon.png</file>
+    <file alias="assets/images/notice.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/notice.png</file>
+    <file alias="assets/images/language.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/language.png</file>
+    <file alias="assets/images/Viettel_Aerospace_Institute_logo.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/Viettel_Aerospace_Institute_logo.png</file>
+    <file alias="assets/images/Moon.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/Moon.png</file>
+    <file alias="assets/images/Sun.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/Sun.png</file>
+    <file alias="assets/images/refresh.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/refresh.png</file>
+    <file alias="assets/images/freq.png">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/assets/images/freq.png</file>
+  </qresource>
+</RCC>
+

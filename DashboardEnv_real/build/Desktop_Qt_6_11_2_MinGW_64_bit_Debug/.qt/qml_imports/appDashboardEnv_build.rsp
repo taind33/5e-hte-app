@@ -1,0 +1,16 @@
+-rootPath
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real
+-cmake-output
+-output-file
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/qml_imports/appDashboardEnv_build.cmake
+-importPath
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug
+-importPath
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv
+-importPath
+C:/Qt/6.11.2/mingw_64/qml
+-qrcFiles
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qmake_DashboardEnv.qrc
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/appDashboardEnv_raw_qml_0.qrc
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/appDashboardEnv_raw_res_0.qrc
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/appDashboardEnv_raw_qml_0_extra_qmldirs.qrc

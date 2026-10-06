@@ -1,0 +1,8 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Cổng /dev/pts/0 đã mở nhưng KHÔNG nhận được byte nào từ board. Kiểm tra: board đã chạy firmware (nếu chạy Debug trong Vitis phải bấm Resume), đúng cổng COM của RS422, dây RS422 (TX/RX, A/B), nguồn board. Gõ 'scan' trong Terminal để tự tìm cổng/baud có board.
+      rf diag: [] 
+      fw: 
+PASS  orange + reason: no bytes at all
+PASS  notification after ~4 s
+RESULT(nobytes): 3 passed, 0 failed

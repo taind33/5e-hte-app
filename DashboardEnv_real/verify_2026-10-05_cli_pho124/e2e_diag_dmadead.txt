@@ -1,0 +1,10 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Đã xác thực đúng board (1865 byte, 33 khung nhận)
+      rf diag: [error] RX DMA không về dữ liệu: 6 lần timeout, 0 lần lỗi khởi động.
+AD9361 đã khởi tạo; kiểm tra HDL: clock/data AD9361 → axi_ad9361 → DMA.
+      fw: Oct 5 2026 10:53:14
+PASS  DMA dead: link stays green (no false PING loss)
+PASS  RF panel explains: DMA never completes
+PASS  notification: DMA dead
+RESULT(dmadead): 4 passed, 0 failed

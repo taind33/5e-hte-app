@@ -1,0 +1,19 @@
+ok   qml/Main.qml
+ok   qml/components/AppTheme.qml
+ok   qml/components/BoxWrap.qml
+ok   qml/components/ClampedTextField.qml
+ok   qml/components/CustomBoxFiled.qml
+ok   qml/components/CustomComboBox.qml
+ok   qml/components/CustomRowBox.qml
+ok   qml/components/CustomSwitch.qml
+ok   qml/components/MiniMonitorChart.qml
+ok   qml/views/Attenuation.qml
+ok   qml/views/CommandLogPanel.qml
+ok   qml/views/ConnectionPanel.qml
+ok   qml/views/Detect.qml
+ok   qml/views/EnvelopeChartPanel.qml
+ok   qml/views/Notification.qml
+ok   qml/views/PowerControlPanel.qml
+ok   qml/views/TimeDelay.qml
+ok   qml/views/chartView.qml
+qmlcachegen 6.11.2 failures: 0

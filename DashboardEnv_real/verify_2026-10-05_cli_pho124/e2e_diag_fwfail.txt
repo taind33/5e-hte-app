@@ -1,0 +1,13 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Đã xác thực đúng board (1635 byte, 23 khung nhận)
+      rf diag: [error] AD9361 khởi tạo lỗi (mã -22) - phổ RF đang tắt.
+Xem dòng BOARD-LỖI trong Terminal.
+      fw: Oct 5 2026 10:53:14
+PASS  AD9361 failed but board still answers (green)
+PASS  AD9361 error line in Terminal
+PASS  notification: AD9361 init error code -22
+PASS  RF panel explains: AD9361 init failed
+PASS  no spectrum (as expected)
+PASS  AC command still accepted
+RESULT(fwfail): 7 passed, 0 failed

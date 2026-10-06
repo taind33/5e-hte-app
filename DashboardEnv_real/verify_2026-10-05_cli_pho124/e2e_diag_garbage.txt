@@ -1,0 +1,7 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Có nhận 2112 byte nhưng không giải mã được khung nào. Baud app đã là 115200 -> kiểm tra đảo dây A/B, hoặc baud phía board (clock UART RS422 trong HDL/xparameters).
+      rf diag: [] 
+      fw: 
+PASS  orange + reason: bytes but no frames (baud/A-B)
+RESULT(garbage): 2 passed, 0 failed

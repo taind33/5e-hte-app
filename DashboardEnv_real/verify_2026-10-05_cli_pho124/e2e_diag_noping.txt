@@ -1,0 +1,7 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Board đang gửi dữ liệu (33 khung) nhưng không trả lời PING của app: hướng PC → board có vấn đề (dây TX của bộ chuyển USB-RS422 / A-B), hoặc board đang bận.
+      rf diag: [] 
+      fw: 
+PASS  orange + reason: frames arrive but PING unanswered
+RESULT(noping): 2 passed, 0 failed

@@ -1,0 +1,21 @@
+module DashboardEnv
+typeinfo appDashboardEnv.qmltypes
+prefer :/qt/qml/DashboardEnv/
+Main 1.0 qml/Main.qml
+BoxWrap 1.0 qml/components/BoxWrap.qml
+ConnectionPanel 1.0 qml/views/ConnectionPanel.qml
+PowerControlPanel 1.0 qml/views/PowerControlPanel.qml
+TimeDelay 1.0 qml/views/TimeDelay.qml
+MiniMonitorChart 1.0 qml/components/MiniMonitorChart.qml
+EnvelopeChartPanel 1.0 qml/views/EnvelopeChartPanel.qml
+CommandLogPanel 1.0 qml/views/CommandLogPanel.qml
+Notification 1.0 qml/views/Notification.qml
+Detect 1.0 qml/views/Detect.qml
+Attenuation 1.0 qml/views/Attenuation.qml
+CustomComboBox 1.0 qml/components/CustomComboBox.qml
+CustomSwitch 1.0 qml/components/CustomSwitch.qml
+CustomBoxFiled 1.0 qml/components/CustomBoxFiled.qml
+ClampedTextField 1.0 qml/components/ClampedTextField.qml
+singleton AppTheme 1.0 qml/components/AppTheme.qml
+depends QtQuick
+

@@ -1,0 +1,75 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+      [sim] supplies: AC=ok DC=ok
+PASS  config path override (DASHBOARDENV_CONFIG)
+PASS  first run: COM/baud/delay unset ("--")
+PASS  first run: AC/DC inputs unset ("--")
+PASS  first run: ATT unset ("--")
+PASS  charts empty, no simulated AC/DC data
+PASS  start without COM -> refused with message
+PASS  start without baud -> refused with message
+PASS  opened /dev/pts/0
+PASS  board verified (PING/ACK)
+PASS  RF spectrum live
+PASS  init/connect sent NOTHING to the supplies
+PASS  AC ON with empty inputs -> blocked, named fields, switch stays OFF
+PASS  AC ON 120 V / 400 Hz sent
+PASS  switch shows requested ON while waiting
+PASS  DC ON 24 V / 2.35 A sent
+PASS  AC confirmed ON by supply (OUTP?)
+PASS  AC chart: measured 120.3 V (not the 120 V setpoint)
+PASS  AC freq 400 Hz, current 1.234 A measured
+PASS  DC confirmed (answered readback)
+PASS  DC measured 24.00 V / 0.800 A (load-limited, not 2.35 A limit)
+PASS  operator notified: AC confirmed ON
+PASS  F5 -> both pending
+PASS  F5 added one reading to every chart
+PASS  chart X = real time between readings
+      [sim] supplies: AC=silent DC=ok
+PASS  AC silent -> 'no reply' + message
+PASS  no fake point added on failure
+PASS  AC still shown ON (last confirmed)
+PASS  AC OFF unconfirmed (silent) -> switch back to last confirmed ON
+PASS  operator told the OFF was not confirmed
+      [sim] supplies: AC=err DC=ok
+PASS  SCPI error -113 reported with code
+PASS  output state from OUTP? (ON) even when an error occurred
+      [sim] supplies: AC=ok DC=ok
+PASS  AC OFF confirmed
+      [sim] supplies: AC=stuck DC=garbage
+PASS  relay stuck -> mismatch, switch shows real OFF
+PASS  DC garbage reply -> 'bad reply'
+      [sim] supplies: AC=ok DC=ok
+PASS  AC ON again
+PASS  Đặt lại: charts cleared, both pending
+PASS  RESET confirmed OFF by both supplies
+PASS  RESET reading: AC 0 V
+PASS  RESET no longer pushes 80 V / 0 Hz to the AC supply
+PASS  cleared AC volt stored as empty ("--")
+PASS  AC freq / DC current stored
+PASS  baud + delay combobox stored
+PASS  ATT + theme stored
+PASS  restart: AC volt '--', others reloaded
+PASS  restart: COM, baud, delay, session name reloaded
+PASS  restart: ATT2 7.25, ATT1 '--'
+PASS  restart: port NOT opened automatically
+
+notifications:
+  Warning: Chưa chọn cổng COM.
+  Warning: Chưa chọn tốc độ baud (board 5E-HTE dùng 115200).
+  Success: Đã kết nối thành công cổng /dev/pts/0 @ 115200 baud
+  Warning: Chưa nhập điện áp và tần số AC - chưa bật nguồn.
+  Success: Nguồn DC đã xác nhận: BẬT
+  Success: Nguồn AC đã xác nhận: BẬT
+  Error: Nguồn AC không phản hồi - kiểm tra cáp RS232, baud, nguồn đã bật.
+  Error: Đã gửi lệnh tới nguồn AC nhưng nguồn không phản hồi để xác nhận - kiểm tra cáp RS232/baud.
+  Error: Nguồn AC báo lỗi lệnh (mã SCPI -113).
+  Success: Nguồn AC đã xác nhận: TẮT
+  Error: Nguồn DC trả lời không đọc được - kiểm tra lệnh đọc trong board_config.h.
+  Error: Nguồn AC: ngõ ra đang TẮT, khác trạng thái yêu cầu.
+  Success: Nguồn AC đã xác nhận: BẬT
+  Warning: Đã gửi lệnh đặt lại toàn bộ hệ thống.
+  Info: Giữ chậm: 270 ns
+  Info: ATT 2 cập nhật: 7.25 dB
+  Info: Đã ngắt kết nối cổng /dev/pts/0
+
+RESULT: 47 passed, 0 failed

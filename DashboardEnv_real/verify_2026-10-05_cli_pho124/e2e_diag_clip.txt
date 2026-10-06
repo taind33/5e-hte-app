@@ -1,0 +1,8 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Đã xác thực đúng board (17009 byte, 80 khung nhận)
+      rf diag: [warn] ADC RX1 bão hoà (đỉnh 2050/2047) - giảm công suất vào / tăng suy hao.
+      fw: Oct 5 2026 10:53:14
+PASS  ADC clipping flagged on live spectrum
+PASS  notification: clipping
+RESULT(clip): 3 passed, 0 failed

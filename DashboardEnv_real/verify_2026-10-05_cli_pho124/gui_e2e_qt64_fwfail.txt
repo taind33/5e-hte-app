@@ -1,0 +1,33 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+saved /tmp/claude-0/verify7/gui_qt64_fwfail_0_first_run.png
+PASS  AC switch found
+PASS  click AC switch with '--' inputs -> blocked, switch back OFF
+dbg: checked=1 enabled=0 isOn=1 pending=1 sw pos=455,66 size 54x32 visible=1
+log: [11:04:16] [INFO] Cấu hình: /tmp/claude-0/gui3/config.ini
+log: [11:04:16] [BOARD] 5E-HTE firmware build Oct  5 2026 10:53:14 - RS422/PC san sang (RX polling).
+log: [11:04:16] [BOARD] AD9361: bat dau khoi tao (ad9361_init)...
+log: [11:04:16] [BOARD-LỖI] Loi: ad9361_init() that bai (status=-22)
+log: [11:04:16] [BOARD-LỖI] Loi: AD9361 khoi tao that bai - tat pho RF, cac chuc nang khac van chay.
+log: [11:04:16] [BOARD-LỖI] Pho RF tat: AD9361 chua khoi tao duoc (status=-22). AC/DC/ATT/Delay van hoat dong.
+log: [11:04:16] [BOARD] Board san sang: AD9361 LOI, pho RF TAT, ATT OK, Delay OK, ADC7928 OK, UART AC OK, UART DC OK.
+log: [11:04:16] [INFO] Firmware trên board: build Oct 5 2026 10:53:14
+log: [11:04:16] [BOARD] 5E-HTE firmware build Oct  5 2026 10:53:14 - RS422/PC san sang (RX polling).
+log: [11:04:16] [BOARD] AD9361: bat dau khoi tao (ad9361_init)...
+log: [11:04:16] [BOARD-LỖI] Loi: ad9361_init() that bai (status=-22)
+log: [11:04:16] [BOARD-LỖI] Loi: AD9361 khoi tao that bai - tat pho RF, cac chuc nang khac van chay.
+log: [11:04:16] [BOARD-LỖI] Pho RF tat: AD9361 chua khoi tao duoc (status=-22). AC/DC/ATT/Delay van hoat dong.
+log: [11:04:16] [BOARD] Board san sang: AD9361 LOI, pho RF TAT, ATT OK, Delay OK, ADC7928 OK, UART AC OK, UART DC OK.
+log: [11:04:18] [TX] AC ON 120 V 400 Hz
+PASS  click with values -> ON shown, switch locked while confirming
+PASS  AC confirmed -> switch ON + unlocked (binding intact)
+PASS  F5 key -> both supplies being read
+PASS  F5 -> new point on charts
+PASS  DC silent -> red status
+saved /tmp/claude-0/verify7/gui_qt64_fwfail_1_live.png
+PASS  AC OFF via switch confirmed
+PASS  no QML runtime warnings
+saved /tmp/claude-0/verify7/gui_qt64_fwfail_2_ac_off.png
+tail: [11:04:24] [RX] DC (đọc): NOREPLY 24.00 V
+tail: [11:04:26] [TX] AC OFF
+tail: [11:04:26] [RX] AC (xác nhận lệnh): OK OUT=OFF 0.00 V 0.000 A 0.00 Hz
+RESULT: 9 passed, 0 failed

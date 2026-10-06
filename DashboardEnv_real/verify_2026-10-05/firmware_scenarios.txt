@@ -1,0 +1,28 @@
+== nguồn giả lập: AC=ok DC=ok :: lệnh: ac 120 400 1
+inner(seq=0 msgid=42 len=24 PWS dev=AC reason=SET result=OK out=ON valid=0x1f err=0 V=120.300 I=1.234 F=400.000)
+inner(seq=1 msgid=35 len=1 raw=01) ACK success=1
+== nguồn giả lập: AC=ok DC=ok :: lệnh: pwq ac
+inner(seq=1 msgid=42 len=24 PWS dev=AC reason=READ result=OK out=ON valid=0x1f err=0 V=120.300 I=1.234 F=400.000)
+== nguồn giả lập: AC=ok DC=ok :: lệnh: dc 24 2.35 1
+inner(seq=2 msgid=42 len=24 PWS dev=DC reason=SET result=OK out=? valid=0x03 err=0 V=24.000 I=0.800 F=0.000)
+inner(seq=1 msgid=36 len=1 raw=01) ACK success=1
+== nguồn giả lập: AC=silent DC=ok :: lệnh: pwq ac
+inner(seq=3 msgid=42 len=24 PWS dev=AC reason=READ result=NO_REPLY out=? valid=0x00 err=0 V=0.000 I=0.000 F=0.000)
+== nguồn giả lập: AC=slow DC=ok :: lệnh: pwq ac
+inner(seq=4 msgid=42 len=24 PWS dev=AC reason=READ result=NO_REPLY out=? valid=0x00 err=0 V=0.000 I=0.000 F=0.000)
+== nguồn giả lập: AC=garbage DC=ok :: lệnh: pwq ac
+inner(seq=5 msgid=42 len=24 PWS dev=AC reason=READ result=BAD_REPLY out=? valid=0x00 err=0 V=0.000 I=0.000 F=0.000)
+== nguồn giả lập: AC=echo DC=echo :: lệnh: pwq ac
+inner(seq=6 msgid=42 len=24 PWS dev=AC reason=READ result=OK out=ON valid=0x1f err=0 V=120.300 I=1.234 F=400.000)
+== nguồn giả lập: AC=err DC=ok :: lệnh: ac 100 50 1
+inner(seq=7 msgid=42 len=24 PWS dev=AC reason=SET result=DEV_ERROR out=ON valid=0x1f err=-113 V=100.300 I=1.234 F=50.000)
+inner(seq=1 msgid=35 len=1 raw=00) ACK success=0
+== nguồn giả lập: AC=ok DC=ok :: lệnh: ac 0 0 0
+inner(seq=8 msgid=42 len=24 PWS dev=AC reason=SET result=OK out=OFF valid=0x1f err=0 V=0.000 I=0.000 F=0.000)
+inner(seq=1 msgid=35 len=1 raw=01) ACK success=1
+== nguồn giả lập: AC=stuck DC=ok :: lệnh: ac 100 50 1
+inner(seq=9 msgid=42 len=24 PWS dev=AC reason=SET result=OUT_MISMATCH out=OFF valid=0x1f err=0 V=0.000 I=0.000 F=0.000)
+inner(seq=1 msgid=35 len=1 raw=00) ACK success=0
+== nguồn giả lập: AC=ok DC=ok :: lệnh: cmd RESET
+inner(seq=10 msgid=42 len=24 PWS dev=DC reason=RESET result=OK out=? valid=0x03 err=0 V=0.000 I=0.000 F=0.000)
+inner(seq=11 msgid=42 len=24 PWS dev=AC reason=RESET result=OK out=OFF valid=0x1f err=0 V=0.000 I=0.000 F=0.000)

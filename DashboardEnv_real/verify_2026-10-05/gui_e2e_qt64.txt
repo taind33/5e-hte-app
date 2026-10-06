@@ -1,0 +1,20 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+saved /tmp/claude-0/verify5/gui_qt64_0_first_run.png
+PASS  AC switch found
+PASS  click AC switch with '--' inputs -> blocked, switch back OFF
+dbg: checked=1 enabled=0 isOn=1 pending=1 sw pos=455,66 size 54x32 visible=1
+log: [09:09:40] [INFO] Cấu hình: /tmp/claude-0/gui3/config.ini
+log: [09:09:43] [TX] AC ON 120 V 400 Hz
+PASS  click with values -> ON shown, switch locked while confirming
+PASS  AC confirmed -> switch ON + unlocked (binding intact)
+PASS  F5 key -> both supplies being read
+PASS  F5 -> new point on charts
+PASS  DC silent -> red status
+saved /tmp/claude-0/verify5/gui_qt64_1_live.png
+PASS  AC OFF via switch confirmed
+PASS  no QML runtime warnings
+saved /tmp/claude-0/verify5/gui_qt64_2_ac_off.png
+tail: [09:09:49] [RX] DC (đọc): NOREPLY
+tail: [09:09:50] [TX] AC OFF
+tail: [09:09:51] [RX] AC (xác nhận lệnh): OK OUT=OFF 0.00 V 0.000 A 0.00 Hz
+RESULT: 9 passed, 0 failed

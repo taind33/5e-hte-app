@@ -1,0 +1,2565 @@
+diff -ruN --strip-trailing-cr -x build r3_base/app/CMakeLists.txt r3/app/CMakeLists.txt
+--- r3_base/app/CMakeLists.txt	2026-09-16 09:01:10.000000000 +0000
++++ r3/app/CMakeLists.txt	2026-10-05 09:06:26.159769372 +0000
+@@ -65,6 +65,8 @@
+         assets/images/Viettel_Aerospace_Institute_logo.png
+         assets/images/Moon.png
+         assets/images/Sun.png
++        assets/images/refresh.png
++        assets/images/freq.png
+         SOURCES backend/kria_helper.h
+         SOURCES backend/vip_helper.h
+         SOURCES backend/vip_helper.cpp
+Binary files r3_base/app/assets/images/freq.png and r3/app/assets/images/freq.png differ
+Binary files r3_base/app/assets/images/refresh.png and r3/app/assets/images/refresh.png differ
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/acsource.cpp r3/app/backend/acsource.cpp
+--- r3_base/app/backend/acsource.cpp	2026-06-05 23:32:26.000000000 +0000
++++ r3/app/backend/acsource.cpp	2026-10-05 09:06:26.163761490 +0000
+@@ -1,18 +1,39 @@
+ #include "acsource.h"
+ 
+-
+-
+-void ACsource::appendFreqHistory(double value){
+-    int idx = m_freqHistory.size();
+-    m_freqHistory.append(QVariant::fromValue(QPointF(idx, value)));
+-    if (m_freqHistory.size() > HISTORY_SIZE) {
+-        m_freqHistory.removeFirst();
+-        for (int i = 0; i < m_freqHistory.size(); ++i) {
+-            QPointF p = m_freqHistory[i].toPointF();
+-            m_freqHistory[i] = QVariant::fromValue(QPointF(i, p.y()));
++void ACsource::addAcSample(const QDateTime &t, bool vValid, double v, bool iValid, double i, bool fValid, double f)
++{
++    if (fValid) {
++        // sampleX() trước addSample(): cùng 1 lần đọc -> cùng toạ độ X cho
++        // cả 3 đồ thị (áp, dòng, tần số).
++        const double x = sampleX(t);
++        m_freq = f;
++        appendPoint(m_freqHistory, x, f, m_freqMax, m_freqMin);
++        emit freqChanged();
++        emit freqHistoryChanged();
++        emit freqMaxChanged();
++        emit freqMinChanged();
++    }
++    if (vValid || iValid) {
++        addSample(t, vValid, v, iValid, i);
++    } else if (fValid) {
++        if (!m_hasData) {
++            m_hasData = true;
++            emit hasDataChanged();
+         }
++        m_lastUpdate = t.toString(QStringLiteral("HH:mm:ss"));
++        emit linkChanged();
+     }
+-    if (value > m_freqMax) { m_freqMax = value; emit freqMaxChanged(); }
+-    if (value < m_freqMin) { m_freqMin = value; emit freqMinChanged(); }
++}
++
++void ACsource::resetHistory()
++{
++    m_freqHistory.clear();
++    m_freq = 0.0;
++    m_freqMax = NO_MAX;
++    m_freqMin = NO_MIN;
++    emit freqChanged();
+     emit freqHistoryChanged();
+-}
+\ No newline at end of file
++    emit freqMaxChanged();
++    emit freqMinChanged();
++    BasePowerSource::resetHistory();
++}
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/acsource.h r3/app/backend/acsource.h
+--- r3_base/app/backend/acsource.h	2026-06-05 23:32:20.000000000 +0000
++++ r3/app/backend/acsource.h	2026-10-05 09:06:26.166108809 +0000
+@@ -3,46 +3,39 @@
+ 
+ #include <backend/basepowersource.h>
+ 
+-
++// Nguồn AC (ITECH IT-M7700): thêm tần số ĐO (MEAS:FREQ?) - đồ thị thứ 2 của
++// nguồn AC trên giao diện.
+ class ACsource : public BasePowerSource
+ {
+     Q_OBJECT
+-    Q_PROPERTY(double freq READ freq WRITE setFreq NOTIFY freqChanged FINAL)
++    Q_PROPERTY(double freq READ freq NOTIFY freqChanged FINAL)
+     Q_PROPERTY(QVariantList freqHistory READ freqHistory NOTIFY freqHistoryChanged FINAL)
+     Q_PROPERTY(double freqMax READ freqMax NOTIFY freqMaxChanged FINAL)
+-    Q_PROPERTY(double freqMin READ freqMin  NOTIFY freqMinChanged FINAL)
++    Q_PROPERTY(double freqMin READ freqMin NOTIFY freqMinChanged FINAL)
+ 
+ public:
+-    explicit ACsource(QObject *parent = nullptr): BasePowerSource(parent),m_freq(50.0),m_freqMax(-1e9),m_freqMin(1e9){}
+-    double freq() const {return m_freq;}
+-    QVariantList freqHistory() const {return m_freqHistory;}
+-    double freqMax() const {return m_freqMax;}
+-    double freqMin() const {return m_freqMin;}
+-
+-    void setFreq(double f){
+-        if(qFuzzyCompare(m_freq,f))return;
+-        m_freq =f;
+-        emit freqChanged();
+-    }
+-    void updateACData(double v, double i, double f){
+-        updateData(v,i);
+-        setFreq(f);
+-    }
++    explicit ACsource(QObject *parent = nullptr)
++        : BasePowerSource(parent), m_freq(0.0), m_freqMax(NO_MAX), m_freqMin(NO_MIN) {}
++
++    double freq() const { return m_freq; }
++    QVariantList freqHistory() const { return m_freqHistory; }
++    double freqMax() const { return m_freqMax; }
++    double freqMin() const { return m_freqMin; }
++
++    void addAcSample(const QDateTime &t, bool vValid, double v, bool iValid, double i, bool fValid, double f);
++    void resetHistory() override;
++
+ signals:
+     void freqChanged();
+     void freqHistoryChanged();
+     void freqMaxChanged();
+     void freqMinChanged();
+ 
+-
+-protected:
++private:
+     double m_freq;
+     double m_freqMax;
+     double m_freqMin;
+     QVariantList m_freqHistory;
+-private:
+-    void appendFreqHistory(double value);
+-
+ };
+ 
+ #endif // ACSOURCE_H
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/basepowersource.cpp r3/app/backend/basepowersource.cpp
+--- r3_base/app/backend/basepowersource.cpp	2026-06-06 11:45:42.000000000 +0000
++++ r3/app/backend/basepowersource.cpp	2026-10-05 09:06:26.168347993 +0000
+@@ -1,65 +1,106 @@
+ #include "basepowersource.h"
+ #include <cmath>
+ 
++BasePowerSource::BasePowerSource(QObject *parent)
++    : QObject(parent),
++    m_voltage(0.0), m_current(0.0), m_hasData(false), m_isOn(false),
++    m_voltageMax(NO_MAX), m_voltageMin(NO_MIN),
++    m_currentMax(NO_MAX), m_currentMin(NO_MIN),
++    m_linkState(QStringLiteral("none"))
++{
++}
+ 
+-void BasePowerSource::setVoltage(double v){
+-    if (qFuzzyCompare(m_voltage, v)) return;
+-    m_voltage = v;
+-    emit voltageChanged();
+-    appendHistory(m_voltageHistory, v, m_voltageMax, m_voltageMin);
+-    emit voltageHistoryChanged();
+-    emit voltageMaxChanged();
+-    emit voltageMinChanged();
++void BasePowerSource::setIsOn(bool on)
++{
++    if (m_isOn == on)
++        return;
++    m_isOn = on;
++    emit isOnChanged();
+ }
+ 
+-void BasePowerSource::setCurrent(double i){
+-    if (qFuzzyCompare(m_current, i)) return;
+-    m_current = i;
+-    emit currentChanged();
+-    appendHistory(m_currentHistory, i, m_currentMax, m_currentMin);
+-    emit currentHistoryChanged();
+-    emit currentMaxChanged();
+-    emit currentMinChanged();
++void BasePowerSource::setLink(const QString &state, const QString &message)
++{
++    if (m_linkState == state && m_linkMessage == message)
++        return;
++    m_linkState = state;
++    m_linkMessage = message;
++    emit linkChanged();
+ }
+ 
+-void BasePowerSource::setIsOn(double on){
+-    if(m_isOn==on) return;
+-    m_isOn = on;
+-    emit isOnChanged();
++double BasePowerSource::sampleX(const QDateTime &t)
++{
++    if (!m_t0.isValid())
++        m_t0 = t;
++    return static_cast<double>(m_t0.msecsTo(t)) / 1000.0;
++}
++
++void BasePowerSource::appendPoint(QVariantList &list, double x, double y, double &maxVal, double &minVal)
++{
++    list.append(QVariant::fromValue(QPointF(x, y)));
++    while (list.size() > HISTORY_SIZE)
++        list.removeFirst();
++    // Max/Min theo đúng những điểm đang hiển thị (cửa sổ HISTORY_SIZE).
++    maxVal = NO_MAX;
++    minVal = NO_MIN;
++    for (const QVariant &p : std::as_const(list)) {
++        const double v = p.toPointF().y();
++        if (v > maxVal) maxVal = v;
++        if (v < minVal) minVal = v;
++    }
+ }
+-void BasePowerSource::updateData(double v, double i){
+-    setVoltage(v);
+-    setCurrent(i);
++
++void BasePowerSource::addSample(const QDateTime &t, bool vValid, double v, bool iValid, double i)
++{
++    if (!vValid && !iValid)
++        return;
++    const double x = sampleX(t);
++    if (vValid) {
++        m_voltage = v;
++        appendPoint(m_voltageHistory, x, v, m_voltageMax, m_voltageMin);
++        emit voltageChanged();
++        emit voltageHistoryChanged();
++        emit voltageMaxChanged();
++        emit voltageMinChanged();
++    }
++    if (iValid) {
++        m_current = i;
++        appendPoint(m_currentHistory, x, i, m_currentMax, m_currentMin);
++        emit currentChanged();
++        emit currentHistoryChanged();
++        emit currentMaxChanged();
++        emit currentMinChanged();
++    }
++    if (!m_hasData) {
++        m_hasData = true;
++        emit hasDataChanged();
++    }
++    m_lastUpdate = t.toString(QStringLiteral("HH:mm:ss"));
++    emit linkChanged();
+ }
+ 
+-void BasePowerSource:: resetHistory(){
++void BasePowerSource::resetHistory()
++{
+     m_voltageHistory.clear();
+     m_currentHistory.clear();
+-    m_voltageMax = -500;
+-    m_voltageMin = 500;
+-    m_currentMax = -500;
+-    m_currentMin = 500;
++    m_t0 = QDateTime();
++    m_voltageMax = NO_MAX;
++    m_voltageMin = NO_MIN;
++    m_currentMax = NO_MAX;
++    m_currentMin = NO_MIN;
++    m_voltage = 0.0;
++    m_current = 0.0;
++    if (m_hasData) {
++        m_hasData = false;
++        emit hasDataChanged();
++    }
++    m_lastUpdate.clear();
++    emit voltageChanged();
++    emit currentChanged();
+     emit voltageHistoryChanged();
+     emit currentHistoryChanged();
+-    emit currentMaxChanged();
+-    emit currentMinChanged();
+     emit voltageMaxChanged();
+     emit voltageMinChanged();
++    emit currentMaxChanged();
++    emit currentMinChanged();
++    emit linkChanged();
+ }
+-
+-void BasePowerSource :: appendHistory(QVariantList &list,
+-                                     double value, double &maxVal, double &minVal
+-                                     ){
+-    int idx = list.size();
+-    list.append(QVariant::fromValue(QPointF(idx,value)));
+-    if(list.size()>HISTORY_SIZE){
+-        list.removeFirst();
+-        for( int i=0; i< list.size(); ++i){
+-            QPointF p= list[i].toPointF();
+-            list[i] = QVariant::fromValue((QPointF(i,p.y())));
+-
+-        }
+-    }
+-    if(value >maxVal) maxVal = value;
+-    if(value <minVal) minVal = value;
+-}
+\ No newline at end of file
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/basepowersource.h r3/app/backend/basepowersource.h
+--- r3_base/app/backend/basepowersource.h	2026-06-06 11:51:54.000000000 +0000
++++ r3/app/backend/basepowersource.h	2026-10-05 09:06:26.170449544 +0000
+@@ -4,12 +4,24 @@
+ #include <QObject>
+ #include <QVariantList>
+ #include <QPointF>
++#include <QDateTime>
++#include <QString>
+ 
++// Một nguồn chuẩn (AC hoặc DC) như app nhìn thấy:
++//  - voltage/current + lịch sử: CHỈ là số ĐO đọc ngược từ chính nguồn
++//    (firmware hỏi MEAS:VOLT?/MEAS:CURR? rồi gửi lên bằng msgid 42) - không
++//    bao giờ là giá trị đặt. Chưa đọc lần nào -> hasData=false, UI hiện "--".
++//  - isOn: trạng thái ngõ ra. Sau khi bấm công tắc hiển thị trạng thái YÊU
++//    CẦU trong lúc chờ xác nhận (pending=true), rồi theo đúng trạng thái
++//    nguồn xác nhận (OUTP?) hoặc quay lại trạng thái cũ nếu thất bại.
++//  - linkState/linkMessage/lastUpdate: kết quả lần trao đổi gần nhất với
++//    nguồn, để vận hành viên biết số trên màn hình còn đáng tin hay không.
+ class BasePowerSource : public QObject
+ {
+     Q_OBJECT
+-    Q_PROPERTY(double voltage READ voltage WRITE setVoltage NOTIFY voltageChanged FINAL)
+-    Q_PROPERTY(double current READ current WRITE setCurrent NOTIFY currentChanged FINAL)
++    Q_PROPERTY(double voltage READ voltage NOTIFY voltageChanged FINAL)
++    Q_PROPERTY(double current READ current NOTIFY currentChanged FINAL)
++    Q_PROPERTY(bool hasData READ hasData NOTIFY hasDataChanged FINAL)
+     Q_PROPERTY(bool isOn READ isOn WRITE setIsOn NOTIFY isOnChanged FINAL)
+     Q_PROPERTY(QVariantList voltageHistory READ voltageHistory NOTIFY voltageHistoryChanged FINAL)
+     Q_PROPERTY(QVariantList currentHistory READ currentHistory NOTIFY currentHistoryChanged FINAL)
+@@ -18,58 +30,75 @@
+     Q_PROPERTY(double currentMax READ currentMax  NOTIFY currentMaxChanged FINAL)
+     Q_PROPERTY(double currentMin READ currentMin  NOTIFY currentMinChanged FINAL)
+ 
+-public:
+-    static constexpr int HISTORY_SIZE =60;
++    // "none" chưa đọc | "ok" | "pending" đang chờ | "noreply" | "error" |
++    // "mismatch" | "badreply" | "notready" | "boardnoreply"
++    Q_PROPERTY(QString linkState READ linkState NOTIFY linkChanged FINAL)
++    Q_PROPERTY(QString linkMessage READ linkMessage NOTIFY linkChanged FINAL)
++    Q_PROPERTY(bool pending READ pending NOTIFY linkChanged FINAL)
++    // "hh:mm:ss" của lần đọc thành công gần nhất, "" nếu chưa có.
++    Q_PROPERTY(QString lastUpdate READ lastUpdate NOTIFY linkChanged FINAL)
+ 
++public:
++    static constexpr int HISTORY_SIZE = 100;
++    static constexpr double NO_MAX = -1e12;     // max < min -> UI hiện "--"
++    static constexpr double NO_MIN =  1e12;
++
++    explicit BasePowerSource(QObject *parent = nullptr);
++
++    double voltage() const { return m_voltage; }
++    double current() const { return m_current; }
++    bool   hasData() const { return m_hasData; }
++    bool   isOn() const { return m_isOn; }
++    QVariantList voltageHistory() const { return m_voltageHistory; }
++    QVariantList currentHistory() const { return m_currentHistory; }
++    double voltageMax() const { return m_voltageMax; }
++    double voltageMin() const { return m_voltageMin; }
++    double currentMax() const { return m_currentMax; }
++    double currentMin() const { return m_currentMin; }
++    QString linkState() const { return m_linkState; }
++    QString linkMessage() const { return m_linkMessage; }
++    bool    pending() const { return m_linkState == QLatin1String("pending"); }
++    QString lastUpdate() const { return m_lastUpdate; }
+ 
+-    explicit BasePowerSource(QObject *parent = nullptr)
+-        :QObject(parent), m_voltage(0.0), m_current(0.0),m_isOn(false)
+-        ,m_voltageMax(-500),m_voltageMin(500)
+-        ,m_currentMax(-500),m_currentMin(500){}
+-
+-    double voltage() const { return m_voltage;}
+-    double current() const { return m_current;}
+-    bool isOn() const {return m_isOn;}
+-    QVariantList voltageHistory() const {return m_voltageHistory;}
+-    QVariantList currentHistory() const {return m_currentHistory;}
+-    double voltageMax() const { return m_voltageMax;}
+-    double currentMax() const { return m_currentMax;}
+-    double voltageMin() const { return m_voltageMin;}
+-    double currentMin() const { return  m_currentMin;}
+-
+-
+-    void setVoltage(double v);
+-    void setCurrent(double i);
+-    void setIsOn(double on);
+-    virtual void updateData(double v, double i);
++    void setIsOn(bool on);
++    void setLink(const QString &state, const QString &message);
+ 
+-    Q_INVOKABLE void resetHistory();
++    // 1 lần đọc thật từ nguồn. vValid/iValid: trường nào nguồn thực sự trả.
++    void addSample(const QDateTime &t, bool vValid, double v, bool iValid, double i);
+ 
++    Q_INVOKABLE virtual void resetHistory();
+ 
+ signals:
+     void voltageChanged();
+     void currentChanged();
++    void hasDataChanged();
+     void isOnChanged();
+     void voltageHistoryChanged();
+     void currentHistoryChanged();
+-    void currentMaxChanged();
+-    void currentMinChanged();
+     void voltageMaxChanged();
+     void voltageMinChanged();
+-
++    void currentMaxChanged();
++    void currentMinChanged();
++    void linkChanged();
+ 
+ protected:
++    // x = giây kể từ mẫu đầu tiên của lịch sử hiện tại (đọc theo nút bấm nên
++    // khoảng cách giữa các điểm không đều - trục X theo thời gian thật).
++    double sampleX(const QDateTime &t);
++    static void appendPoint(QVariantList &list, double x, double y, double &maxVal, double &minVal);
++
+     double m_voltage;
+     double m_current;
+-    bool m_isOn;
+-    double m_voltageMax;
+-    double m_voltageMin ;
+-    double m_currentMax ;
+-    double m_currentMin ;
++    bool   m_hasData;
++    bool   m_isOn;
++    double m_voltageMax, m_voltageMin;
++    double m_currentMax, m_currentMin;
+     QVariantList m_voltageHistory;
+     QVariantList m_currentHistory;
+-private :
+-    void appendHistory(QVariantList &list, double value, double &maxVal, double &minVal);
++    QDateTime m_t0;
++    QString m_linkState;
++    QString m_linkMessage;
++    QString m_lastUpdate;
+ };
+ 
+ #endif // BASEPOWERSOURCE_H
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/dashboardmanager.cpp r3/app/backend/dashboardmanager.cpp
+--- r3_base/app/backend/dashboardmanager.cpp	2026-10-01 09:37:04.530729373 +0000
++++ r3/app/backend/dashboardmanager.cpp	2026-10-05 09:06:26.173050624 +0000
+@@ -6,6 +6,9 @@
+ #include <QUrl>
+ #include <QDir>
+ #include <QStandardPaths>
++#include <QCoreApplication>
++#include <QFileInfo>
++#include <limits>
+ #include <cstdlib>
+ #include <cmath>
+ #include <algorithm>
+@@ -23,6 +26,11 @@
+     default: return QStringLiteral("?");
+     }
+ }
++
++constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
++
++// "V/A/Hz" có số lẻ hợp lý cho dòng log Terminal.
++QString fmtNum(double v, int decimals) { return QString::number(v, 'f', decimals); }
+ } // namespace
+ 
+ // chưa sửa datatype cho AC DC
+@@ -37,18 +45,20 @@
+     // dưới đây bằng QSettings nếu đã có phiên trước. Đây CHỈ là nạp giá trị
+     // hiển thị lên UI, KHÔNG gửi lệnh gì xuống thiết bị (cổng còn chưa mở) -
+     // đúng yêu cầu "khi init app giá trị không động vào [phần cứng]".
+-    m_comPort("COM1"), m_baudRate(115200), m_delayTime(100),
+-    m_sessionName("Mặc định"),
++    // Chạy lần đầu (chưa có config.ini): mọi giá trị người dùng chọn/nhập đều
++    // "chưa đặt" -> giao diện hiện "--" (yêu cầu: không tự điền mặc định).
++    m_comPort(), m_baudRate(0), m_delayTime(-1),
++    m_sessionName(),
+     m_logFile(nullptr),
+     m_logStream(nullptr),
+     m_isPortVerified(false),
+     m_pingTimer(new QTimer(this)),
+     m_pingTimeoutTimer(new QTimer(this)),
+     m_kichNoPeakV(0.0),
+-    m_stagedAcVolt(acVoltMin()),
+-    m_stagedAcFreq(acFreqMin()),
+-    m_stagedDcVolt(dcVoltMin()),
+-    m_stagedDcCurrent(dcCurrentMin()),
++    m_stagedAcVolt(kNaN),
++    m_stagedAcFreq(kNaN),
++    m_stagedDcVolt(kNaN),
++    m_stagedDcCurrent(kNaN),
+     m_waveWatchdog(new QTimer(this)),
+     m_waveSeenThisSession(false),
+     m_rfStatusValid(false),
+@@ -59,7 +69,12 @@
+     m_simSpectrumTick(0),
+     m_acPendingOn(false), m_acPrevOn(false),
+     m_dcPendingOn(false), m_dcPrevOn(false),
+-    m_settings(this)
++    m_acGotPws(false), m_dcGotPws(false),
++    m_acWaitKind(0), m_dcWaitKind(0),
++    m_acPowerTimer(new QTimer(this)),
++    m_dcPowerTimer(new QTimer(this)),
++    m_configPath(resolveConfigPath()),
++    m_settings(m_configPath, QSettings::IniFormat)
+ {
+     connect(m_serialPort, &QSerialPort::readyRead, this, &DashboardManager::handleSerialRead);
+     connect(m_serialPort, &QSerialPort::errorOccurred, this, &DashboardManager::handleSerialError);
+@@ -77,36 +92,51 @@
+     m_waveWatchdog->setInterval(WAVE_WATCHDOG_MS);
+     connect(m_waveWatchdog, &QTimer::timeout, this, &DashboardManager::onWaveWatchdog);
+ 
++    m_acPowerTimer->setSingleShot(true);
++    m_acPowerTimer->setInterval(POWER_REPLY_TIMEOUT_MS);
++    connect(m_acPowerTimer, &QTimer::timeout, this, &DashboardManager::onAcPowerTimeout);
++    m_dcPowerTimer->setSingleShot(true);
++    m_dcPowerTimer->setInterval(POWER_REPLY_TIMEOUT_MS);
++    connect(m_dcPowerTimer, &QTimer::timeout, this, &DashboardManager::onDcPowerTimeout);
++
+     VIP_Decode_Init(&m_vipStatus);
+     refreshPorts();
+ 
+-    // Nạp lại cấu hình lần làm việc trước (QSettings::setDefaultFormat đã
+-    // được ép về IniFormat trong main.cpp -> ra file *.ini, không phải
+-    // registry). Chỉ gán thẳng vào biến thành viên (không gọi qua setXxx()
+-    // để khỏi ghi lại chính giá trị vừa đọc ra - vô hại nhưng thừa) và không
+-    // đụng gì tới m_serialPort/thiết bị thật ở đây.
+-    m_comPort     = m_settings.value("connection/comPort", m_comPort).toString();
+-    m_baudRate    = m_settings.value("connection/baudRate", m_baudRate).toInt();
+-    m_sessionName = m_settings.value("connection/sessionName", m_sessionName).toString();
+-    m_delayTime   = m_settings.value("delay/ns", m_delayTime).toInt();
+-
+-    // ATT (vd "Att1Value: 25.5"): gán thẳng qua setAttN() (chỉ cập nhật thuộc
+-    // tính hiển thị trên RfController), TUYỆT ĐỐI không gọi requestSetAtt() ở
+-    // đây - requestSetAtt() mới là đường phát lệnh xuống dây (attUpdateRequested
+-    // -> onAttUpdateRequested() -> sendKriaFrame()), và cổng còn chưa mở lúc
+-    // khởi tạo. Giá trị thực tế chỉ được gửi khi người dùng bấm gửi lại/sửa ô
+-    // ATT trên giao diện sau khi đã kết nối.
+-    m_rfController->setAtt1(m_settings.value("att/ch1", m_rfController->att1()).toDouble());
+-    m_rfController->setAtt2(m_settings.value("att/ch2", m_rfController->att2()).toDouble());
+-    m_rfController->setAtt3(m_settings.value("att/ch3", m_rfController->att3()).toDouble());
+-
+-    // Staged Power UI (xem comment Q_PROPERTY trong .h) - clamp lại theo giới
+-    // hạn thật phòng khi file .ini cũ còn giá trị ngoài khoảng (vd sau khi
+-    // đổi acFreqMax/dcCurrentMax). Gán thẳng member, KHÔNG qua setter.
+-    m_stagedAcVolt    = qBound(acVoltMin(),    m_settings.value("power/acVolt",    m_stagedAcVolt).toInt(),    acVoltMax());
+-    m_stagedAcFreq    = qBound(acFreqMin(),    m_settings.value("power/acFreq",    m_stagedAcFreq).toInt(),    acFreqMax());
+-    m_stagedDcVolt    = qBound(dcVoltMin(),    m_settings.value("power/dcVolt",    m_stagedDcVolt).toInt(),    dcVoltMax());
+-    m_stagedDcCurrent = qBound(dcCurrentMin(), m_settings.value("power/dcCurrent", m_stagedDcCurrent).toDouble(), dcCurrentMax());
++    // Nạp lại cấu hình lần làm việc trước từ config.ini (xem
++    // resolveConfigPath()). Chỉ gán thẳng vào biến thành viên/thuộc tính
++    // hiển thị - KHÔNG mở cổng, KHÔNG gửi lệnh nào xuống thiết bị (invariant
++    // "init không được động vào phần cứng"). Khoá chưa có -> "chưa đặt" ("--").
++    migrateOldSettings();
++    m_comPort     = m_settings.value("connection/comPort", QString()).toString();
++    m_baudRate    = m_settings.value("connection/baudRate", 0).toInt();
++    m_sessionName = m_settings.value("connection/sessionName", QString()).toString();
++    m_delayTime   = m_settings.value("delay/ns", -1).toInt();
++
++    // ATT: gán thẳng qua setAttN() (chỉ cập nhật thuộc tính hiển thị trên
++    // RfController), TUYỆT ĐỐI không gọi requestSetAtt() ở đây - đó mới là
++    // đường phát lệnh xuống dây. Chưa lưu -> NaN -> ô hiện "--".
++    m_rfController->setAtt1(loadOptionalDouble(m_settings, "att/ch1", 0.0, attMax()));
++    m_rfController->setAtt2(loadOptionalDouble(m_settings, "att/ch2", 0.0, attMax()));
++    m_rfController->setAtt3(loadOptionalDouble(m_settings, "att/ch3", 0.0, attMax()));
++
++    // Staged Power UI - kẹp lại theo giới hạn thật phòng khi .ini cũ còn giá
++    // trị ngoài khoảng. Chuỗi rỗng/thiếu khoá -> NaN ("--").
++    m_stagedAcVolt    = loadOptionalDouble(m_settings, "power/acVolt",    acVoltMin(),    acVoltMax());
++    m_stagedAcFreq    = loadOptionalDouble(m_settings, "power/acFreq",    acFreqMin(),    acFreqMax());
++    m_stagedDcVolt    = loadOptionalDouble(m_settings, "power/dcVolt",    dcVoltMin(),    dcVoltMax());
++    m_stagedDcCurrent = loadOptionalDouble(m_settings, "power/dcCurrent", dcCurrentMin(), dcCurrentMax());
++
++    // Cổng COM đã lưu nhưng hiện không cắm: báo (sau khi QML đã kết nối
++    // signal), KHÔNG tự chọn cổng khác.
++    if (!m_comPort.isEmpty() && !isPortAvailable(m_comPort)) {
++        const QString missing = m_comPort;
++        QTimer::singleShot(0, this, [this, missing] {
++            emit systemNotification("Warning", QString("Cổng %1 đã lưu lần trước hiện không có - hãy chọn lại cổng COM.").arg(missing));
++        });
++    }
++    QTimer::singleShot(0, this, [this] {
++        appendCommandLog("INFO", "Cấu hình: " + QDir::toNativeSeparators(m_configPath));
++    });
+ 
+     // Hiệu chuẩn phổ RF (dBFS -> dBm) đã lưu từ lần trước, nếu có.
+     m_calibrated = m_settings.contains("rf/calOffsetDb");
+@@ -125,14 +155,14 @@
+ void DashboardManager::setComPort(const QString &port){
+     if (m_comPort != port) {
+         m_comPort = port;
+-        m_settings.setValue("connection/comPort", m_comPort);
++        saveSetting("connection/comPort", m_comPort);
+         emit comPortChanged();
+     }
+ }
+ void DashboardManager::setBaudRate(int rate) {
+     if (m_baudRate != rate) {
+         m_baudRate = rate;
+-        m_settings.setValue("connection/baudRate", m_baudRate);
++        saveSetting("connection/baudRate", m_baudRate);
+         emit baudRateChanged();
+     }
+ }
+@@ -141,54 +171,66 @@
+         m_delayTime = time;
+         // Chỉ lưu lại lựa chọn hiển thị - việc GỬI lệnh xuống board (nếu có)
+         // là trách nhiệm của applyDelayTime(), hàm gọi setDelayTime() này.
+-        m_settings.setValue("delay/ns", m_delayTime);
++        saveSetting("delay/ns", m_delayTime);
+         emit delayTimeChanged();
+     }
+ }
+ void DashboardManager::setSessionName(const QString &sessionName){
+     if(m_sessionName!= sessionName){
+         m_sessionName = sessionName;
+-        m_settings.setValue("connection/sessionName", m_sessionName);
++        saveSetting("connection/sessionName", m_sessionName);
+         emit sessionNameChanged();
+     }
+ }
+ 
+ // Staged Power UI setters - CHỈ lưu giá trị đang soạn trên form, không tự ý
+-// gửi lệnh xuống nguồn AC/DC (việc đó do setAcPower()/setDcPower() làm khi
+-// người dùng bấm nút gửi). Clamp theo đúng giới hạn thật (xem acVoltMin()...)
+-// để không có đường nào lưu được giá trị vượt ngưỡng vào *.ini.
+-void DashboardManager::setStagedAcVolt(int v){
+-    v = qBound(acVoltMin(), v, acVoltMax());
+-    if(m_stagedAcVolt != v){
++// gửi lệnh xuống nguồn AC/DC. NaN = người dùng xoá trắng ô ("--"), lưu vào
++// .ini là chuỗi rỗng. Giá trị số được kẹp theo giới hạn thật.
++namespace {
++bool sameOptional(double a, double b)
++{
++    if (std::isnan(a) || std::isnan(b))
++        return std::isnan(a) && std::isnan(b);
++    return qFuzzyCompare(a + 1.0, b + 1.0);
++}
++QVariant optionalToVariant(double v)
++{
++    return std::isnan(v) ? QVariant(QString()) : QVariant(v);
++}
++} // namespace
++
++void DashboardManager::setStagedAcVolt(double v){
++    if (!std::isnan(v)) v = qBound<double>(acVoltMin(), std::round(v), acVoltMax());
++    if (!sameOptional(m_stagedAcVolt, v)) {
+         m_stagedAcVolt = v;
+-        m_settings.setValue("power/acVolt", m_stagedAcVolt);
++        saveSetting("power/acVolt", optionalToVariant(v));
+         emit stagedAcVoltChanged();
+     }
+ }
+ 
+-void DashboardManager::setStagedAcFreq(int f){
+-    f = qBound(acFreqMin(), f, acFreqMax());
+-    if(m_stagedAcFreq != f){
++void DashboardManager::setStagedAcFreq(double f){
++    if (!std::isnan(f)) f = qBound<double>(acFreqMin(), std::round(f), acFreqMax());
++    if (!sameOptional(m_stagedAcFreq, f)) {
+         m_stagedAcFreq = f;
+-        m_settings.setValue("power/acFreq", m_stagedAcFreq);
++        saveSetting("power/acFreq", optionalToVariant(f));
+         emit stagedAcFreqChanged();
+     }
+ }
+ 
+-void DashboardManager::setStagedDcVolt(int v){
+-    v = qBound(dcVoltMin(), v, dcVoltMax());
+-    if(m_stagedDcVolt != v){
++void DashboardManager::setStagedDcVolt(double v){
++    if (!std::isnan(v)) v = qBound<double>(dcVoltMin(), std::round(v), dcVoltMax());
++    if (!sameOptional(m_stagedDcVolt, v)) {
+         m_stagedDcVolt = v;
+-        m_settings.setValue("power/dcVolt", m_stagedDcVolt);
++        saveSetting("power/dcVolt", optionalToVariant(v));
+         emit stagedDcVoltChanged();
+     }
+ }
+ 
+ void DashboardManager::setStagedDcCurrent(double c){
+-    c = qBound(dcCurrentMin(), c, dcCurrentMax());
+-    if(!qFuzzyCompare(m_stagedDcCurrent + 1.0, c + 1.0)){
++    if (!std::isnan(c)) c = qBound(dcCurrentMin(), std::round(c * 100.0) / 100.0, dcCurrentMax());
++    if (!sameOptional(m_stagedDcCurrent, c)) {
+         m_stagedDcCurrent = c;
+-        m_settings.setValue("power/dcCurrent", m_stagedDcCurrent);
++        saveSetting("power/dcCurrent", optionalToVariant(c));
+         emit stagedDcCurrentChanged();
+     }
+ }
+@@ -197,6 +239,15 @@
+ void DashboardManager::startSession() {
+     stopSession();
+ 
++    if (m_comPort.isEmpty()) {
++        emit systemNotification("Warning", "Chưa chọn cổng COM.");
++        return;
++    }
++    if (m_baudRate <= 0) {
++        emit systemNotification("Warning", "Chưa chọn tốc độ baud (board 5E-HTE dùng 115200).");
++        return;
++    }
++
+     m_serialPort->setPortName(m_comPort);
+     m_serialPort->setBaudRate(m_baudRate);
+     m_serialPort->setDataBits(QSerialPort::Data8);
+@@ -219,14 +270,12 @@
+     m_rfController->setWaveSource(QStringLiteral("waiting"));
+     m_waveWatchdog->start();
+ 
+-    // 4 biểu đồ AC/DC: xoá số liệu MÔ PHỎNG còn lại từ lúc chưa kết nối để
+-    // không bị hiểu nhầm là số đo thật. Lưu ý: firmware hiện KHÔNG đọc ngược
+-    // điện áp/dòng từ nguồn (UART nguồn AC/DC chỉ phát lệnh), nên khi đã kết
+-    // nối các biểu đồ này chỉ thể hiện giá trị ĐẶT (setAcPower/setDcPower).
+-    m_acSource->updateACData(0.0, 0.0, 0.0);
+-    m_dcSource->updateData(0.0, 0.0);
++    // 4 biểu đồ AC/DC chỉ vẽ số ĐO đọc ngược từ nguồn (msgid 42) - phiên mới
++    // bắt đầu trống ("--") cho tới khi bấm refresh/F5 hoặc gửi lệnh đặt.
+     m_acSource->resetHistory();
+     m_dcSource->resetHistory();
++    m_acSource->setLink("none", QString());
++    m_dcSource->setLink("none", QString());
+ 
+     // Mở cổng thành công KHÔNG có nghĩa đây đúng là board 5E-HTE - nhiều cổng
+     // COM khác (nguồn AC/DC qua cùng hub USB) cũng mở được y hệt. Bắt đầu
+@@ -240,7 +289,7 @@
+                       + "/DashboardLogs";
+     QDir().mkpath(logsDir);
+ 
+-    QString safeName = m_sessionName;
++    QString safeName = m_sessionName.trimmed().isEmpty() ? QStringLiteral("phien") : m_sessionName.trimmed();
+     QString timestamp = QDateTime ::currentDateTime().toString("yyyyMMdd_HHmmss");
+     QString logPath = QString ("%1/%2_%3.log").arg(logsDir,safeName,timestamp);
+     m_logFile = new QFile(logPath, this);
+@@ -262,6 +311,14 @@
+ void DashboardManager::stopSession(){
+     stopPingCycle();
+     m_waveWatchdog->stop();
++    m_acPowerTimer->stop();
++    m_dcPowerTimer->stop();
++    m_acWaitKind = m_dcWaitKind = 0;
++    if (m_serialPort->isOpen()) {
++        // Số cũ vẫn giữ trên đồ thị nhưng đánh dấu không còn kết nối.
++        m_acSource->setLink("offline", "Đã ngắt kết nối board");
++        m_dcSource->setLink("offline", "Đã ngắt kết nối board");
++    }
+     if (m_isPortVerified) { m_isPortVerified = false; emit isPortVerifiedChanged(); }
+ 
+     if (m_serialPort->isOpen()) {
+@@ -300,26 +357,24 @@
+ }
+ 
+ void DashboardManager::resetSystem() {
+-    m_acSource->updateACData(0.0, 0.0, 50.0);
+-    m_acSource->setIsOn(false);
+-    m_dcSource->updateData(0.0, 0.0);
+-    m_dcSource->setIsOn(false);
+-    m_acSource->resetHistory();
+-    m_dcSource->resetHistory();
+-
+-    // "Dat lai" tren UI cung la lenh reset dinh kich no bat duoc (xem
+-    // parseIncomingData() msgid 40) - dung y "Khi dat lai se reset dien ap
+-    // doc duoc" da xac nhan voi nguoi dung.
++    // "Đặt lại" = đưa hệ thống về trạng thái an toàn (nút có hộp xác nhận
++    // phía QML). Cũng là lệnh reset đỉnh kích nổ bắt được - đúng ý "Khi đặt
++    // lại sẽ reset điện áp đọc được" đã xác nhận với người dùng.
+     if (m_kichNoPeakV != 0.0) {
+         m_kichNoPeakV = 0.0;
+         emit kichNoPeakVoltageChanged();
+     }
++    m_acSource->resetHistory();
++    m_dcSource->resetHistory();
++
++    if (!m_serialPort->isOpen()) {
++        emit systemNotification("Warning", "Chưa kết nối board - chỉ xoá số liệu trên màn hình, chưa gửi lệnh đặt lại.");
++        return;
++    }
+ 
+-    // Gui "RESET" qua kenh generic/diag (msgid 39). Firmware
+-    // (HandleGenericCmd() trong cmd_dispatcher.c) dua moi dau ra ve trang
+-    // thai an toan: AC/DC OFF, 3 ATT = 0 dB, delay quang = 0 ns - KHONG phai
+-    // khoi dong lai board. ACK tra ve that bai neu co thiet bi nao chua khoi
+-    // tao duoc (xem log/terminal).
++    // Gửi "RESET" qua kênh generic/diag (msgid 39). Firmware đưa mọi đầu ra
++    // về an toàn: AC/DC OUTPUT OFF (mỗi nguồn trả 1 msgid 42 xác nhận trạng
++    // thái thật), 3 ATT = 0 dB, delay quang = 0 ns - KHÔNG khởi động lại board.
+     cmd_msg_t reset_cmd;
+     std::memset(&reset_cmd, 0, sizeof(cmd_msg_t));
+     std::strncpy(reset_cmd.msg, "RESET", sizeof(reset_cmd.msg));
+@@ -330,8 +385,16 @@
+     kria_msg_output_encode(reset_seq++, 39, &reset_cmd, &tx_msg);
+     sendKriaFrame(tx_msg);
+ 
++    m_acWaitKind = 3;
++    m_dcWaitKind = 3;
++    m_acSource->setLink("pending", "Đang đặt lại (tắt ngõ ra)…");
++    m_dcSource->setLink("pending", "Đang đặt lại (tắt ngõ ra)…");
++    m_acPowerTimer->start();
++    m_dcPowerTimer->start();
++
++    appendCommandLog("TX", "RESET (AC/DC OFF, ATT 0 dB, delay 0 ns)");
+     writeToLog("[RESET] system reset requested");
+-    emit systemNotification("Warning", "Yêu cầu đặt lại toàn bộ hệ thống.");
++    emit systemNotification("Warning", "Đã gửi lệnh đặt lại toàn bộ hệ thống.");
+ }
+ 
+ void DashboardManager::sendKriaFrame(const kria_message_t &msg)
+@@ -443,14 +506,54 @@
+ }
+ 
+ 
++bool DashboardManager::requestAcPower(bool on)
++{
++    if (!m_serialPort->isOpen()) {
++        emit systemNotification("Warning", "Chưa kết nối board - lệnh nguồn AC chưa được gửi.");
++        return false;
++    }
++    if (on && (std::isnan(m_stagedAcVolt) || std::isnan(m_stagedAcFreq))) {
++        QStringList missing;
++        if (std::isnan(m_stagedAcVolt)) missing << "điện áp";
++        if (std::isnan(m_stagedAcFreq)) missing << "tần số";
++        emit systemNotification("Warning", "Chưa nhập " + missing.join(" và ") + " AC - chưa bật nguồn.");
++        return false;
++    }
++    // TẮT không cần giá trị: firmware chỉ gửi OUTP OFF cho lệnh tắt.
++    setAcPower(on,
++               on ? static_cast<uint16_t>(std::lround(m_stagedAcVolt)) : 0,
++               on ? static_cast<uint16_t>(std::lround(m_stagedAcFreq)) : 0);
++    return true;
++}
++
++bool DashboardManager::requestDcPower(bool on)
++{
++    if (!m_serialPort->isOpen()) {
++        emit systemNotification("Warning", "Chưa kết nối board - lệnh nguồn DC chưa được gửi.");
++        return false;
++    }
++    if (on && (std::isnan(m_stagedDcVolt) || std::isnan(m_stagedDcCurrent))) {
++        QStringList missing;
++        if (std::isnan(m_stagedDcVolt)) missing << "điện áp";
++        if (std::isnan(m_stagedDcCurrent)) missing << "dòng";
++        emit systemNotification("Warning", "Chưa nhập " + missing.join(" và ") + " DC - chưa bật nguồn.");
++        return false;
++    }
++    setDcPower(on,
++               on ? static_cast<uint16_t>(std::lround(m_stagedDcVolt)) : 0,
++               on ? m_stagedDcCurrent : 0.0);
++    return true;
++}
++
+ void DashboardManager::setAcPower(bool on, uint16_t volt, uint16_t freq ){
+-    // Nhớ trạng thái trước + trạng thái yêu cầu để xử lý ACK đúng: trước đây
+-    // ACK thành công của lệnh TẮT lại bật đèn ON (setIsOn(isSuccess)).
+-    m_acPrevOn = m_acSource->isOn();
++    // Nhớ trạng thái trước + trạng thái yêu cầu. Công tắc hiện trạng thái
++    // YÊU CẦU trong lúc chờ (link "pending"); kết quả cuối cùng theo msgid 42
++    // (OUTP? của nguồn) - xem handlePwrStatus().
++    if (m_acWaitKind != 2)
++        m_acPrevOn = m_acSource->isOn();
+     m_acPendingOn = on;
++    m_acGotPws = false;
+     m_acSource->setIsOn(on);
+-    m_acSource->setVoltage(volt);
+-    m_acSource->setFreq(freq);
+     fwi_msg_t ac_packet;
+     std::memset(&ac_packet, 0, sizeof(fwi_msg_t));
+     std ::strncpy (ac_packet.msg, "FWI", sizeof(ac_packet.msg));
+@@ -460,34 +563,35 @@
+     ac_packet.state = on ? 1:0;
+     kria_message_t tx_msg ;
+     static uint8_t local_seq =0;
+-    kria_msg_output_encode(local_seq++, 35, &ac_packet, &tx_msg);   // <-- đổi 36 -> 35
++    kria_msg_output_encode(local_seq++, 35, &ac_packet, &tx_msg);
+     sendKriaFrame(tx_msg);
+ 
+     if( m_serialPort->isOpen()){
+-        writeToLog(QString("[POWER] AC %1 (V: %2, F: %3 Hz)")
+-                       .arg(on ? "ON" : "OFF").arg(ac_packet.voltage).arg(ac_packet.frequency));
+-        emit systemNotification("Info",
+-                                QString("Nguồn AC đã được %1").arg(on ? "bật" : "tắt"));
++        m_acWaitKind = 2;
++        m_acSource->setLink("pending", on ? "Đang bật, chờ nguồn xác nhận…" : "Đang tắt, chờ nguồn xác nhận…");
++        m_acPowerTimer->start();
++        const QString txt = on ? QString("AC ON %1 V %2 Hz").arg(ac_packet.voltage).arg(ac_packet.frequency)
++                               : QStringLiteral("AC OFF");
++        appendCommandLog("TX", txt);
++        writeToLog("[POWER] " + txt);
+     }
+ }
+ 
+ void DashboardManager:: setDcPower(bool on,uint16_t volt, double cur)
+ {
+-    m_dcPrevOn = m_dcSource->isOn();
++    if (m_dcWaitKind != 2)
++        m_dcPrevOn = m_dcSource->isOn();
+     m_dcPendingOn = on;
++    m_dcGotPws = false;
+     m_dcSource->setIsOn(on);
+-    m_dcSource->setCurrent(cur);
+-    m_dcSource->setVoltage(volt);
+     fwi_msg_t dc_packet;
+     std::memset(&dc_packet, 0, sizeof(fwi_msg_t));
+     std ::strncpy (dc_packet.msg, "FWI", sizeof(dc_packet.msg));
+     std :: strncpy(dc_packet.isAC,"DC", sizeof(dc_packet.isAC));
+-    dc_packet.voltage = static_cast<uint16_t> (m_dcSource->voltage());
+-    // Fixed-point x100 (centiamps), e.g. 2.35 A -> 235 - fixes the old bug
+-    // where static_cast<uint16_t> on current() (a double) truncated any
+-    // decimal current straight down to whole amps. Firmware's HandleFwi()
+-    // divides this back by 100.0f for the DC case - keep both ends in sync.
+-    dc_packet.frequency = static_cast<uint16_t> (std::lround(m_dcSource->current() * 100.0));
++    dc_packet.voltage = static_cast<uint16_t> (volt);
++    // Fixed-point x100 (centiamps), e.g. 2.35 A -> 235 - firmware's
++    // HandleFwi() divides this back by 100.0f for the DC case.
++    dc_packet.frequency = static_cast<uint16_t> (std::lround(std::max(cur, 0.0) * 100.0));
+     dc_packet.state = on ? 1:0;
+     kria_message_t tx_msg ;
+     static uint8_t local_seq =0;
+@@ -495,12 +599,175 @@
+     sendKriaFrame(tx_msg);
+ 
+     if( m_serialPort->isOpen()){
+-        writeToLog(QString("[POWER] DC %1 (V: %2, A: %3)")
+-                       .arg(on ? "ON" : "OFF").arg(dc_packet.voltage)
+-                       .arg(m_dcSource->current(), 0, 'f', 2));
+-        emit systemNotification("Info",
+-                                QString("Nguồn DC đã được %1").arg(on ? "bật" : "tắt"));
++        m_dcWaitKind = 2;
++        m_dcSource->setLink("pending", on ? "Đang bật, chờ nguồn xác nhận…" : "Đang tắt, chờ nguồn xác nhận…");
++        m_dcPowerTimer->start();
++        const QString txt = on ? QString("DC ON %1 V, giới hạn %2 A").arg(dc_packet.voltage).arg(cur, 0, 'f', 2)
++                               : QStringLiteral("DC OFF");
++        appendCommandLog("TX", txt);
++        writeToLog("[POWER] " + txt);
++    }
++}
++
++void DashboardManager::sendPwrQuery(uint8_t dev)
++{
++    pwr_query_msg_t q;
++    std::memset(&q, 0, sizeof(q));
++    std::strncpy(q.msg, "PWQ", sizeof(q.msg));
++    q.dev = dev;
++    kria_message_t tx_msg;
++    static uint8_t seq = 0;
++    kria_msg_output_encode(seq++, 41, &q, &tx_msg);
++    sendKriaFrame(tx_msg);
++}
++
++void DashboardManager::refreshPower(int dev)
++{
++    const bool isAc = (dev == PWR_DEV_AC);
++    if (dev != PWR_DEV_AC && dev != PWR_DEV_DC)
++        return;
++    if (!m_serialPort->isOpen()) {
++        emit systemNotification("Warning", "Chưa kết nối board - không đọc được nguồn.");
++        return;
+     }
++    BasePowerSource *src = isAc ? static_cast<BasePowerSource *>(m_acSource) : m_dcSource;
++    int &waitKind = isAc ? m_acWaitKind : m_dcWaitKind;
++    if (waitKind != 0)
++        return;     // đang chờ kết quả của chính nguồn này - kết quả đó cũng có số đo
++    waitKind = 1;
++    src->setLink("pending", "Đang đọc nguồn…");
++    (isAc ? m_acPowerTimer : m_dcPowerTimer)->start();
++    sendPwrQuery(static_cast<uint8_t>(dev));
++}
++
++void DashboardManager::refreshAllPower()
++{
++    if (!m_serialPort->isOpen()) {
++        emit systemNotification("Warning", "Chưa kết nối board - không đọc được nguồn.");
++        return;
++    }
++    refreshPower(PWR_DEV_AC);
++    refreshPower(PWR_DEV_DC);
++}
++
++void DashboardManager::onAcPowerTimeout() { powerTimeout(true); }
++void DashboardManager::onDcPowerTimeout() { powerTimeout(false); }
++
++void DashboardManager::powerTimeout(bool isAc)
++{
++    BasePowerSource *src = isAc ? static_cast<BasePowerSource *>(m_acSource) : m_dcSource;
++    int &waitKind = isAc ? m_acWaitKind : m_dcWaitKind;
++    const QString name = isAc ? QStringLiteral("AC") : QStringLiteral("DC");
++    if (waitKind == 2)      // lệnh đặt không có kết quả -> về trạng thái cũ
++        src->setIsOn(isAc ? m_acPrevOn : m_dcPrevOn);
++    waitKind = 0;
++    const QString msg = QString("Board không trả kết quả nguồn %1 (mất kết nối, hoặc firmware cũ chưa hỗ trợ đọc nguồn).").arg(name);
++    src->setLink("boardnoreply", msg);
++    appendCommandLog("RX", name + ": không có kết quả từ board");
++    writeToLog("[POWER] " + msg);
++    emit systemNotification("Error", msg);
++}
++
++void DashboardManager::handlePwrStatus(const pwr_status_msg_t &st)
++{
++    const bool isAc = (st.dev == PWR_DEV_AC);
++    if (st.dev != PWR_DEV_AC && st.dev != PWR_DEV_DC)
++        return;
++    BasePowerSource *src = isAc ? static_cast<BasePowerSource *>(m_acSource) : m_dcSource;
++    int  &waitKind = isAc ? m_acWaitKind : m_dcWaitKind;
++    bool &gotPws   = isAc ? m_acGotPws : m_dcGotPws;
++    const bool pendingOn = isAc ? m_acPendingOn : m_dcPendingOn;
++    const bool prevOn    = isAc ? m_acPrevOn : m_dcPrevOn;
++    const QString name = isAc ? QStringLiteral("AC") : QStringLiteral("DC");
++
++    // Kết quả này thuộc lệnh đang chờ? (một lần đọc có thể tới trong lúc
++    // đang chờ lệnh đặt - vẫn dùng số đo nhưng không kết thúc việc chờ).
++    const bool matchesWait =
++        (waitKind == 1 && st.reason == PWR_REASON_READ) ||
++        (waitKind == 2 && st.reason == PWR_REASON_SET) ||
++        (waitKind == 3 && st.reason == PWR_REASON_RESET);
++    if (matchesWait) {
++        (isAc ? m_acPowerTimer : m_dcPowerTimer)->stop();
++        waitKind = 0;
++    }
++    if (st.reason == PWR_REASON_SET)
++        gotPws = true;
++
++    // 1) Số đo -> đồ thị
++    const QDateTime now = QDateTime::currentDateTime();
++    const bool vV = st.valid & PWR_VALID_VOLT;
++    const bool iV = st.valid & PWR_VALID_CURR;
++    const bool fV = st.valid & PWR_VALID_FREQ;
++    const double v = st.volt_mv / 1000.0;
++    const double i = st.curr_ma / 1000.0;
++    const double f = st.freq_mhz / 1000.0;
++    if (isAc)
++        m_acSource->addAcSample(now, vV, v, iV, i, fV, f);
++    else
++        m_dcSource->addSample(now, vV, v, iV, i);
++
++    // 2) Trạng thái ngõ ra: tin nguồn (OUTP?) nếu có; DC chưa có lệnh hỏi
++    //    trạng thái -> lệnh đặt thành công thì lấy trạng thái yêu cầu.
++    const bool outKnown = st.valid & PWR_VALID_OUTPUT;
++    if (outKnown && st.output <= 1)
++        src->setIsOn(st.output == 1);
++    else if (st.reason == PWR_REASON_SET)
++        src->setIsOn(st.result == PWR_RESULT_OK ? pendingOn : prevOn);
++    else if (st.reason == PWR_REASON_RESET && st.result == PWR_RESULT_OK)
++        src->setIsOn(false);
++
++    // 3) Kết quả -> nhãn trạng thái, Terminal, thông báo
++    QString parts;
++    if (outKnown && st.output <= 1) parts += QString(" OUT=%1").arg(st.output ? "ON" : "OFF");
++    if (vV) parts += " " + fmtNum(v, 2) + " V";
++    if (iV) parts += " " + fmtNum(i, 3) + " A";
++    if (fV) parts += " " + fmtNum(f, 2) + " Hz";
++
++    QString state, msg;
++    switch (st.result) {
++    case PWR_RESULT_OK:
++        state = "ok";
++        break;
++    case PWR_RESULT_NO_REPLY:
++        state = "noreply";
++        msg = (st.reason == PWR_REASON_READ)
++            ? QString("Nguồn %1 không phản hồi - kiểm tra cáp RS232, baud, nguồn đã bật.").arg(name)
++            : QString("Đã gửi lệnh tới nguồn %1 nhưng nguồn không phản hồi để xác nhận - kiểm tra cáp RS232/baud.").arg(name);
++        break;
++    case PWR_RESULT_DEV_ERROR:
++        state = "error";
++        msg = QString("Nguồn %1 báo lỗi lệnh (mã SCPI %2).").arg(name).arg(st.dev_err);
++        break;
++    case PWR_RESULT_OUT_MISMATCH:
++        state = "mismatch";
++        msg = QString("Nguồn %1: ngõ ra đang %2, khác trạng thái yêu cầu.").arg(name, st.output ? "BẬT" : "TẮT");
++        break;
++    case PWR_RESULT_NOT_READY:
++        state = "notready";
++        msg = QString("UART nguồn %1 trên board chưa khởi tạo được.").arg(name);
++        break;
++    case PWR_RESULT_BAD_REPLY:
++        state = "badreply";
++        msg = QString("Nguồn %1 trả lời không đọc được - kiểm tra lệnh đọc trong board_config.h.").arg(name);
++        break;
++    default:
++        state = "error";
++        msg = QString("Nguồn %1: kết quả không xác định (%2).").arg(name).arg(st.result);
++        break;
++    }
++    // Lần đọc chen vào giữa lúc đang chờ lệnh đặt: giữ nhãn "pending".
++    if (matchesWait || waitKind == 0)
++        src->setLink(state, msg);
++
++    static const char *reasonText[] = { "đọc", "xác nhận lệnh", "đặt lại" };
++    const QString reason = st.reason <= 2 ? QString::fromUtf8(reasonText[st.reason]) : QStringLiteral("?");
++    appendCommandLog("RX", QString("%1 (%2): %3%4").arg(name, reason,
++                     st.result == PWR_RESULT_OK ? QStringLiteral("OK") : state.toUpper(), parts));
++    writeToLog(QString("[POWER] %1 %2 result=%3 err=%4%5").arg(name, reason).arg(st.result).arg(st.dev_err).arg(parts));
++    if (!msg.isEmpty())
++        emit systemNotification("Error", msg);
++    else if (st.reason == PWR_REASON_SET)
++        emit systemNotification("Success", QString("Nguồn %1 đã xác nhận: %2").arg(name, src->isOn() ? "BẬT" : "TẮT"));
+ }
+ 
+ 
+@@ -609,20 +876,33 @@
+             const char *okText = isSuccess ? "THÀNH CÔNG" : "THẤT BẠI";
+ 
+             switch (kmsg.msgid) {
+-            case 35: // Phản hồi bật/tắt AC
+-                // Thành công -> đúng trạng thái đã yêu cầu; thất bại -> trả về
+-                // trạng thái trước đó (công tắc trên UI tự nhảy lại theo).
+-                m_acSource->setIsOn(isSuccess ? m_acPendingOn : m_acPrevOn);
+-                writeToLog(QString("[ACK] Lệnh %1 AC: %2").arg(m_acPendingOn ? "bật" : "tắt", okText));
+-                if (!isSuccess)
+-                    emit systemNotification("Error", "Board từ chối lệnh nguồn AC (UART nguồn AC chưa sẵn sàng?)");
+-                break;
+-            case 36: // Phản hồi bật/tắt DC
+-                m_dcSource->setIsOn(isSuccess ? m_dcPendingOn : m_dcPrevOn);
+-                writeToLog(QString("[ACK] Lệnh %1 DC: %2").arg(m_dcPendingOn ? "bật" : "tắt", okText));
+-                if (!isSuccess)
+-                    emit systemNotification("Error", "Board từ chối lệnh nguồn DC (UART nguồn DC chưa sẵn sàng?)");
++            case 35: // ACK lệnh AC
++            case 36: { // ACK lệnh DC
++                // Firmware mới gửi msgid 42 (kết quả thật từ nguồn) NGAY TRƯỚC
++                // ACK này - handlePwrStatus() đã cập nhật công tắc/đồ thị/
++                // thông báo. Chỉ khi chưa có 42 (firmware cũ: ACK = "đã gửi
++                // byte", không xác nhận được nguồn) mới dùng ACK để quyết định.
++                const bool isAc = (kmsg.msgid == 35);
++                BasePowerSource *src = isAc ? static_cast<BasePowerSource *>(m_acSource) : m_dcSource;
++                const bool gotPws = isAc ? m_acGotPws : m_dcGotPws;
++                writeToLog(QString("[ACK] Lệnh %1: %2").arg(isAc ? "AC" : "DC", okText));
++                if (!gotPws) {
++                    int &waitKind = isAc ? m_acWaitKind : m_dcWaitKind;
++                    if (waitKind == 2) {
++                        (isAc ? m_acPowerTimer : m_dcPowerTimer)->stop();
++                        waitKind = 0;
++                    }
++                    src->setIsOn(isSuccess ? (isAc ? m_acPendingOn : m_dcPendingOn)
++                                           : (isAc ? m_acPrevOn : m_dcPrevOn));
++                    if (isSuccess) {
++                        src->setLink("unconfirmed", "Board đã gửi lệnh nhưng firmware này chưa hỗ trợ xác nhận từ nguồn.");
++                    } else {
++                        src->setLink("error", "Board từ chối lệnh.");
++                        emit systemNotification("Error", QString("Board từ chối lệnh nguồn %1.").arg(isAc ? "AC" : "DC"));
++                    }
++                }
+                 break;
++            }
+             case 37: // Phản hồi làm chậm (Delay)
+                 writeToLog(QString("[ACK] Lệnh cấu hình Delay: %1").arg(okText));
+                 if (!isSuccess)
+@@ -636,6 +916,23 @@
+             }
+         }
+ 
++        else if (kmsg.msgid == 41) {
++            // Chỉ có ACK khi board TỪ CHỐI yêu cầu đọc (gói sai) - thành công
++            // thì câu trả lời là msgid 42.
++            if (kmsg.len >= 1 && kmsg.payload64[0] == 0) {
++                appendCommandLog("RX", "Board từ chối yêu cầu đọc nguồn");
++                emit systemNotification("Error", "Board từ chối yêu cầu đọc nguồn (gói không hợp lệ).");
++            }
++        }
++
++        else if (kmsg.msgid == 42) {
++            if (kmsg.len == sizeof(pwr_status_msg_t)) {
++                pwr_status_msg_t st;
++                std::memcpy(&st, kmsg.payload64, sizeof(st));
++                handlePwrStatus(st);
++            }
++        }
++
+         else if (kmsg.msgid == 39) {
+ 
+             if (kmsg.len > STREAM_MAGIC_LEN &&
+@@ -735,7 +1032,7 @@
+     // Lưu giá trị để lần mở app sau hiển thị lại (chỉ hiển thị, không tự
+     // gửi xuống board lúc khởi động - xem constructor).
+     if (channel >= 1 && channel <= 3) {
+-        m_settings.setValue(QString("att/ch%1").arg(channel), sentDb);
++        saveSetting(QString("att/ch%1").arg(channel), sentDb);
+     }
+ 
+     kria_message_t tx_msg;
+@@ -776,19 +1073,8 @@
+         processWaveMagnitudes(mags, true);
+     }
+ 
+-    static int tickCount = 0;
+-    if (++tickCount % 30 == 0) {
+-        double simVAC = 220.0 + 5.0 * std::sin(t * 0.1);
+-        double simIAC = 1.0   + 0.1 * std::sin(t * 0.07);
+-        double simF   = 50.0  + 0.2 * std::sin(t * 0.05);
+-        m_acSource->updateACData(simVAC, simIAC, simF);
+-
+-        double simVDC = 24.0  + 0.5 * std::sin(t * 0.08);
+-        double simIDC = 0.8   + 0.05 * std::sin(t * 0.06);
+-        m_dcSource->updateData(simVDC, simIDC);
+-
+-
+-    }
++    // 4 đồ thị nguồn AC/DC KHÔNG còn số mô phỏng: chúng chỉ hiển thị số đo
++    // thật đọc từ nguồn (msgid 42), chưa có thì hiện "--".
+ }
+ 
+ 
+@@ -951,9 +1237,9 @@
+     m_calibrated  = true;
+     m_calLoHz     = m_rxLoHz;
+     m_calGainDb   = m_rxGainDb;
+-    m_settings.setValue("rf/calOffsetDb", m_calOffsetDb);
+-    m_settings.setValue("rf/calLoHz", static_cast<qulonglong>(m_calLoHz));
+-    m_settings.setValue("rf/calGainDb", m_calGainDb);
++    saveSetting("rf/calOffsetDb", m_calOffsetDb);
++    saveSetting("rf/calLoHz", static_cast<qulonglong>(m_calLoHz));
++    saveSetting("rf/calGainDb", m_calGainDb);
+     updateCalibrationState();
+     writeToLog(QString("[RF] Hiệu chuẩn: chuẩn %1 dBm <-> đo %2 dBFS => offset %3 dB (LO %4 MHz, gain %5 dB)")
+                    .arg(refDbm, 0, 'f', 2).arg(m_lastTotalDbfs, 0, 'f', 2).arg(m_calOffsetDb, 0, 'f', 2)
+@@ -971,7 +1257,97 @@
+     m_settings.remove("rf/calOffsetDb");
+     m_settings.remove("rf/calLoHz");
+     m_settings.remove("rf/calGainDb");
++    m_settings.sync();
+     updateCalibrationState();
+     writeToLog("[RF] Đã xoá hiệu chuẩn - phổ hiển thị theo dBFS");
+     emit systemNotification("Info", "Đã xoá hiệu chuẩn RF (đơn vị trở về dBFS)");
+ }
++
++
++// ─────────────────────────────────────────────────────────────────────────
++// config.ini
++// ─────────────────────────────────────────────────────────────────────────
++QString DashboardManager::resolveConfigPath()
++{
++    // 1) Biến môi trường (máy test/nhiều cấu hình): DASHBOARDENV_CONFIG=<file>
++    const QString env = qEnvironmentVariable("DASHBOARDENV_CONFIG");
++    if (!env.isEmpty())
++        return env;
++
++    // 2) config.ini cạnh file .exe - dễ thấy, dễ sao lưu/mang sang máy khác.
++    //    Thử mở ghi thật (QFileInfo::isWritable không đáng tin với ACL Windows,
++    //    vd khi cài trong Program Files).
++    const QString exeDir = QCoreApplication::applicationDirPath();
++    const QString local = exeDir + QStringLiteral("/config.ini");
++    {
++        QFile f(local);
++        if (f.open(QIODevice::ReadWrite)) {
++            f.close();
++            return local;
++        }
++    }
++
++    // 3) Không ghi được cạnh .exe -> AppData của người dùng.
++    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
++    if (dir.isEmpty())
++        dir = QDir::homePath() + QStringLiteral("/.DashboardEnv");
++    QDir().mkpath(dir);
++    return dir + QStringLiteral("/config.ini");
++}
++
++void DashboardManager::migrateOldSettings()
++{
++    // Bản trước lưu ở %APPDATA%/VASC/AvionicsDashboard.ini (QSettings mặc định
++    // theo tên tổ chức/ứng dụng). Lần đầu chạy bản mới (config.ini còn trống)
++    // chép sang 1 lần để người dùng không phải nhập lại.
++    if (!m_settings.allKeys().isEmpty())
++        return;
++    if (QCoreApplication::organizationName().isEmpty() || QCoreApplication::applicationName().isEmpty())
++        return;
++    QSettings old(QSettings::IniFormat, QSettings::UserScope,
++                  QCoreApplication::organizationName(), QCoreApplication::applicationName());
++    if (QFileInfo(old.fileName()) == QFileInfo(m_configPath))
++        return;
++    const QStringList keys = old.allKeys();
++    if (keys.isEmpty())
++        return;
++    for (const QString &k : keys)
++        m_settings.setValue(k, old.value(k));
++    m_settings.setValue("meta/migratedFrom", old.fileName());
++    m_settings.sync();
++    const QString from = old.fileName();
++    QTimer::singleShot(0, this, [this, from] {
++        appendCommandLog("INFO", "Đã chép cấu hình cũ từ " + QDir::toNativeSeparators(from));
++    });
++}
++
++void DashboardManager::saveSetting(const QString &key, const QVariant &value)
++{
++    m_settings.setValue(key, value);
++    // Ghi xuống đĩa ngay - app bị tắt đột ngột cũng không mất giá trị vừa chốt.
++    m_settings.sync();
++}
++
++double DashboardManager::loadOptionalDouble(const QSettings &s, const QString &key, double lo, double hi)
++{
++    if (!s.contains(key))
++        return kNaN;
++    const QString txt = s.value(key).toString().trimmed();
++    if (txt.isEmpty())
++        return kNaN;
++    bool ok = false;
++    const double v = txt.toDouble(&ok);
++    if (!ok || std::isnan(v))
++        return kNaN;
++    return qBound(lo, v, hi);
++}
++
++QVariant DashboardManager::loadUi(const QString &key, const QVariant &defaultValue) const
++{
++    return m_settings.value(QStringLiteral("ui/") + key, defaultValue);
++}
++
++void DashboardManager::saveUi(const QString &key, const QVariant &value)
++{
++    saveSetting(QStringLiteral("ui/") + key, value);
++}
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/dashboardmanager.h r3/app/backend/dashboardmanager.h
+--- r3_base/app/backend/dashboardmanager.h	2026-10-01 09:37:04.531153253 +0000
++++ r3/app/backend/dashboardmanager.h	2026-10-05 09:10:19.233506691 +0000
+@@ -11,6 +11,7 @@
+ #include <QStringList>
+ #include <QVariantList>
+ #include <QSettings>
++#include <cmath>
+ 
+ #include "acsource.h"
+ #include "dcsource.h"
+@@ -38,6 +39,9 @@
+     Q_PROPERTY(QStringList availablePorts READ availablePorts  NOTIFY availablePortsChanged FINAL)
+     Q_PROPERTY(QStringList commandLog READ commandLog  NOTIFY commandLogChanged FINAL)
+     Q_PROPERTY(QVariantList adcChannels READ adcChannels NOTIFY adcChannelsChanged FINAL)
++    // Đường dẫn file cấu hình thật đang dùng (config.ini cạnh file .exe, hoặc
++    // AppData nếu thư mục .exe không ghi được) - hiện ở tooltip/Terminal.
++    Q_PROPERTY(QString configPath READ configPath CONSTANT FINAL)
+ 
+     // Đèn xác thực đúng COM: true chỉ khi board 5E-HTE thật đã trả lời ACK
+     // cho 1 khung PING_STD do app gửi (xem StartPingCycle()/parseIncomingData()).
+@@ -67,16 +71,18 @@
+     Q_PROPERTY(double dcCurrentMax READ dcCurrentMax CONSTANT)
+     Q_PROPERTY(double attMax READ attMax CONSTANT)
+ 
+-    // Giá trị "đang nhập" (staged) cho 4 ô Power - trước đây lưu bằng
++    // Giá trị "đang nhập" (staged) cho 4 ô Power. NaN = CHƯA NHẬP (ô hiện
++    // "--", lưu vào .ini dưới dạng chuỗi rỗng) - không còn tự điền giá trị
++    // mặc định khi xoá ô hay khi chạy lần đầu. Trước đây lưu bằng
+     // Qt.labs.settings ở PowerControlPanel.qml (QML-side), giờ chuyển hẳn
+     // xuống backend để: (1) hết cảnh báo deprecate Qt.labs.settings, (2)
+     // dùng chung 1 QSettings m_settings với comPort/baudRate/... thay vì
+     // 2 cơ chế lưu khác nhau trong cùng 1 app. Đây CHỈ là giá trị đang
+     // soạn trên UI (chưa gửi lệnh) - không đụng phần cứng khi load lại
+     // (xem constructor: gán thẳng vào member, không gọi qua setter).
+-    Q_PROPERTY(int stagedAcVolt READ stagedAcVolt WRITE setStagedAcVolt NOTIFY stagedAcVoltChanged)
+-    Q_PROPERTY(int stagedAcFreq READ stagedAcFreq WRITE setStagedAcFreq NOTIFY stagedAcFreqChanged)
+-    Q_PROPERTY(int stagedDcVolt READ stagedDcVolt WRITE setStagedDcVolt NOTIFY stagedDcVoltChanged)
++    Q_PROPERTY(double stagedAcVolt READ stagedAcVolt WRITE setStagedAcVolt NOTIFY stagedAcVoltChanged)
++    Q_PROPERTY(double stagedAcFreq READ stagedAcFreq WRITE setStagedAcFreq NOTIFY stagedAcFreqChanged)
++    Q_PROPERTY(double stagedDcVolt READ stagedDcVolt WRITE setStagedDcVolt NOTIFY stagedDcVoltChanged)
+     Q_PROPERTY(double stagedDcCurrent READ stagedDcCurrent WRITE setStagedDcCurrent NOTIFY stagedDcCurrentChanged)
+ 
+ public:
+@@ -99,10 +105,11 @@
+     bool isPortVerified() const {return m_isPortVerified;}
+     double kichNoPeakVoltage() const {return m_kichNoPeakV;}
+ 
+-    int    stagedAcVolt()    const {return m_stagedAcVolt;}
+-    int    stagedAcFreq()    const {return m_stagedAcFreq;}
+-    int    stagedDcVolt()    const {return m_stagedDcVolt;}
++    double stagedAcVolt()    const {return m_stagedAcVolt;}
++    double stagedAcFreq()    const {return m_stagedAcFreq;}
++    double stagedDcVolt()    const {return m_stagedDcVolt;}
+     double stagedDcCurrent() const {return m_stagedDcCurrent;}
++    QString configPath()     const {return m_configPath;}
+ 
+     // Giới hạn nguồn AC/DC - xem board_config.h (firmware) src/board_config.h:
+     // AC_UVP_VOLTAGE=80, AC_OVP_LIMIT=150, DC_MAX_VOLTAGE=36, DC_MAX_CURRENT=5.
+@@ -122,16 +129,33 @@
+     void setBaudRate(int rate);
+     void setDelayTime(int time);
+     void setSessionName(const QString &sessionName);
+-    void setStagedAcVolt(int v);
+-    void setStagedAcFreq(int f);
+-    void setStagedDcVolt(int v);
++    void setStagedAcVolt(double v);
++    void setStagedAcFreq(double f);
++    void setStagedDcVolt(double v);
+     void setStagedDcCurrent(double c);
+ 
+     Q_INVOKABLE void startSession();
+     Q_INVOKABLE void stopSession();
+     Q_INVOKABLE void openLogFile();
++    // Công tắc AC/DC trên giao diện gọi 2 hàm này: kiểm tra đã kết nối và
++    // (khi BẬT) đã nhập đủ giá trị - thiếu thì báo rõ và trả false (công tắc
++    // tự về vị trí cũ), đủ thì gửi lệnh. Trạng thái ON/OFF cuối cùng theo
++    // đúng xác nhận của nguồn (msgid 42), không theo vị trí công tắc.
++    Q_INVOKABLE bool requestAcPower(bool on);
++    Q_INVOKABLE bool requestDcPower(bool on);
+     Q_INVOKABLE void setAcPower(bool on, uint16_t volt, uint16_t freq );
+     Q_INVOKABLE void setDcPower(bool on,uint16_t volt, double cur);
++
++    // Đọc giá trị tức thời của nguồn (nút refresh trên đồ thị): dev 1 = AC,
++    // 2 = DC. refreshAllPower() = phím F5 (cả 2 nguồn). Chỉ đọc, không đổi
++    // gì trên nguồn.
++    Q_INVOKABLE void refreshPower(int dev);
++    Q_INVOKABLE void refreshAllPower();
++
++    // Lưu/nạp trạng thái giao diện thuần (theme, kích thước cửa sổ, ô công
++    // suất chuẩn RF...) vào cùng file config.ini, nhóm [ui].
++    Q_INVOKABLE QVariant loadUi(const QString &key, const QVariant &defaultValue = QVariant()) const;
++    Q_INVOKABLE void saveUi(const QString &key, const QVariant &value);
+     Q_INVOKABLE void applyDelayTime ( int ns);
+     Q_INVOKABLE void refreshPorts();
+     Q_INVOKABLE bool isPortAvailable(const QString &portName) const;
+@@ -179,6 +203,9 @@
+     void onPingTimeout();
+     // Không nhận được gói "WAVE" nào trong WAVE_WATCHDOG_MS khi đang kết nối.
+     void onWaveWatchdog();
++    // Board không trả msgid 42 trong POWER_REPLY_TIMEOUT_MS.
++    void onAcPowerTimeout();
++    void onDcPowerTimeout();
+ 
+ private:
+     void handleSerialRead();
+@@ -207,6 +234,17 @@
+     void updateCalibrationState();
+     void resetRfState();
+ 
++    // ── Nguồn chuẩn AC/DC: đọc ngược + xác nhận (msgid 41/42) ──
++    void handlePwrStatus(const pwr_status_msg_t &st);
++    void sendPwrQuery(uint8_t dev);
++    void powerTimeout(bool isAc);
++
++    // ── config.ini ──
++    static QString resolveConfigPath();
++    void migrateOldSettings();
++    void saveSetting(const QString &key, const QVariant &value);
++    static double loadOptionalDouble(const QSettings &s, const QString &key, double lo, double hi);
++
+     ACsource *m_acSource;
+     DCsource *m_dcSource;
+     RfController *m_rfController;
+@@ -242,10 +280,10 @@
+     // Kích nổ - bắt đỉnh phần mềm (xem parseIncomingData() msgid 40).
+     double m_kichNoPeakV;
+ 
+-    // Staged Power UI values - xem comment Q_PROPERTY phía trên.
+-    int    m_stagedAcVolt;
+-    int    m_stagedAcFreq;
+-    int    m_stagedDcVolt;
++    // Staged Power UI values - xem comment Q_PROPERTY phía trên. NaN = "--".
++    double m_stagedAcVolt;
++    double m_stagedAcFreq;
++    double m_stagedDcVolt;
+     double m_stagedDcCurrent;
+     // ── RF spectrum ──
+     QTimer *m_waveWatchdog;                      // single-shot
+@@ -270,13 +308,23 @@
+     // ── ACK nguồn AC/DC: trạng thái yêu cầu vs trạng thái trước đó ──
+     bool m_acPendingOn, m_acPrevOn;
+     bool m_dcPendingOn, m_dcPrevOn;
++    // Đã nhận msgid 42 cho lệnh đặt đang chờ chưa (firmware mới luôn gửi 42
++    // TRƯỚC ACK; ACK tới mà chưa có 42 = firmware cũ, không xác nhận được).
++    bool m_acGotPws, m_dcGotPws;
++    // Đang chờ kết quả cho: 0 không chờ, 1 đọc (refresh), 2 lệnh đặt, 3 RESET
++    int  m_acWaitKind, m_dcWaitKind;
++    QTimer *m_acPowerTimer;     // single-shot
++    QTimer *m_dcPowerTimer;
++    // Trường hợp xấu nhất phía firmware (xả hàng lỗi SCPI + 5 câu hỏi, mỗi
++    // câu timeout 500 ms) vẫn < 4 s; 8 s để không báo động giả.
++    static constexpr int POWER_REPLY_TIMEOUT_MS = 8000;
+ 
+     static constexpr double ADC7928_VREF_VOLTS = 2.5;      // board_config.h
+     static constexpr double ADC7928_FULL_SCALE = ADC7928_VREF_VOLTS * 2.0; // RANGE 0..2*VREF
+ 
+-    // Backing QSettings cho các giá trị "nhớ lần trước" (COM/baud/tên phiên/
+-    // giữ chậm) - INI format được ép ở main.cpp (QSettings::setDefaultFormat)
+-    // để luôn ra file *.ini thay vì registry trên Windows.
++    // config.ini - xem resolveConfigPath(). m_configPath PHẢI khai báo trước
++    // m_settings (thứ tự khởi tạo thành viên).
++    QString   m_configPath;
+     QSettings m_settings;
+ };
+ 
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/kria_helper.h r3/app/backend/kria_helper.h
+--- r3_base/app/backend/kria_helper.h	2026-10-01 09:37:04.531777595 +0000
++++ r3/app/backend/kria_helper.h	2026-10-05 09:10:19.235516103 +0000
+@@ -85,6 +85,50 @@
+     uint8_t  window;        // 0 = rectangular
+ } rf_status_msg_t;
+ 
++// ── Đọc ngược nguồn chuẩn AC/DC (byte-for-byte giống firmware src/kria_helper.h)
++#define PWR_DEV_AC              1U
++#define PWR_DEV_DC              2U
++
++#define PWR_REASON_READ         0U  // msgid 41 (nút refresh / F5)
++#define PWR_REASON_SET          1U  // xác nhận lệnh msgid 35/36
++#define PWR_REASON_RESET        2U  // xác nhận "RESET" (msgid 39)
++
++#define PWR_RESULT_OK           0U
++#define PWR_RESULT_NO_REPLY     1U  // nguồn không trả lời (cáp/baud/nguồn tắt)
++#define PWR_RESULT_DEV_ERROR    2U  // SYST:ERR? báo lỗi (dev_err)
++#define PWR_RESULT_OUT_MISMATCH 3U  // OUTP? khác trạng thái yêu cầu
++#define PWR_RESULT_NOT_READY    4U  // UART nguồn trên board chưa khởi tạo
++#define PWR_RESULT_ABORTED      5U  // bị lệnh mới hơn thay thế
++#define PWR_RESULT_BAD_REPLY    6U  // phản hồi không đọc được
++
++#define PWR_VALID_VOLT          0x01U
++#define PWR_VALID_CURR          0x02U
++#define PWR_VALID_FREQ          0x04U
++#define PWR_VALID_OUTPUT        0x08U
++#define PWR_VALID_ERR           0x10U
++
++// msgid 41, app -> board: đọc 1 nguồn ngay.
++typedef struct __pwr_query_msg {
++    char    msg[4];         // "PWQ" + NUL
++    uint8_t dev;            // PWR_DEV_AC / PWR_DEV_DC
++    uint8_t flags;          // 0
++} pwr_query_msg_t;
++
++// msgid 42, board -> app: kết quả 1 lần trao đổi với nguồn.
++typedef struct __pwr_status_msg {
++    char     msg[4];        // "PWS" + NUL
++    uint8_t  dev;
++    uint8_t  reason;        // PWR_REASON_*
++    uint8_t  result;        // PWR_RESULT_*
++    uint8_t  output;        // 0 OFF, 1 ON, 0xFF chưa biết
++    uint8_t  valid;         // PWR_VALID_*
++    uint8_t  req_seq;
++    int16_t  dev_err;       // mã lỗi SCPI (AC)
++    int32_t  volt_mv;
++    int32_t  curr_ma;
++    int32_t  freq_mhz;
++} pwr_status_msg_t;
++
+ typedef struct _kria_message {
+     uint8_t seq;
+     uint8_t msgid;
+@@ -104,6 +148,8 @@
+ static_assert(sizeof(cmd_msg_t) == 68, "cmd_msg_t wire size changed");
+ static_assert(sizeof(adc7928_msg_t) == 20, "adc7928_msg_t wire size changed");
+ static_assert(sizeof(rf_status_msg_t) == 28, "rf_status_msg_t wire size changed");
++static_assert(sizeof(pwr_query_msg_t) == 6, "pwr_query_msg_t wire size changed");
++static_assert(sizeof(pwr_status_msg_t) == 24, "pwr_status_msg_t wire size changed");
+ 
+ 
+ typedef enum {
+@@ -195,6 +241,12 @@
+     case 40:
+         msg->len = sizeof(adc7928_msg_t);
+         break;
++    case 41:
++        msg->len = sizeof(pwr_query_msg_t);
++        break;
++    case 42:
++        msg->len = sizeof(pwr_status_msg_t);
++        break;
+     default:
+         return;
+     }
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/rfcontroller.cpp r3/app/backend/rfcontroller.cpp
+--- r3_base/app/backend/rfcontroller.cpp	2026-10-01 09:37:04.532461715 +0000
++++ r3/app/backend/rfcontroller.cpp	2026-10-05 09:06:26.185672426 +0000
+@@ -1,8 +1,13 @@
+ #include "rfcontroller.h"
++#include <cmath>
++#include <limits>
+ 
+ RfController::RfController(QObject *parent)
+     : QObject(parent),
+-    m_att1(0.0), m_att2(0.0), m_att3(0.0),
++    // NaN = chưa đặt (ô ATT hiện "--") cho tới khi nạp từ config.ini/người dùng nhập.
++    m_att1(std::numeric_limits<double>::quiet_NaN()),
++    m_att2(std::numeric_limits<double>::quiet_NaN()),
++    m_att3(std::numeric_limits<double>::quiet_NaN()),
+     m_xMin(-16.0), m_xMax(15.0), m_yMin(-100.0), m_yMax(0.0),
+     m_xIsFrequency(false),
+     m_peakLevel(0.0), m_peakX(0.0), m_totalLevel(0.0), m_totalDbfs(0.0),
+@@ -75,10 +80,12 @@
+ bool RfController::requestSetAtt(int channel, double value, bool force)
+ {
+     bool changed = false;
++    if (std::isnan(value))
++        return false;           // ô đang "--": không có gì để gửi
+     switch (channel) {
+-    case 1: if (!qFuzzyCompare(m_att1 + 1.0, value + 1.0)) { m_att1 = value; emit att1Changed(); changed = true; } break;
+-    case 2: if (!qFuzzyCompare(m_att2 + 1.0, value + 1.0)) { m_att2 = value; emit att2Changed(); changed = true; } break;
+-    case 3: if (!qFuzzyCompare(m_att3 + 1.0, value + 1.0)) { m_att3 = value; emit att3Changed(); changed = true; } break;
++    case 1: if (!sameAtt(m_att1, value)) { m_att1 = value; emit att1Changed(); changed = true; } break;
++    case 2: if (!sameAtt(m_att2, value)) { m_att2 = value; emit att2Changed(); changed = true; } break;
++    case 3: if (!sameAtt(m_att3, value)) { m_att3 = value; emit att3Changed(); changed = true; } break;
+     default: return false;
+     }
+     if (changed || force)
+diff -ruN --strip-trailing-cr -x build r3_base/app/backend/rfcontroller.h r3/app/backend/rfcontroller.h
+--- r3_base/app/backend/rfcontroller.h	2026-10-01 09:37:04.533011745 +0000
++++ r3/app/backend/rfcontroller.h	2026-10-05 09:06:26.188621619 +0000
+@@ -59,9 +59,14 @@
+     double att2() const { return m_att2; }
+     double att3() const { return m_att3; }
+ 
+-    void setAtt1(double val) { if (!qFuzzyCompare(m_att1 + 1.0, val + 1.0)) { m_att1 = val; emit att1Changed(); } }
+-    void setAtt2(double val) { if (!qFuzzyCompare(m_att2 + 1.0, val + 1.0)) { m_att2 = val; emit att2Changed(); } }
+-    void setAtt3(double val) { if (!qFuzzyCompare(m_att3 + 1.0, val + 1.0)) { m_att3 = val; emit att3Changed(); } }
++    // NaN = chưa đặt ("--"). So sánh tay vì qFuzzyCompare không xử lý NaN.
++    static bool sameAtt(double a, double b) {
++        if (a != a || b != b) return (a != a) && (b != b);
++        return qFuzzyCompare(a + 1.0, b + 1.0);
++    }
++    void setAtt1(double val) { if (!sameAtt(m_att1, val)) { m_att1 = val; emit att1Changed(); } }
++    void setAtt2(double val) { if (!sameAtt(m_att2, val)) { m_att2 = val; emit att2Changed(); } }
++    void setAtt3(double val) { if (!sameAtt(m_att3, val)) { m_att3 = val; emit att3Changed(); } }
+ 
+     QVariantList waveData() const { return m_waveData; }
+     double xMin() const { return m_xMin; }
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/Main.qml r3/app/qml/Main.qml
+--- r3_base/app/qml/Main.qml	2026-09-16 11:06:42.000000000 +0000
++++ r3/app/qml/Main.qml	2026-10-05 09:10:19.237561480 +0000
+@@ -1,11 +1,13 @@
+ import QtQuick
+ import QtQuick.Layouts
+ import QtQuick.Controls
++import QtQuick.Window
+ import DashboardEnv
+ import "../qml/views"
+ import "../qml/components"
+ 
+ ApplicationWindow {
++    id: appWindow
+     visible: true
+     width: 1280
+     height: 720
+@@ -18,6 +20,48 @@
+     title: qsTr("Bảng Điều Khiển Hệ Thống Avionics VASC")
+     color: AppTheme.mainBg
+ 
++    // ── Nhớ giao diện giữa các lần mở (config.ini, nhóm [ui]) ──
++    // Chỉ là trạng thái hiển thị - không liên quan thiết bị.
++    Component.onCompleted: {
++        var w = Number(dashboard.loadUi("windowWidth", 0))
++        var h = Number(dashboard.loadUi("windowHeight", 0))
++        if (w >= 800 && h >= 500) { width = w; height = h }
++        var x0 = dashboard.loadUi("windowX", "")
++        var y0 = dashboard.loadUi("windowY", "")
++        if (x0 !== "" && y0 !== "") {
++            // Chỉ đặt lại vị trí nếu vẫn nằm trong màn hình hiện có (tránh
++            // cửa sổ "biến mất" khi lần trước mở trên màn hình phụ đã rút).
++            var xi = Number(x0), yi = Number(y0)
++            if (xi > -width + 100 && xi < Screen.desktopAvailableWidth - 100 && yi >= 0 && yi < Screen.desktopAvailableHeight - 100) {
++                x = xi; y = yi
++            }
++        }
++        if (String(dashboard.loadUi("maximized", "false")) === "true")
++            visibility = Window.Maximized
++        AppTheme.isDarkMode = String(dashboard.loadUi("darkMode", "false")) === "true"
++    }
++    onClosing: {
++        var maximized = (visibility === Window.Maximized)
++        dashboard.saveUi("maximized", maximized)
++        if (!maximized) {
++            dashboard.saveUi("windowWidth", width)
++            dashboard.saveUi("windowHeight", height)
++            dashboard.saveUi("windowX", x)
++            dashboard.saveUi("windowY", y)
++        }
++    }
++    Connections {
++        target: AppTheme
++        function onIsDarkModeChanged() { dashboard.saveUi("darkMode", AppTheme.isDarkMode) }
++    }
++
++    // F5: đọc tức thời cả 2 nguồn (AC + DC) - chỉ đọc, không đổi gì trên nguồn.
++    Shortcut {
++        sequence: "F5"
++        context: Qt.ApplicationShortcut
++        onActivated: dashboard.refreshAllPower()
++    }
++
+     GridLayout {
+         anchors.fill: parent
+         anchors.margins: 12
+@@ -207,31 +251,39 @@
+             Layout.fillHeight: true
+             spacing: 12
+ 
++            // 4 đồ thị = SỐ ĐO đọc từ chính nguồn (không phải giá trị đặt).
++            // Nút ⟳ trên mỗi ô đọc lại nguồn đó (2 ô AC dùng chung 1 lần đọc
++            // nên cùng cập nhật), F5 đọc cả 2 nguồn.
+             MiniMonitorChart {
+-                boxTitle:  qsTr("Điện áp AC")
+-                isAC:  true
+-                unit : "V"
+-                yMin: 180.0
+-                yMax: 260.0
++                Layout.fillWidth: true
++                Layout.fillHeight: true
++                boxTitle: qsTr("Điện áp AC")
++                isAC: true
++                unit: "V"
+                 currentValue: dashboard.acSource.voltage
+                 dataSource: dashboard.acSource.voltageHistory
+                 historyMaxVal: dashboard.acSource.voltageMax
+                 historyMinVal: dashboard.acSource.voltageMin
+-                Layout.fillWidth: true
+-                Layout.fillHeight: true
++                powerSource: dashboard.acSource
++                refreshEnabled: dashboard.isConnected
++                refreshTip: qsTr("Làm mới nguồn AC (F5: làm mới tất cả)")
++                onRefreshRequested: dashboard.refreshPower(1)
+             }
+             MiniMonitorChart {
+                 Layout.fillWidth: true
+                 Layout.fillHeight: true
+-                boxTitle: qsTr("Dòng điện AC")
++                boxTitle: qsTr("Tần số AC")
+                 isAC: true
+-                unit: "A"
+-                yMin: 0.0
+-                yMax: 3.0
+-                currentValue: dashboard.acSource.current
+-                dataSource: dashboard.acSource.currentHistory
+-                historyMaxVal: dashboard.acSource.currentMax
+-                historyMinVal: dashboard.acSource.currentMin
++                iconSource: "qrc:/qt/qml/DashboardEnv/assets/images/freq.png"
++                unit: "Hz"
++                currentValue: dashboard.acSource.freq
++                dataSource: dashboard.acSource.freqHistory
++                historyMaxVal: dashboard.acSource.freqMax
++                historyMinVal: dashboard.acSource.freqMin
++                powerSource: dashboard.acSource
++                refreshEnabled: dashboard.isConnected
++                refreshTip: qsTr("Làm mới nguồn AC (F5: làm mới tất cả)")
++                onRefreshRequested: dashboard.refreshPower(1)
+             }
+             MiniMonitorChart {
+                 Layout.fillWidth: true
+@@ -239,12 +291,14 @@
+                 boxTitle: qsTr("Điện áp DC")
+                 isAC: false
+                 unit: "V"
+-                yMax: 30.0
+-                yMin: 20.0
+                 currentValue: dashboard.dcSource.voltage
+                 dataSource: dashboard.dcSource.voltageHistory
+                 historyMaxVal: dashboard.dcSource.voltageMax
+                 historyMinVal: dashboard.dcSource.voltageMin
++                powerSource: dashboard.dcSource
++                refreshEnabled: dashboard.isConnected
++                refreshTip: qsTr("Làm mới nguồn DC (F5: làm mới tất cả)")
++                onRefreshRequested: dashboard.refreshPower(2)
+             }
+             MiniMonitorChart {
+                 Layout.fillWidth: true
+@@ -252,12 +306,15 @@
+                 boxTitle: qsTr("Dòng điện DC")
+                 isAC: false
+                 unit: "A"
+-                yMin : 0.0
+-                yMax : 3.0
++                decimals: 3
+                 currentValue: dashboard.dcSource.current
+                 dataSource: dashboard.dcSource.currentHistory
+                 historyMaxVal: dashboard.dcSource.currentMax
+                 historyMinVal: dashboard.dcSource.currentMin
++                powerSource: dashboard.dcSource
++                refreshEnabled: dashboard.isConnected
++                refreshTip: qsTr("Làm mới nguồn DC (F5: làm mới tất cả)")
++                onRefreshRequested: dashboard.refreshPower(2)
+             }
+         }
+ 
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/components/ClampedTextField.qml r3/app/qml/components/ClampedTextField.qml
+--- r3_base/app/qml/components/ClampedTextField.qml	2026-09-16 08:53:44.000000000 +0000
++++ r3/app/qml/components/ClampedTextField.qml	2026-10-05 08:53:24.312988047 +0000
+@@ -1,17 +1,15 @@
+ // ClampedTextField.qml
+ //
+ // TextField dùng chung cho MỌI ô nhập số có giới hạn min/max thật (Power AC/
+-// DC, Suy hao ATT...) - gộp lại logic từng bị lặp/sai riêng lẻ ở từng file.
++// DC, Suy hao ATT...).
+ //
+-// Theo đúng yêu cầu: dùng RegularExpressionValidator, nhưng CHỈ để lọc ký tự
+-// hợp lệ lúc gõ (số, tối đa 1 dấu chấm nếu decimals>0) - regex KHÔNG hiểu số
+-// học nên không thể tự chặn theo khoảng (vd "999" vẫn "khớp" mẫu 3 chữ số dù
+-// vượt xa max=150 - đúng lỗi "vẫn nhập được hơn" đã bị báo khi dùng regex một
+-// mình). Việc chặn khoảng giá trị THẬT SỰ nằm ở JS (parseFloat/parseInt luôn
+-// độc lập locale, không như DoubleValidator.locale - xem bug "Unable to assign
+-// QLocale to QString": locale ở Validator là QString tên locale, không phải
+-// QLocale, Qt.locale("en_US") trả về QLocale nên gán vào là sai kiểu) trong
+-// onTextChanged, tức chặn NGAY LÚC ĐANG GÕ, không đợi rời khỏi ô.
++// - RegularExpressionValidator CHỈ lọc ký tự hợp lệ lúc gõ (số, tối đa 1 dấu
++//   chấm nếu decimals>0). Chặn khoảng giá trị THẬT nằm ở JS (parseFloat/
++//   parseInt không phụ thuộc locale): vượt trên bị kẹp ngay lúc gõ, dưới
++//   ngưỡng kẹp khi gõ xong.
++// - Ô RỖNG = "chưa đặt": value = NaN, ô hiện "--" (placeholder). Xoá trắng ô
++//   rồi rời ô/Enter KHÔNG còn tự quay về giá trị cũ/mặc định nữa - phát
++//   committed(NaN) để nơi dùng lưu trạng thái "--".
+ import QtQuick
+ import QtQuick.Controls
+ 
+@@ -20,13 +18,13 @@
+ 
+     property real minValue: 0
+     property real maxValue: 100
+-    // 0 = số nguyên (ATT vẫn cho .25 -> dùng decimals:2 riêng), >0 = số thập phân
++    // 0 = số nguyên, >0 = số chữ số thập phân
+     property int  decimals: 0
+-    // Giá trị "đã chốt" - chỉ đổi khi rời ô/nhấn Enter, KHÔNG đổi theo từng
+-    // ký tự gõ dở (đúng nguyên tắc "init/đang gõ không được tự gửi lệnh").
+-    property real value: minValue
++    // Giá trị "đã chốt" - chỉ đổi khi rời ô/nhấn Enter. NaN = chưa đặt.
++    property real value: NaN
+ 
+-    // Phát ra khi người dùng chốt xong 1 giá trị hợp lệ (rời ô hoặc Enter).
++    // Phát ra khi người dùng chốt xong (rời ô hoặc Enter): số hợp lệ đã kẹp,
++    // hoặc NaN nếu ô bị xoá trắng.
+     signal committed(real value)
+ 
+     // true trong lúc field tự sửa lại text của chính nó - chặn onTextChanged
+@@ -34,6 +32,7 @@
+     property bool _selfEdit: false
+ 
+     selectByMouse: true
++    placeholderText: "--"
+ 
+     validator: RegularExpressionValidator {
+         regularExpression: field.decimals > 0
+@@ -42,6 +41,7 @@
+     }
+ 
+     function _format(v) {
++        if (isNaN(v)) return ""
+         return field.decimals > 0 ? v.toFixed(field.decimals) : String(Math.round(v))
+     }
+ 
+@@ -51,28 +51,41 @@
+         _selfEdit = false
+     }
+ 
++    // Giá trị bị đổi từ bên ngoài (nạp .ini, backend kẹp lại...) khi người
++    // dùng không đang gõ trong ô -> hiển thị lại cho khớp.
++    onValueChanged: if (!activeFocus) _setText(_format(value))
++
+     onTextChanged: {
+         if (_selfEdit || text.length === 0) return
+-        // Đang gõ dở dang (vd "12." hoặc chỉ 1 dấu chấm) - regex đã đảm bảo
+-        // hợp lệ về ký tự, chờ có số thật để parse, tránh kẹp nhầm về 0 giữa
+-        // chừng khi người dùng còn đang gõ tiếp phần thập phân.
++        // Đang gõ dở dang (vd "12.") - chờ có số thật để parse.
+         if (/\.$/.test(text)) return
+ 
+         var v = field.decimals > 0 ? parseFloat(text) : parseInt(text, 10)
+         if (isNaN(v)) return
+ 
+-        // Chỉ chặn NGOÀI TRÊN lúc đang gõ (vd không cho gõ vượt 150) - không
+-        // chặn dưới ở đây, vì số hợp lệ luôn bắt đầu từ 1-2 chữ số nhỏ hơn
+-        // minValue (vd gõ "8" rồi "0" thành "80" cho khoảng 80-150 sẽ luôn bị
+-        // kẹp ngược về minValue giữa chừng nếu chặn dưới ngay lúc gõ). Chặn
+-        // dưới thực hiện ở onEditingFinished khi đã gõ xong.
++        // Chỉ chặn NGOÀI TRÊN lúc đang gõ (không cho gõ vượt max) - chặn dưới
++        // để khi gõ xong (gõ "8" rồi "0" thành "80" cho khoảng 80-150 sẽ bị
++        // kẹp sai giữa chừng nếu chặn dưới ngay).
+         if (v > field.maxValue)
+             _setText(field._format(field.maxValue))
+     }
+ 
+     onEditingFinished: {
+-        var v = field.decimals > 0 ? parseFloat(field.text) : parseInt(field.text, 10)
+-        if (isNaN(v)) v = field.value
++        var t = field.text.trim()
++        if (t.length === 0 || t === ".") {
++            // Xoá trắng = chưa đặt ("--").
++            field.value = NaN
++            _setText("")
++            field.committed(NaN)
++            return
++        }
++        var v = field.decimals > 0 ? parseFloat(t) : parseInt(t, 10)
++        if (isNaN(v)) {
++            field.value = NaN
++            _setText("")
++            field.committed(NaN)
++            return
++        }
+         v = Math.max(field.minValue, Math.min(field.maxValue, v))
+         field.value = v
+         _setText(field._format(v))
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/components/CustomComboBox.qml r3/app/qml/components/CustomComboBox.qml
+--- r3_base/app/qml/components/CustomComboBox.qml	2026-09-16 08:14:24.000000000 +0000
++++ r3/app/qml/components/CustomComboBox.qml	2026-10-05 08:53:38.067931799 +0000
+@@ -57,7 +57,9 @@
+     }
+ 
+     contentItem: Text {
+-        text: cbControl.currentText
++        // Chưa chọn (chạy lần đầu, hoặc giá trị đã lưu không còn trong danh
++        // sách - vd cổng COM đã rút) -> "--".
++        text: cbControl.currentIndex < 0 ? "--" : cbControl.currentText
+         font.pixelSize: 11
+         color: AppTheme.textDark
+         verticalAlignment: Text.AlignVCenter
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/components/MiniMonitorChart.qml r3/app/qml/components/MiniMonitorChart.qml
+--- r3_base/app/qml/components/MiniMonitorChart.qml	2026-10-01 09:37:04.534618939 +0000
++++ r3/app/qml/components/MiniMonitorChart.qml	2026-10-05 09:05:54.076527321 +0000
+@@ -1,86 +1,126 @@
+-
+ import QtQuick
+ import QtQuick.Layouts
++import QtQuick.Controls
+ import QtQuick.Effects
+ import QtCharts
+ import DashboardEnv
++
++// Ô đồ thị 1 đại lượng của nguồn chuẩn (áp/dòng/tần số). Chỉ vẽ SỐ ĐO đọc
++// ngược từ chính nguồn (msgid 42) - mỗi điểm là 1 lần đọc thật (nút ⟳, F5,
++// hoặc lần xác nhận ngay sau lệnh bật/tắt). Chưa có số đo -> "--".
++//
++//  ┌──────────────────────────────────────────┐
++//  │ [icon] Tiêu đề              [ 220.4V ] [⟳]│  ⟳ = đọc lại nguồn này
++//  │              (đồ thị)                    │
++//  │ Cập nhật 14:32:05          Max: …  Min: …│
++//  └──────────────────────────────────────────┘
+ BoxWrap {
+     id: root
+     implicitWidth: 250
+     implicitHeight: 200
+ 
+-
+-    // Giá trị mặc định chỉ dùng nếu nơi gọi quên set boxTitle - mọi chỗ dùng
+-    // thật (Main.qml) đều tự truyền boxTitle riêng nên default này không bao
+-    // giờ thực sự hiển thị.
+     property string boxTitle: qsTr("Điện áp AC")
+-    property bool isAC: true
++    property bool   isAC: true
+     property string unit: "V"
++    property string iconSource: isAC ? "qrc:/qt/qml/DashboardEnv/assets/images/ACicon.png"
++                                     : "qrc:/qt/qml/DashboardEnv/assets/images/DCicon.png"
++    property int    decimals: 2
+ 
+-    property var dataSource: []
+-    property real currentValue: 0.0
+-    property real yMax: 120.0
+-    property real yMin: 80.0
+-    property alias series: lineSeries
++    property var    dataSource: []
++    property real   currentValue: 0.0
+     property real   historyMaxVal: 0.0
+     property real   historyMinVal: 0.0
++    property alias  series: lineSeries
++
++    // Nguồn (BasePowerSource) - trạng thái đọc: hasData/pending/linkState/
++    // linkMessage/lastUpdate.
++    property var    powerSource: null
++    property bool   refreshEnabled: true
++    property string refreshTip: qsTr("Làm mới (F5: làm mới tất cả)")
++    signal refreshRequested()
++
++    readonly property bool hasData: powerSource ? powerSource.hasData : dataSource.length > 0
++    readonly property bool pending: powerSource ? powerSource.pending : false
++    readonly property string linkState: powerSource ? powerSource.linkState : "none"
++    readonly property bool linkBad: ["noreply", "error", "mismatch", "badreply", "notready", "boardnoreply"].indexOf(linkState) >= 0
+ 
+     onDataSourceChanged: refreshSeries()
+-    function refreshSeries(){
++    Component.onCompleted: refreshSeries()
++
++    // Trục tự co giãn theo đúng các điểm đang có.
++    function refreshSeries() {
+         lineSeries.clear()
+-        for( var i =0 ;i< dataSource.length; i++){
++        pointSeries.clear()
++        var n = dataSource.length
++        if (n === 0) {
++            axisX.min = 0; axisX.max = 1
++            axisY.min = 0; axisY.max = 1
++            return
++        }
++        var lo = 1e300, hi = -1e300
++        for (var i = 0; i < n; i++) {
+             var pt = dataSource[i]
+             lineSeries.append(pt.x, pt.y)
++            pointSeries.append(pt.x, pt.y)
++            if (pt.y < lo) lo = pt.y
++            if (pt.y > hi) hi = pt.y
+         }
+-        if(dataSource.length>0){
+-            axisX.max = Math.max(dataSource.length-1,1)
+-        }
++        var x0 = dataSource[0].x, x1 = dataSource[n - 1].x
++        if (x1 - x0 < 1e-6) { axisX.min = x0 - 1; axisX.max = x0 + 1 }
++        else { var px = (x1 - x0) * 0.04; axisX.min = x0 - px; axisX.max = x1 + px }
++
++        var pad = (hi - lo) > 1e-9 ? (hi - lo) * 0.15 : Math.max(Math.abs(hi) * 0.05, 0.05)
++        // Đại lượng không âm (áp/dòng/tần số đo được) -> không kéo trục xuống dưới 0.
++        axisY.min = (lo >= 0 && lo - pad < 0) ? 0 : lo - pad
++        axisY.max = hi + pad
++        axisY.applyNiceNumbers()   // vạch chia tròn số (0/50/100/150...)
+     }
+ 
+-
++    function fmt(v) {
++        return (Math.abs(v) >= 100 ? v.toFixed(1) : v.toFixed(root.decimals)) + root.unit
++    }
+ 
+     ColumnLayout {
+         anchors.fill: parent
+         anchors.margins: 10
+         spacing: 2
+ 
+-
++        // ── Header: icon + tiêu đề ......... [số] [⟳] ──
+         RowLayout {
+             Layout.fillWidth: true
++            spacing: 6
+ 
+-
+-            RowLayout {
+-                spacing: 4
+-                Image {
+-                    source:   root.isAC?"qrc:/qt/qml/DashboardEnv/assets/images/ACicon.png"
+-                                       :"qrc:/qt/qml/DashboardEnv/assets/images/DCicon.png"
+-                    width:    16
+-                    height:   16
+-                    fillMode: Image.PreserveAspectFit
+-                }
+-                Text {
+-                    text: root.boxTitle
+-                    font.pixelSize: 15
+-                    font.bold: true
+-                    color: AppTheme.textDark
+-                }
++            Image {
++                source: root.iconSource
++                sourceSize.width: 16
++                sourceSize.height: 16
++                Layout.preferredWidth: 16
++                Layout.preferredHeight: 16
++                fillMode: Image.PreserveAspectFit
++            }
++            // Tiêu đề co lại (…) khi ô hẹp - ô số và nút ⟳ luôn hiện đủ.
++            Text {
++                Layout.fillWidth: true
++                Layout.minimumWidth: 20
++                text: root.boxTitle
++                elide: Text.ElideRight
++                font.pixelSize: 15
++                font.bold: true
++                color: AppTheme.textDark
+             }
+-
+-            Item { Layout.fillWidth: true }
+-
+ 
+             Rectangle {
+-                id:segment
++                id: segment
+                 color: AppTheme.textDark
+                 radius: 4
+-                implicitWidth: 48
++                implicitWidth: Math.max(48, segText.implicitWidth + 12)
+                 implicitHeight: 25
++                opacity: root.linkBad || root.linkState === "offline" ? 0.55 : 1.0
+ 
+                 Text {
+-
++                    id: segText
+                     anchors.centerIn: parent
+-                    text:(root.currentValue>100 ? (root.currentValue||0).toFixed(1):
+-                                                 (root.currentValue||0).toFixed(2)) + root.unit
++                    text: root.hasData ? root.fmt(root.currentValue) : "--"
+                     color: AppTheme.textLight
+                     font.family: "Seven Segment"
+                     font.pointSize: 12
+@@ -88,7 +128,6 @@
+                 MultiEffect {
+                     source:                  segment
+                     anchors.fill:            segment
+-
+                     shadowEnabled:           true
+                     shadowColor:             "#40000000"
+                     shadowBlur:              0.3
+@@ -97,8 +136,58 @@
+                     shadowScale:             1.0
+                 }
+             }
+-        }
+ 
++            // Nút làm mới: cùng chiều cao ô số (24 ~ 25 px) -> header không cao
++            // thêm, đồ thị không bị thu nhỏ.
++            Item {
++                id: refreshBtn
++                Layout.preferredWidth: 24
++                Layout.preferredHeight: 24
++                enabled: root.refreshEnabled && !root.pending
++                opacity: enabled ? 1.0 : (root.pending ? 1.0 : 0.35)
++
++                Rectangle {
++                    anchors.fill: parent
++                    radius: 6
++                    color: refreshArea.pressed ? AppTheme.panelBgMuted
++                         : refreshArea.containsMouse && refreshBtn.enabled ? AppTheme.panelBg
++                         : "transparent"
++                    border.color: refreshArea.containsMouse && refreshBtn.enabled ? AppTheme.borderLight : "transparent"
++                }
++                Image {
++                    id: refreshIcon
++                    anchors.centerIn: parent
++                    source: "qrc:/qt/qml/DashboardEnv/assets/images/refresh.png"
++                    sourceSize.width: 16
++                    sourceSize.height: 16
++                    width: 16
++                    height: 16
++                    fillMode: Image.PreserveAspectFit
++                    // Đang chờ nguồn trả lời: icon xoay.
++                    RotationAnimator on rotation {
++                        from: 0; to: 360; duration: 900
++                        loops: Animation.Infinite
++                        running: root.pending
++                    }
++                }
++                Connections {
++                    target: root
++                    function onPendingChanged() { if (!root.pending) refreshIcon.rotation = 0 }
++                }
++                MouseArea {
++                    id: refreshArea
++                    anchors.fill: parent
++                    hoverEnabled: true
++                    cursorShape: refreshBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
++                    onClicked: if (refreshBtn.enabled) root.refreshRequested()
++                }
++                ToolTip.visible: refreshArea.containsMouse
++                ToolTip.delay: 400
++                ToolTip.text: !root.refreshEnabled ? qsTr("Chưa kết nối board")
++                            : root.pending ? qsTr("Đang chờ nguồn trả lời…")
++                            : root.refreshTip
++            }
++        }
+ 
+         ChartView {
+             id: chart
+@@ -112,28 +201,28 @@
+             margins.right: 4
+             backgroundColor: "transparent"
+ 
+-
+             ValueAxis {
+                 id: axisX
+                 min: 0
+-                max: 60
+-                tickCount :4
+-                labelsColor : "transparent"
++                max: 1
++                tickCount: 4
++                labelsColor: "transparent"
+                 gridLineColor: AppTheme.borderMuted
+             }
+ 
+-
+             ValueAxis {
+                 id: axisY
+-                min: root.yMin
+-                max: root.yMax
++                min: 0
++                max: 1
+                 tickCount: 4
++                labelFormat: "%.4g"
++                // Chưa có số đo: ẩn nhãn 0/0.33/0.67/1 vô nghĩa của trục rỗng.
++                labelsVisible: root.dataSource.length > 0
+                 labelsFont.pixelSize: 8
+                 gridLineColor: AppTheme.borderMuted
+                 labelsColor: AppTheme.borderMuted
+             }
+ 
+-
+             LineSeries {
+                 id: lineSeries
+                 axisX: axisX
+@@ -141,31 +230,64 @@
+                 color: AppTheme.brandRed
+                 width: 1.5
+             }
++            // Mỗi lần đọc là 1 điểm rời rạc (theo nút bấm) - đánh dấu rõ.
++            ScatterSeries {
++                id: pointSeries
++                axisX: axisX
++                axisY: axisY
++                color: AppTheme.brandRed
++                borderColor: AppTheme.brandRed
++                markerSize: 5
++            }
+         }
+ 
+-
++        // ── Footer: trạng thái lần đọc gần nhất ......... Max/Min ──
+         RowLayout {
+             Layout.fillWidth: true
+ 
+-            Item { Layout.fillWidth: true }
++            Text {
++                id: statusText
++                Layout.fillWidth: true
++                elide: Text.ElideRight
++                font.pixelSize: 9
++                readonly property string when: root.powerSource ? root.powerSource.lastUpdate : ""
++                text: root.pending ? qsTr("Đang đọc…")
++                    : root.linkState === "boardnoreply" ? qsTr("Board không trả kết quả")
++                    : root.linkState === "noreply" ? qsTr("Nguồn không phản hồi") + (when ? " · " + when : "")
++                    : root.linkState === "notready" ? qsTr("UART nguồn chưa sẵn sàng")
++                    : root.linkBad ? qsTr("Lỗi") + (when ? " · " + when : "")
++                    : root.linkState === "offline" ? qsTr("Đã ngắt kết nối") + (when ? " · " + when : "")
++                    : root.linkState === "unconfirmed" ? qsTr("Chưa xác nhận được")
++                    : when ? qsTr("Cập nhật %1").arg(when)
++                    : qsTr("Chưa có số đo")
++                color: root.linkBad ? AppTheme.brandRed
++                     : root.linkState === "unconfirmed" ? AppTheme.warningNote
++                     : AppTheme.textMuted
++
++                MouseArea {
++                    id: statusArea
++                    anchors.fill: parent
++                    hoverEnabled: true
++                    acceptedButtons: Qt.NoButton
++                }
++                ToolTip.visible: statusArea.containsMouse && root.powerSource && root.powerSource.linkMessage.length > 0
++                ToolTip.text: root.powerSource ? root.powerSource.linkMessage : ""
++            }
+ 
+             RowLayout {
+                 spacing: 8
+                 Text {
+-                    // Lịch sử rỗng (vừa "Đặt lại"/vừa kết nối): backend để giá trị
+-                    // canh gác max=-500 < min=500 -> hiện "--" thay vì số vô nghĩa.
++                    // Lịch sử rỗng: backend để max < min -> hiện "--".
+                     text: "Max: " + (root.historyMaxVal < root.historyMinVal ? "--" : (root.historyMaxVal || 0).toFixed(2))
+-
+                     font.pixelSize: 9
+                     color: AppTheme.textMuted
+                 }
+                 Text {
+                     text: "Min: " + (root.historyMaxVal < root.historyMinVal ? "--" : (root.historyMinVal || 0).toFixed(2))
+-
+                     font.pixelSize: 9
+-                    color:  AppTheme.textMuted
++                    color: AppTheme.textMuted
+                 }
+             }
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/Attenuation.qml r3/app/qml/views/Attenuation.qml
+--- r3_base/app/qml/views/Attenuation.qml	2026-10-01 09:37:04.534978141 +0000
++++ r3/app/qml/views/Attenuation.qml	2026-10-05 09:06:26.216148245 +0000
+@@ -61,7 +61,7 @@
+         id: attRow
+ 
+         property int channel:         1
+-        property double currentValue: 0.0
++        property double currentValue: NaN
+         // true trong lúc commit đến từ NÚT GỬI (lệnh tường minh -> luôn gửi,
+         // kể cả khi giá trị không đổi); rời ô/Enter chỉ gửi khi giá trị đổi.
+         property bool forceSend: false
+@@ -75,6 +75,12 @@
+             return Math.round(v * 4) / 4
+         }
+ 
++        // NaN (chưa đặt) -> ô trống, hiện placeholder "--".
++        function showValue() {
++            attInput.value = attRow.currentValue
++            attInput.text = isNaN(attRow.currentValue) ? "" : attRow.currentValue.toFixed(2)
++        }
++
+         Text {
+             text:                  "ATT " + attRow.channel + " :"
+             font.pixelSize:        12
+@@ -111,12 +117,20 @@
+             rightPadding:            6
+             font.pixelSize:          12
+             color :                 AppTheme.textDark
+-            placeholderText: "----"
++            placeholderText: "--"
+ 
+             // F1956 thật bước 0.25dB - làm tròn về bước gần nhất SAU KHI đã
+             // kẹp trong khoảng [0, attMax] (ClampedTextField lo phần kẹp
+             // khoảng), rồi mới thực sự gửi lệnh xuống RfController.
+             onCommitted: (v) => {
++                if (isNaN(v)) {
++                    // Ô bị xoá trắng: không có gì để gửi. Bấm nút gửi khi ô
++                    // đang "--" thì báo rõ thay vì im lặng.
++                    if (attRow.forceSend)
++                        dashboard.systemNotification("Warning", qsTr("ATT %1: chưa nhập giá trị - chưa gửi.").arg(attRow.channel))
++                    attRow.forceSend = false
++                    return
++                }
+                 var q = attRow.quantize(v)
+                 value = q
+                 text = q.toFixed(2)
+@@ -126,9 +140,9 @@
+ 
+             Connections {
+                 target: dashboard.rfController
+-                function onAtt1Changed() { if (attRow.channel === 1) { attInput.value = attRow.currentValue; attInput.text = attRow.currentValue.toFixed(2) } }
+-                function onAtt2Changed() { if (attRow.channel === 2) { attInput.value = attRow.currentValue; attInput.text = attRow.currentValue.toFixed(2) } }
+-                function onAtt3Changed() { if (attRow.channel === 3) { attInput.value = attRow.currentValue; attInput.text = attRow.currentValue.toFixed(2) } }
++                function onAtt1Changed() { if (attRow.channel === 1) attRow.showValue() }
++                function onAtt2Changed() { if (attRow.channel === 2) attRow.showValue() }
++                function onAtt3Changed() { if (attRow.channel === 3) attRow.showValue() }
+             }
+ 
+             background: BoxWrap{
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/CommandLogPanel.qml r3/app/qml/views/CommandLogPanel.qml
+--- r3_base/app/qml/views/CommandLogPanel.qml	2026-09-16 08:56:50.000000000 +0000
++++ r3/app/qml/views/CommandLogPanel.qml	2026-10-05 09:10:19.239666051 +0000
+@@ -56,6 +56,10 @@
+                     id:      logContent
+                     width:   logFlick.width
+                     spacing: 4
++                    // Cuộn xuống dòng cuối SAU KHI Column đã xếp xong dòng mới
++                    // (lúc commandLogChanged chiều cao vẫn là chiều cao cũ ->
++                    // trước đây luôn hụt mất dòng cuối cùng).
++                    onImplicitHeightChanged: logFlick.contentY = Math.max(0, implicitHeight - logFlick.height)
+ 
+                     Repeater {
+                         model: logOverride.visible ? [] : dashboard.commandLog
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/ConnectionPanel.qml r3/app/qml/views/ConnectionPanel.qml
+--- r3_base/app/qml/views/ConnectionPanel.qml	2026-09-16 08:53:14.000000000 +0000
++++ r3/app/qml/views/ConnectionPanel.qml	2026-10-05 09:06:26.221304446 +0000
+@@ -68,10 +68,9 @@
+                 Text { text: qsTr("Chọn COM:"); font.pixelSize: 12; color: AppTheme.textDark;font.weight: Font.Medium; Layout.preferredWidth: 70 }
+                 CustomComboBox {
+                     model: dashboard.availablePorts
+-                    currentIndex:{
+-                        var idx =   dashboard.availablePorts.indexOf(dashboard.comPort)
+-                        return idx >=0 ?idx :0
+-                    }
++                    // Cổng đã lưu không còn trong danh sách (hoặc chưa từng chọn)
++                    // -> -1 = "--", KHÔNG tự chọn cổng đầu tiên.
++                    currentIndex: dashboard.availablePorts.indexOf(dashboard.comPort)
+                     onActivated: (index) => dashboard.comPort = currentText
+                     onPressedChanged: if(pressed) dashboard.refreshPorts()
+                 }
+@@ -108,7 +107,7 @@
+                 CustomBoxFiled {
+                     id: sessionNameField
+                     text:dashboard.sessionName
+-                    placeholderText: qsTr("Mặc định hệ thống...")
++                    placeholderText: "--"
+                     font.weight : Font.Light
+                     onEditingFinished: dashboard.sessionName= text
+                 }
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/Detect.qml r3/app/qml/views/Detect.qml
+--- r3_base/app/qml/views/Detect.qml	2026-09-16 08:56:22.000000000 +0000
++++ r3/app/qml/views/Detect.qml	2026-10-05 09:06:26.225421802 +0000
+@@ -68,7 +68,9 @@
+             text: qsTr("ĐẶT LẠI")
+             Layout.fillWidth: true
+             Layout.preferredHeight: 35
+-            onClicked: dashboard.resetSystem()
++            // Đặt lại TẮT nguồn AC/DC, ATT về 0 dB, delay về 0 ns -> hỏi lại
++            // trước, tránh cắt nguồn đang cấp chỉ vì 1 cú bấm nhầm.
++            onClicked: resetConfirm.open()
+             MouseArea {
+                 anchors.fill: parent
+                 hoverEnabled: true
+@@ -88,4 +90,86 @@
+             }
+         }
+     }
+-}
+\ No newline at end of file
++
++    // Popup (không phải Item) không được làm con trực tiếp của BoxWrap
++    // (default property là list<Item>) -> đặt trong 1 Item chứa.
++    Item {
++        Dialog {
++            id: resetConfirm
++            objectName: "resetConfirm"
++            parent: Overlay.overlay
++            anchors.centerIn: parent
++            width: 380
++            modal: true
++            padding: 18
++            topPadding: 14
++            onAccepted: dashboard.resetSystem()
++
++            background: Rectangle {
++                color: AppTheme.elementBg
++                radius: 10
++                border.color: AppTheme.borderLight
++            }
++            header: Text {
++                text: qsTr("Đặt lại hệ thống?")
++                font.pixelSize: 15
++                font.bold: true
++                color: AppTheme.textDark
++                leftPadding: 18
++                topPadding: 16
++            }
++            contentItem: Text {
++                wrapMode: Text.WordWrap
++                color: AppTheme.textDark
++                font.pixelSize: 12
++                lineHeight: 1.2
++                text: qsTr("Lệnh này sẽ TẮT ngõ ra nguồn AC và DC, đưa 3 ATT về 0 dB, giữ chậm về 0 ns và xoá đỉnh kích nổ đang giữ.")
++            }
++            footer: RowLayout {
++                spacing: 10
++                Item { Layout.fillWidth: true }
++                Button {
++                    id: cancelBtn
++                    text: qsTr("Huỷ")
++                    Layout.preferredWidth: 90
++                    Layout.preferredHeight: 32
++                    Layout.bottomMargin: 16
++                    onClicked: resetConfirm.reject()
++                    background: Rectangle {
++                        radius: AppTheme.radiusControl
++                        color: cancelBtn.down ? AppTheme.panelBgMuted : AppTheme.panelBg
++                        border.color: AppTheme.borderLight
++                    }
++                    contentItem: Text {
++                        text: cancelBtn.text
++                        color: AppTheme.textDark
++                        font.pixelSize: 12
++                        horizontalAlignment: Text.AlignHCenter
++                        verticalAlignment: Text.AlignVCenter
++                    }
++                }
++                Button {
++                    id: okBtn
++                    text: qsTr("Đặt lại")
++                    Layout.preferredWidth: 90
++                    Layout.preferredHeight: 32
++                    Layout.rightMargin: 18
++                    Layout.bottomMargin: 16
++                    onClicked: resetConfirm.accept()
++                    background: Rectangle {
++                        radius: AppTheme.radiusControl
++                        color: okBtn.down ? AppTheme.brandRedPressed : AppTheme.brandRed
++                    }
++                    contentItem: Text {
++                        text: okBtn.text
++                        color: AppTheme.textLight
++                        font.pixelSize: 12
++                        font.bold: true
++                        horizontalAlignment: Text.AlignHCenter
++                        verticalAlignment: Text.AlignVCenter
++                    }
++                }
++            }
++        }
++    }
++}
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/EnvelopeChartPanel.qml r3/app/qml/views/EnvelopeChartPanel.qml
+--- r3_base/app/qml/views/EnvelopeChartPanel.qml	2026-10-01 09:37:04.535379010 +0000
++++ r3/app/qml/views/EnvelopeChartPanel.qml	2026-10-05 09:06:26.227774438 +0000
+@@ -291,6 +291,9 @@
+                 color: AppTheme.textDark
+                 placeholderText: "dBm"
+                 selectByMouse: true
++                // Nhớ mức chuẩn đã nhập lần trước (config.ini, [ui]).
++                Component.onCompleted: text = String(dashboard.loadUi("rfRefDbm", ""))
++                onEditingFinished: dashboard.saveUi("rfRefDbm", text)
+                 // Công suất chuẩn (dBm) đưa vào RX1 - cho phép số âm.
+                 validator: RegularExpressionValidator { regularExpression: /^-?\d{0,3}(\.\d{0,2})?$/ }
+                 ToolTip.visible: hovered
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/PowerControlPanel.qml r3/app/qml/views/PowerControlPanel.qml
+--- r3_base/app/qml/views/PowerControlPanel.qml	2026-10-01 09:14:12.498643031 +0000
++++ r3/app/qml/views/PowerControlPanel.qml	2026-10-05 09:01:43.110080278 +0000
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import QtQuick.Layouts
++import QtQuick.Controls
+ import DashboardEnv
+ 
+ Item {
+@@ -60,7 +61,7 @@
+                         // JS ngay trong lúc gõ, không đợi rời ô.
+                         ClampedTextField {
+                             id: acVoltField
+-                            placeholderText: "____"
++                            placeholderText: "--"
+                             color: AppTheme.textDark
+                             font.weight: Font.Medium
+                             Layout.preferredWidth: 56
+@@ -89,7 +90,7 @@
+                         // không phải điện lưới 45-65Hz) - xem dashboardmanager.h.
+                         ClampedTextField {
+                             id: acFreqField
+-                            placeholderText: "____"
++                            placeholderText: "--"
+                             color: AppTheme.textDark
+                             font.weight: Font.Medium
+                             Layout.preferredWidth: 56
+@@ -116,12 +117,23 @@
+                             Layout.alignment:  Qt.AlignHCenter
+                         }
+                         CustomSwitch {
++                            id: acSwitch
++                            objectName: "acPowerSwitch"
+                             Layout.alignment: Qt.AlignHCenter
+                             checked: dashboard.acSource.isOn
+-                            // onToggled (CHỈ khi người dùng bấm) thay cho onCheckedChanged:
+-                            // trước đây mọi thay đổi isOn từ backend (ACK, Đặt lại...) cũng
+-                            // làm checked đổi theo binding -> tự gửi thêm 1 lệnh AC xuống board.
+-                            onToggled: dashboard.setAcPower(checked, dashboard.stagedAcVolt, dashboard.stagedAcFreq)
++                            // Đang chờ nguồn xác nhận -> khoá, tránh bấm dồn lệnh.
++                            enabled: !dashboard.acSource.pending
++                            // onToggled (CHỈ khi người dùng bấm). requestAcPower() kiểm
++                            // tra đã kết nối + đã nhập đủ giá trị (thiếu thì báo và không
++                            // gửi). Bấm vào Switch làm MẤT binding "checked: isOn" - gắn
++                            // lại ngay để công tắc luôn theo trạng thái backend (đang chờ
++                            // = trạng thái yêu cầu, xong = trạng thái nguồn xác nhận).
++                            onToggled: {
++                                dashboard.requestAcPower(checked)
++                                checked = Qt.binding(function() { return dashboard.acSource.isOn })
++                            }
++                            ToolTip.visible: hovered && dashboard.acSource.linkMessage.length > 0
++                            ToolTip.text: dashboard.acSource.linkMessage
+                         }
+                     }
+                 }
+@@ -165,7 +177,7 @@
+                         // dcVoltMin/Max: firmware Device_ControlDCPwr() clamp [0,36].
+                         ClampedTextField {
+                             id: dcVoltField
+-                            placeholderText: "____"
++                            placeholderText: "--"
+                             color: AppTheme.textDark
+                             font.weight: Font.Medium
+                             Layout.preferredWidth: 56
+@@ -193,7 +205,7 @@
+                         // [0,3] (cập nhật theo yêu cầu thực tế, trước ghi nhầm 5A).
+                         ClampedTextField {
+                             id: dcCurrentField
+-                            placeholderText: "____"
++                            placeholderText: "--"
+                             color: AppTheme.textDark
+                             font.weight: Font.Medium
+                             Layout.preferredWidth: 56
+@@ -222,10 +234,18 @@
+                             Layout.alignment:  Qt.AlignHCenter
+                         }
+                         CustomSwitch {
++                            id: dcSwitch
++                            objectName: "dcPowerSwitch"
+                             Layout.alignment:  Qt.AlignHCenter
+                             checked: dashboard.dcSource.isOn
++                            enabled: !dashboard.dcSource.pending
+                             // Xem chú thích công tắc AC ở trên.
+-                            onToggled: dashboard.setDcPower(checked, dashboard.stagedDcVolt, dashboard.stagedDcCurrent)
++                            onToggled: {
++                                dashboard.requestDcPower(checked)
++                                checked = Qt.binding(function() { return dashboard.dcSource.isOn })
++                            }
++                            ToolTip.visible: hovered && dashboard.dcSource.linkMessage.length > 0
++                            ToolTip.text: dashboard.dcSource.linkMessage
+                         }
+                     }
+                 }
+diff -ruN --strip-trailing-cr -x build r3_base/app/qml/views/TimeDelay.qml r3/app/qml/views/TimeDelay.qml
+--- r3_base/app/qml/views/TimeDelay.qml	2026-09-16 08:56:42.000000000 +0000
++++ r3/app/qml/views/TimeDelay.qml	2026-10-05 09:06:26.233031318 +0000
+@@ -15,11 +15,12 @@
+             { label: "400 ns", value: 400 }
+         ]
+ 
++        // -1 = chưa chọn lần nào (chạy lần đầu) -> combo hiện "--".
+         function currentDelayIndex(){
+             for( var i=0; i< delayOptions.length;i++){
+                 if(delayOptions[i].value=== dashboard.delayTime) return i
+             }
+-                return 0
++                return -1
+             }
+ 
+             ColumnLayout {

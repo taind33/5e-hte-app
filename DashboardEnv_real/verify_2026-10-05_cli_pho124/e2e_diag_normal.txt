@@ -1,0 +1,11 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  port opened
+      link: Đã xác thực đúng board (17009 byte, 80 khung nhận)
+      rf diag: [] 
+      fw: Oct 5 2026 10:53:14
+PASS  verified (green)
+PASS  firmware build shown in app
+PASS  boot log replayed into Terminal
+PASS  spectrum live, no RF diagnosis
+PASS  DIAG: DMA captures counted
+RESULT(normal): 6 passed, 0 failed

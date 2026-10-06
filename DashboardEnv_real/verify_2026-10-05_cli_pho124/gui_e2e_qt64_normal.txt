@@ -1,0 +1,31 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+saved /tmp/claude-0/verify7/gui_qt64_normal_0_first_run.png
+PASS  AC switch found
+PASS  click AC switch with '--' inputs -> blocked, switch back OFF
+dbg: checked=1 enabled=0 isOn=1 pending=1 sw pos=455,66 size 54x32 visible=1
+log: [11:04:02] [INFO] Cấu hình: /tmp/claude-0/gui3/config.ini
+log: [11:04:02] [BOARD] 5E-HTE firmware build Oct  5 2026 10:53:14 - RS422/PC san sang (RX polling).
+log: [11:04:02] [BOARD] AD9361: bat dau khoi tao (ad9361_init)...
+log: [11:04:02] [BOARD] AD9361: LO RX = 2440000000 Hz
+log: [11:04:02] [BOARD] AD9361: khoi tao xong.
+log: [11:04:02] [BOARD] Board san sang: AD9361 OK, pho RF OK, ATT OK, Delay OK, ADC7928 OK, UART AC OK, UART DC OK.
+log: [11:04:02] [INFO] Firmware trên board: build Oct 5 2026 10:53:14
+log: [11:04:03] [BOARD] 5E-HTE firmware build Oct  5 2026 10:53:14 - RS422/PC san sang (RX polling).
+log: [11:04:03] [BOARD] AD9361: bat dau khoi tao (ad9361_init)...
+log: [11:04:03] [BOARD] AD9361: LO RX = 2440000000 Hz
+log: [11:04:03] [BOARD] AD9361: khoi tao xong.
+log: [11:04:03] [BOARD] Board san sang: AD9361 OK, pho RF OK, ATT OK, Delay OK, ADC7928 OK, UART AC OK, UART DC OK.
+log: [11:04:04] [TX] AC ON 120 V 400 Hz
+PASS  click with values -> ON shown, switch locked while confirming
+PASS  AC confirmed -> switch ON + unlocked (binding intact)
+PASS  F5 key -> both supplies being read
+PASS  F5 -> new point on charts
+PASS  DC silent -> red status
+saved /tmp/claude-0/verify7/gui_qt64_normal_1_live.png
+PASS  AC OFF via switch confirmed
+PASS  no QML runtime warnings
+saved /tmp/claude-0/verify7/gui_qt64_normal_2_ac_off.png
+tail: [11:04:10] [RX] DC (đọc): NOREPLY
+tail: [11:04:12] [TX] AC OFF
+tail: [11:04:12] [RX] AC (xác nhận lệnh): OK OUT=OFF 0.00 V 0.000 A 0.00 Hz
+RESULT: 9 passed, 0 failed

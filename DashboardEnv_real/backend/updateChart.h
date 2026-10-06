@@ -1,0 +1,4 @@
+#ifndef UPDATECHART_H
+#define UPDATECHART_H
+
+#endif // UPDATECHART_H

@@ -1,0 +1,432 @@
+[ODLY] GPIO=0 (0 ns)
+[UART-AC] baud 9600
+[UART-DC] baud 9600
+[UART-PC] baud 115200
+[xil_printf] RS422/PC: RX bang polling (khong co ngat kha dung trong xparameters.h).
+[xil_printf] 5E-HTE board-app (AC/DC/ATT/Delay/ADC7928/RF) san sang.
+[SUPPLY-AC] pre-loaded 3 errors in queue
+[SIM] RX not polled for 1.57 ms
+[SIM] RX not polled for 2.21 ms
+[SUPPLY-AC] <- SYST:REM   (mode ok)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> -221,"Undefined header" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> -221,"Undefined header" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> -221,"Undefined header" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- PROT:MODE AC   (mode ok)
+[UART-AC @9600] PROT:MODE AC
+[SUPPLY-AC] <- NORM:VOLT:AC 120.0   (mode ok)
+[UART-AC @9600] NORM:VOLT:AC 120.0
+[SUPPLY-AC] <- NORM:FREQ 400.0   (mode ok)
+[UART-AC @9600] NORM:FREQ 400.0
+[SUPPLY-AC] <- OUTP ON   (mode ok)
+[UART-AC @9600] OUTP ON
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode ok)
+[SUPPLY-AC] -> ON 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode ok)
+[SUPPLY-AC] -> +1.203000E+02 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode ok)
+[SUPPLY-AC] -> +1.234000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode ok)
+[SUPPLY-AC] -> +4.000000E+02 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 1.18 ms
+[SIM] RX not polled for 1.08 ms
+[SIM] RX not polled for 4.24 ms
+[SIM] RX not polled for 1.08 ms
+[SIM] RX not polled for 1.06 ms
+[SIM] RX not polled for 2.37 ms
+[SIM] RX not polled for 1.16 ms
+[SIM] RX not polled for 1.51 ms
+[SIM] RX not polled for 4.01 ms
+[SUPPLY-AC] <- SYST:REM   (mode ok)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode ok)
+[SUPPLY-AC] -> ON 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode ok)
+[SUPPLY-AC] -> +1.203000E+02 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode ok)
+[SUPPLY-AC] -> +1.234000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode ok)
+[SUPPLY-AC] -> +4.000000E+02 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 1.65 ms
+[SIM] RX not polled for 2.11 ms
+[SIM] RX not polled for 21.20 ms
+[SIM] RX not polled for 2.58 ms
+[SIM] RX not polled for 3.19 ms
+[SIM] RX not polled for 2.23 ms
+[SIM] RX not polled for 4.23 ms
+[SIM] RX not polled for 1.21 ms
+[SIM] RX not polled for 1.71 ms
+[SIM] RX not polled for 3.55 ms
+[SIM] RX not polled for 1.63 ms
+[SIM] RX not polled for 1.37 ms
+[SIM] RX not polled for 2.01 ms
+[SIM] RX not polled for 1.98 ms
+[SIM] RX not polled for 1.82 ms
+[SIM] RX not polled for 1.14 ms
+[SIM] RX not polled for 2.11 ms
+[SIM] RX not polled for 1.76 ms
+[SIM] RX not polled for 1.00 ms
+[SIM] RX not polled for 2.23 ms
+[SIM] RX not polled for 2.02 ms
+[SUPPLY-DC] <- #0 REN   (mode ok)
+[UART-DC @9600] #0 REN
+[SUPPLY-DC] <- #0 ICN 47.00   (mode ok)
+[UART-DC @9600] #0 ICN 47.00
+[SUPPLY-DC] <- #0 SW1   (mode ok)
+[UART-DC @9600] #0 SW1
+[SUPPLY-DC] <- #0 VCN 66.67   (mode ok)
+[UART-DC @9600] #0 VCN 66.67
+[SUPPLY-DC] <- #0 MEAS:VOLT?   (mode ok)
+[SUPPLY-DC] -> #0 24.00  
+[UART-DC @9600] #0 MEAS:VOLT?
+[SUPPLY-DC] <- #0 MEAS:CURR?   (mode ok)
+[SUPPLY-DC] -> #0 0.800  
+[UART-DC @9600] #0 MEAS:CURR?
+[SIM] RX not polled for 1.70 ms
+[SIM] RX not polled for 1.42 ms
+[SIM] RX not polled for 1.32 ms
+[SIM] RX not polled for 1.05 ms
+[SIM] RX not polled for 2.48 ms
+[SIM] RX not polled for 2.14 ms
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 1.00 ms
+[SIM] RX not polled for 2.53 ms
+[SIM] RX not polled for 1.50 ms
+[SIM] RX not polled for 4.88 ms
+[SIM] RX not polled for 1.62 ms
+[SIM] RX not polled for 1.32 ms
+[SIM] RX not polled for 2.83 ms
+[SIM] RX not polled for 1.50 ms
+[SIM] RX not polled for 2.36 ms
+[SIM] RX not polled for 2.14 ms
+[SIM] RX not polled for 1.76 ms
+[SIM] RX not polled for 1.93 ms
+[SIM] RX not polled for 2.94 ms
+[SIM] RX not polled for 1.82 ms
+[SIM] RX not polled for 2.69 ms
+[SIM] RX not polled for 3.35 ms
+[SUPPLY-AC] mode ok -> silent
+[SIM] RX not polled for 3.48 ms
+[SIM] RX not polled for 1.74 ms
+[SUPPLY-AC] <- SYST:REM   (mode silent)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode silent)
+[UART-AC @9600] SYST:ERR?
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 1.39 ms
+[SIM] RX not polled for 1.53 ms
+[SIM] RX not polled for 2.23 ms
+[SIM] RX not polled for 1.25 ms
+[SIM] RX not polled for 1.13 ms
+[SIM] RX not polled for 1.82 ms
+[SIM] RX not polled for 1.03 ms
+[SIM] RX not polled for 1.41 ms
+[SIM] RX not polled for 1.23 ms
+[SIM] RX not polled for 1.13 ms
+[SIM] RX not polled for 1.13 ms
+[SIM] RX not polled for 1.56 ms
+[SIM] RX not polled for 1.79 ms
+[SIM] RX not polled for 1.28 ms
+[SIM] RX not polled for 1.01 ms
+[SIM] RX not polled for 1.53 ms
+[SIM] RX not polled for 1.04 ms
+[SIM] RX not polled for 2.28 ms
+[SIM] RX not polled for 1.43 ms
+[SIM] RX not polled for 4.89 ms
+[SIM] RX not polled for 2.41 ms
+[SUPPLY-AC] mode silent -> slow
+[SIM] RX not polled for 1.45 ms
+[SIM] RX not polled for 2.50 ms
+[SUPPLY-AC] <- SYST:REM   (mode slow)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode slow)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SIM] RX not polled for 1.34 ms
+[SIM] RX not polled for 1.77 ms
+[SIM] RX not polled for 3.10 ms
+[SIM] RX not polled for 1.83 ms
+[SIM] RX not polled for 2.72 ms
+[SIM] RX not polled for 1.13 ms
+[SIM] RX not polled for 1.33 ms
+[SIM] RX not polled for 1.44 ms
+[SIM] RX not polled for 2.40 ms
+[SIM] RX not polled for 1.69 ms
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 2.31 ms
+[SIM] RX not polled for 1.35 ms
+[SUPPLY-AC] mode slow -> garbage
+[SIM] RX not polled for 3.13 ms
+[SIM] RX not polled for 3.16 ms
+[SUPPLY-AC] <- SYST:REM   (mode garbage)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode garbage)
+[SUPPLY-AC] -> ?#@!  
+[UART-AC @9600] SYST:ERR?
+[SIM] RX not polled for 1.44 ms
+[SIM] RX not polled for 1.63 ms
+[SIM] RX not polled for 1.15 ms
+[SIM] RX not polled for 2.25 ms
+[SIM] RX not polled for 2.10 ms
+[SIM] RX not polled for 3.53 ms
+[SIM] RX not polled for 2.44 ms
+[SIM] RX not polled for 1.20 ms
+[SIM] RX not polled for 1.06 ms
+[SIM] RX not polled for 1.37 ms
+[SIM] RX not polled for 1.51 ms
+[SIM] RX not polled for 1.31 ms
+[SIM] RX not polled for 1.82 ms
+[SUPPLY-AC] mode garbage -> echo
+[SUPPLY-DC] mode ok -> echo
+[SIM] RX not polled for 3.40 ms
+[SIM] RX not polled for 1.80 ms
+[SIM] RX not polled for 1.80 ms
+[SUPPLY-AC] <- SYST:REM   (mode echo)
+[SUPPLY-AC] -> SYST:REM  
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode echo)
+[SUPPLY-AC] -> SYST:ERR?  
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode echo)
+[SUPPLY-AC] -> OUTP?  
+[SUPPLY-AC] -> ON 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode echo)
+[SUPPLY-AC] -> MEAS:VOLT?  
+[SUPPLY-AC] -> +1.203000E+02 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode echo)
+[SUPPLY-AC] -> MEAS:CURR?  
+[SUPPLY-AC] -> +1.234000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode echo)
+[SUPPLY-AC] -> MEAS:FREQ?  
+[SUPPLY-AC] -> +4.000000E+02 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 1.25 ms
+[SIM] RX not polled for 2.18 ms
+[SIM] RX not polled for 1.31 ms
+[SIM] RX not polled for 1.03 ms
+[SIM] RX not polled for 1.26 ms
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 1.39 ms
+[SIM] RX not polled for 2.87 ms
+[SIM] RX not polled for 1.40 ms
+[SUPPLY-AC] mode echo -> err
+[SUPPLY-DC] mode echo -> ok
+[SIM] RX not polled for 1.76 ms
+[SIM] RX not polled for 4.12 ms
+[SIM] RX not polled for 1.21 ms
+[SUPPLY-AC] <- SYST:REM   (mode err)
+[UART-AC @9600] SYST:REM
+[SIM] RX not polled for 1.52 ms
+[SUPPLY-AC] <- SYST:ERR?   (mode err)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- PROT:MODE AC   (mode err)
+[UART-AC @9600] PROT:MODE AC
+[SUPPLY-AC] <- NORM:VOLT:AC 100.0   (mode err)
+[UART-AC @9600] NORM:VOLT:AC 100.0
+[SUPPLY-AC] <- NORM:FREQ 50.0   (mode err)
+[UART-AC @9600] NORM:FREQ 50.0
+[SUPPLY-AC] <- OUTP ON   (mode err)
+[UART-AC @9600] OUTP ON
+[SUPPLY-AC] <- SYST:ERR?   (mode err)
+[SUPPLY-AC] -> -113,"Undefined header" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode err)
+[SUPPLY-AC] -> ON 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode err)
+[SUPPLY-AC] -> +1.003000E+02 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode err)
+[SUPPLY-AC] -> +1.234000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode err)
+[SUPPLY-AC] -> +5.000000E+01 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 2.28 ms
+[SIM] RX not polled for 3.44 ms
+[SIM] RX not polled for 1.36 ms
+[SIM] RX not polled for 1.94 ms
+[SIM] RX not polled for 1.83 ms
+[SIM] RX not polled for 1.30 ms
+[SIM] RX not polled for 1.08 ms
+[SIM] RX not polled for 1.15 ms
+[SIM] RX not polled for 1.15 ms
+[SIM] RX not polled for 2.16 ms
+[SIM] RX not polled for 5.10 ms
+[SIM] RX not polled for 1.61 ms
+[SIM] RX not polled for 1.58 ms
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 1.42 ms
+[SIM] RX not polled for 2.14 ms
+[SIM] RX not polled for 1.80 ms
+[SUPPLY-AC] mode err -> ok
+[SIM] RX not polled for 2.01 ms
+[SIM] RX not polled for 3.64 ms
+[SUPPLY-AC] <- SYST:REM   (mode ok)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP OFF   (mode ok)
+[UART-AC @9600] OUTP OFF
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode ok)
+[SUPPLY-AC] -> OFF 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 1.34 ms
+[SIM] RX not polled for 1.12 ms
+[SIM] RX not polled for 1.81 ms
+[SIM] RX not polled for 1.08 ms
+[SIM] RX not polled for 1.70 ms
+[SIM] RX not polled for 3.79 ms
+[SIM] RX not polled for 1.71 ms
+[SIM] RX not polled for 1.43 ms
+[SIM] RX not polled for 3.01 ms
+[SUPPLY-AC] mode ok -> stuck
+[SIM] RX not polled for 1.86 ms
+[SIM] RX not polled for 2.30 ms
+[SUPPLY-AC] <- SYST:REM   (mode stuck)
+[UART-AC @9600] SYST:REM
+[SUPPLY-AC] <- SYST:ERR?   (mode stuck)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- PROT:MODE AC   (mode stuck)
+[UART-AC @9600] PROT:MODE AC
+[SUPPLY-AC] <- NORM:VOLT:AC 100.0   (mode stuck)
+[UART-AC @9600] NORM:VOLT:AC 100.0
+[SIM] RX not polled for 3.81 ms
+[SUPPLY-AC] <- NORM:FREQ 50.0   (mode stuck)
+[UART-AC @9600] NORM:FREQ 50.0
+[SUPPLY-AC] <- OUTP ON   (mode stuck)
+[UART-AC @9600] OUTP ON
+[SIM] RX not polled for 1.01 ms
+[SUPPLY-AC] <- SYST:ERR?   (mode stuck)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-AC] <- OUTP?   (mode stuck)
+[SUPPLY-AC] -> OFF 
+[UART-AC @9600] OUTP?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode stuck)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:VOLT?
+[SUPPLY-AC] <- MEAS:CURR?   (mode stuck)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode stuck)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 1.94 ms
+[SIM] RX not polled for 1.34 ms
+[SIM] RX not polled for 1.55 ms
+[SIM] RX not polled for 1.13 ms
+[SIM] RX not polled for 1.26 ms
+[SIM] RX not polled for 1.59 ms
+[SIM] RX not polled for 1.40 ms
+[SIM] RX not polled for 2.17 ms
+[SIM] RX not polled for 1.35 ms
+[SIM] RX not polled for 1.52 ms
+[SIM] RX not polled for 1.21 ms
+[SIM] RX not polled for 2.49 ms
+[SIM] RX not polled for 2.28 ms
+[SUPPLY-AC] mode stuck -> ok
+[SIM] RX not polled for 1.54 ms
+[SIM] RX not polled for 2.34 ms
+[SIM] RX not polled for 4.92 ms
+[F1956] ATT1 latched: 0 steps = 0.00 dB
+[F1956] ATT2 latched: 0 steps = 0.00 dB
+[F1956] ATT3 latched: 0 steps = 0.00 dB
+[ODLY] GPIO=0 (0 ns)
+[SUPPLY-AC] <- SYST:REM   (mode ok)
+[UART-AC @9600] SYST:REM
+[SUPPLY-DC] <- #0 REN   (mode ok)
+[UART-DC @9600] #0 REN
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-DC] <- #0 ICN 0.00   (mode ok)
+[UART-DC @9600] #0 ICN 0.00
+[SUPPLY-DC] <- #0 SW0   (mode ok)
+[UART-DC @9600] #0 SW0
+[SUPPLY-AC] <- OUTP OFF   (mode ok)
+[UART-AC @9600] OUTP OFF
+[SUPPLY-DC] <- #0 VCN 0.00   (mode ok)
+[UART-DC @9600] #0 VCN 0.00
+[SUPPLY-AC] <- SYST:ERR?   (mode ok)
+[SUPPLY-AC] -> 0,"No error" 
+[UART-AC @9600] SYST:ERR?
+[SUPPLY-DC] <- #0 MEAS:VOLT?   (mode ok)
+[SUPPLY-DC] -> #0 0.00  
+[UART-DC @9600] #0 MEAS:VOLT?
+[SIM] RX not polled for 1.05 ms
+[SUPPLY-AC] <- OUTP?   (mode ok)
+[SUPPLY-AC] -> OFF 
+[UART-AC @9600] OUTP?
+[SIM] RX not polled for 1.26 ms
+[SUPPLY-DC] <- #0 MEAS:CURR?   (mode ok)
+[SUPPLY-DC] -> #0 0.000  
+[UART-DC @9600] #0 MEAS:CURR?
+[SUPPLY-AC] <- MEAS:VOLT?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:VOLT?
+[SIM] RX not polled for 1.51 ms
+[SUPPLY-AC] <- MEAS:CURR?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:CURR?
+[SUPPLY-AC] <- MEAS:FREQ?   (mode ok)
+[SUPPLY-AC] -> +0.000000E+00 
+[UART-AC @9600] MEAS:FREQ?
+[SIM] RX not polled for 2.13 ms
+[SIM] RX not polled for 1.42 ms
+[SIM] RX not polled for 1.78 ms
+[SIM] RX not polled for 3.01 ms
+[SIM] RX not polled for 1.77 ms
+[SIM] RX not polled for 1.18 ms
+[SIM] RX not polled for 2.07 ms
+[SIM] RX not polled for 1.05 ms
+[SIM] RX not polled for 1.02 ms
+[SIM] RX not polled for 2.80 ms
+[SIM] RX not polled for 3.14 ms
+[SIM] RX not polled for 1.33 ms
+[SIM] RX not polled for 2.19 ms
+[SIM] supply AC: 70 cmds (45 queries), board-side RX overruns 0, out=0
+[SIM] supply DC: 12 cmds (4 queries), board-side RX overruns 0, out=0
+[SIM] exit: dma_captures=199 rx_overruns=0 max_rx_poll_gap=21.20ms gaps>1ms=189

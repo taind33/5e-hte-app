@@ -1,0 +1,41 @@
+
+set(target "appDashboardEnv")
+set(working_dir "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real")
+set(src_and_dest_list
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/Main.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/Main.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/BoxWrap.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/BoxWrap.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/ConnectionPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/ConnectionPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/PowerControlPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/PowerControlPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/TimeDelay.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/TimeDelay.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/MiniMonitorChart.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/MiniMonitorChart.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/EnvelopeChartPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/CommandLogPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/CommandLogPanel.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Notification.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/Notification.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Detect.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/Detect.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Attenuation.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/Attenuation.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomComboBox.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/CustomComboBox.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomSwitch.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/CustomSwitch.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomBoxFiled.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/CustomBoxFiled.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/ClampedTextField.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/ClampedTextField.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/AppTheme.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components/AppTheme.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/chartView.qml"
+    "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views/chartView.qml"
+
+)
+set(timestamp_file "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/appDashboardEnv_qml.txt")

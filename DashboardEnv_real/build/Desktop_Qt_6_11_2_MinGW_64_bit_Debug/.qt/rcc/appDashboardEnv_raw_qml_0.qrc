@@ -1,0 +1,22 @@
+<RCC>
+  <qresource prefix="/qt/qml/DashboardEnv/">
+    <file alias="qml/Main.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/Main.qml</file>
+    <file alias="qml/components/BoxWrap.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/BoxWrap.qml</file>
+    <file alias="qml/views/ConnectionPanel.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/ConnectionPanel.qml</file>
+    <file alias="qml/views/PowerControlPanel.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/PowerControlPanel.qml</file>
+    <file alias="qml/views/TimeDelay.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/TimeDelay.qml</file>
+    <file alias="qml/components/MiniMonitorChart.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/MiniMonitorChart.qml</file>
+    <file alias="qml/views/EnvelopeChartPanel.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml</file>
+    <file alias="qml/views/CommandLogPanel.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/CommandLogPanel.qml</file>
+    <file alias="qml/views/Notification.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Notification.qml</file>
+    <file alias="qml/views/Detect.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Detect.qml</file>
+    <file alias="qml/views/Attenuation.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/Attenuation.qml</file>
+    <file alias="qml/components/CustomComboBox.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomComboBox.qml</file>
+    <file alias="qml/components/CustomSwitch.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomSwitch.qml</file>
+    <file alias="qml/components/CustomBoxFiled.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomBoxFiled.qml</file>
+    <file alias="qml/components/ClampedTextField.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/ClampedTextField.qml</file>
+    <file alias="qml/components/AppTheme.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/AppTheme.qml</file>
+    <file alias="qml/views/chartView.qml">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/chartView.qml</file>
+  </qresource>
+</RCC>
+

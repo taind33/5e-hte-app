@@ -1,0 +1,1 @@
+STRESS(virtual time 4.20s): sent 90 cmds every 30 ms -> ACKs 90 (ATT 27, CMD 27, DELAY 27, AC 9), WAVE frames 13, RX FIFO overruns 0, max RX-poll gap 0.02 ms

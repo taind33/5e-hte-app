@@ -1,0 +1,347 @@
+{
+    "classes": [
+        {
+            "className": "BasePowerSource",
+            "lineNumber": 19,
+            "methods": [
+                {
+                    "access": "public",
+                    "index": 11,
+                    "lineNumber": 69,
+                    "name": "resetHistory",
+                    "returnType": "void"
+                }
+            ],
+            "object": true,
+            "properties": [
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 0,
+                    "lineNumber": 22,
+                    "name": "voltage",
+                    "notify": "voltageChanged",
+                    "override": false,
+                    "read": "voltage",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 1,
+                    "lineNumber": 23,
+                    "name": "current",
+                    "notify": "currentChanged",
+                    "override": false,
+                    "read": "current",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 2,
+                    "lineNumber": 24,
+                    "name": "hasData",
+                    "notify": "hasDataChanged",
+                    "override": false,
+                    "read": "hasData",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 3,
+                    "lineNumber": 25,
+                    "name": "isOn",
+                    "notify": "isOnChanged",
+                    "override": false,
+                    "read": "isOn",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setIsOn"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 4,
+                    "lineNumber": 26,
+                    "name": "voltageHistory",
+                    "notify": "voltageHistoryChanged",
+                    "override": false,
+                    "read": "voltageHistory",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 5,
+                    "lineNumber": 27,
+                    "name": "currentHistory",
+                    "notify": "currentHistoryChanged",
+                    "override": false,
+                    "read": "currentHistory",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 6,
+                    "lineNumber": 28,
+                    "name": "voltageMax",
+                    "notify": "voltageMaxChanged",
+                    "override": false,
+                    "read": "voltageMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 7,
+                    "lineNumber": 29,
+                    "name": "voltageMin",
+                    "notify": "voltageMinChanged",
+                    "override": false,
+                    "read": "voltageMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 8,
+                    "lineNumber": 30,
+                    "name": "currentMax",
+                    "notify": "currentMaxChanged",
+                    "override": false,
+                    "read": "currentMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 9,
+                    "lineNumber": 31,
+                    "name": "currentMin",
+                    "notify": "currentMinChanged",
+                    "override": false,
+                    "read": "currentMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 10,
+                    "lineNumber": 35,
+                    "name": "linkState",
+                    "notify": "linkChanged",
+                    "override": false,
+                    "read": "linkState",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 11,
+                    "lineNumber": 36,
+                    "name": "linkMessage",
+                    "notify": "linkChanged",
+                    "override": false,
+                    "read": "linkMessage",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 12,
+                    "lineNumber": 37,
+                    "name": "pending",
+                    "notify": "linkChanged",
+                    "override": false,
+                    "read": "pending",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 13,
+                    "lineNumber": 39,
+                    "name": "lastUpdate",
+                    "notify": "linkChanged",
+                    "override": false,
+                    "read": "lastUpdate",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                }
+            ],
+            "qualifiedClassName": "BasePowerSource",
+            "signals": [
+                {
+                    "access": "public",
+                    "index": 0,
+                    "lineNumber": 72,
+                    "name": "voltageChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 1,
+                    "lineNumber": 73,
+                    "name": "currentChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 2,
+                    "lineNumber": 74,
+                    "name": "hasDataChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 3,
+                    "lineNumber": 75,
+                    "name": "isOnChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 4,
+                    "lineNumber": 76,
+                    "name": "voltageHistoryChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 5,
+                    "lineNumber": 77,
+                    "name": "currentHistoryChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 6,
+                    "lineNumber": 78,
+                    "name": "voltageMaxChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 7,
+                    "lineNumber": 79,
+                    "name": "voltageMinChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 8,
+                    "lineNumber": 80,
+                    "name": "currentMaxChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 9,
+                    "lineNumber": 81,
+                    "name": "currentMinChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 10,
+                    "lineNumber": 82,
+                    "name": "linkChanged",
+                    "returnType": "void"
+                }
+            ],
+            "superClasses": [
+                {
+                    "access": "public",
+                    "name": "QObject"
+                }
+            ]
+        }
+    ],
+    "inputFile": "basepowersource.h",
+    "outputRevision": 69
+}
