@@ -21,7 +21,7 @@
                         }
                     ],
                     "index": 9,
-                    "lineNumber": 122,
+                    "lineNumber": 131,
                     "name": "requestSetAtt",
                     "returnType": "bool"
                 },
@@ -39,7 +39,7 @@
                     ],
                     "index": 10,
                     "isCloned": true,
-                    "lineNumber": 122,
+                    "lineNumber": 131,
                     "name": "requestSetAtt",
                     "returnType": "bool"
                 }
@@ -479,7 +479,41 @@
                     "designable": true,
                     "final": false,
                     "index": 25,
-                    "lineNumber": 58,
+                    "lineNumber": 57,
+                    "name": "calPoints",
+                    "notify": "calibrationChanged",
+                    "override": false,
+                    "read": "calPoints",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 26,
+                    "lineNumber": 59,
+                    "name": "calInfo",
+                    "notify": "calibrationChanged",
+                    "override": false,
+                    "read": "calInfo",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 27,
+                    "lineNumber": 64,
                     "name": "diagText",
                     "notify": "diagChanged",
                     "override": false,
@@ -495,8 +529,8 @@
                     "constant": false,
                     "designable": true,
                     "final": false,
-                    "index": 26,
-                    "lineNumber": 59,
+                    "index": 28,
+                    "lineNumber": 65,
                     "name": "diagLevel",
                     "notify": "diagChanged",
                     "override": false,
@@ -514,56 +548,56 @@
                 {
                     "access": "public",
                     "index": 0,
-                    "lineNumber": 125,
+                    "lineNumber": 134,
                     "name": "att1Changed",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 1,
-                    "lineNumber": 126,
+                    "lineNumber": 135,
                     "name": "att2Changed",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 2,
-                    "lineNumber": 127,
+                    "lineNumber": 136,
                     "name": "att3Changed",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 3,
-                    "lineNumber": 128,
+                    "lineNumber": 137,
                     "name": "waveDataChanged",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 4,
-                    "lineNumber": 129,
+                    "lineNumber": 138,
                     "name": "waveSourceChanged",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 5,
-                    "lineNumber": 130,
+                    "lineNumber": 139,
                     "name": "rfStatusChanged",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 6,
-                    "lineNumber": 131,
+                    "lineNumber": 140,
                     "name": "calibrationChanged",
                     "returnType": "void"
                 },
                 {
                     "access": "public",
                     "index": 7,
-                    "lineNumber": 132,
+                    "lineNumber": 141,
                     "name": "diagChanged",
                     "returnType": "void"
                 },
@@ -580,7 +614,7 @@
                         }
                     ],
                     "index": 8,
-                    "lineNumber": 133,
+                    "lineNumber": 142,
                     "name": "attUpdateRequested",
                     "returnType": "void"
                 }

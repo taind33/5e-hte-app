@@ -501,4 +501,12 @@ CMakeFiles/appDashboardEnv.dir/main.cpp.obj: \
  C:/Qt/6.11.2/mingw_64/include/QtQuickControls2/qtquickcontrols2global.h \
  C:/Qt/6.11.2/mingw_64/include/QtQuickControls2/qtquickcontrols2exports.h \
  C:/Qt/6.11.2/mingw_64/include/QtGui/QFontDatabase \
- C:/Qt/6.11.2/mingw_64/include/QtGui/qfontdatabase.h
+ C:/Qt/6.11.2/mingw_64/include/QtGui/qfontdatabase.h \
+ C:/Qt/6.11.2/mingw_64/include/QtGui/QIcon \
+ C:/Qt/6.11.2/mingw_64/include/QtGui/qicon.h \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/QUrl \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/QDirIterator \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/qdiriterator.h \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/qdir.h \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/qdirlisting.h \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/qfileinfo.h

@@ -6126,6 +6126,8 @@ CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDash
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
 
+CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj: appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp
+
 CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj: appDashboardEnv_autogen/mocs_compilation.cpp \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QDateTime \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QDebug \
@@ -10374,6 +10376,7 @@ CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/q
 CMakeFiles/appDashboardEnv.dir/main.cpp.obj: D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/main.cpp \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QDateTime \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QDebug \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/QDirIterator \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QElapsedTimer \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QFile \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QList \
@@ -10385,6 +10388,7 @@ CMakeFiles/appDashboardEnv.dir/main.cpp.obj: D:/taind33/Qt/DashboardEnv_fix_tran
   C:/Qt/6.11.2/mingw_64/include/QtCore/QStringList \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QTextStream \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QTimer \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/QUrl \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QVariant \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QVariantList \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QVariantMap \
@@ -10435,12 +10439,16 @@ CMakeFiles/appDashboardEnv.dir/main.cpp.obj: D:/taind33/Qt/DashboardEnv_fix_tran
   C:/Qt/6.11.2/mingw_64/include/QtCore/qdatetime.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qdeadlinetimer.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qdebug.h \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/qdir.h \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/qdiriterator.h \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/qdirlisting.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qelapsedtimer.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qendian.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qeventloop.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qexceptionhandling.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qfile.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qfiledevice.h \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/qfileinfo.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qflags.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qfloat16.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qforeach.h \
@@ -10548,6 +10556,7 @@ CMakeFiles/appDashboardEnv.dir/main.cpp.obj: D:/taind33/Qt/DashboardEnv_fix_tran
   C:/Qt/6.11.2/mingw_64/include/QtGui/QFont \
   C:/Qt/6.11.2/mingw_64/include/QtGui/QFontDatabase \
   C:/Qt/6.11.2/mingw_64/include/QtGui/QGuiApplication \
+  C:/Qt/6.11.2/mingw_64/include/QtGui/QIcon \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qbitmap.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qcolor.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qcursor.h \
@@ -10555,6 +10564,7 @@ CMakeFiles/appDashboardEnv.dir/main.cpp.obj: D:/taind33/Qt/DashboardEnv_fix_tran
   C:/Qt/6.11.2/mingw_64/include/QtGui/qfontdatabase.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qguiapplication.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qguiapplication_platform.h \
+  C:/Qt/6.11.2/mingw_64/include/QtGui/qicon.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qimage.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qinputmethod.h \
   C:/Qt/6.11.2/mingw_64/include/QtGui/qpaintdevice.h \
@@ -12311,6 +12321,7 @@ appDashboardEnv_autogen/timestamp: C:/Qt/6.11.2/mingw_64/include/QtCore/QDateTim
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wctype.h \
   D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/CMakeLists.txt \
+  D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/app.qrc \
   D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/acsource.cpp \
   D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/acsource.h \
   D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/basepowersource.cpp \
@@ -12541,9 +12552,9 @@ C:/Qt/6.11.2/mingw_64/include/QtCore/qbytearrayalgorithms.h:
 
 C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/sys/timeb.h:
 
-C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/string_view:
-
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagehelperspluginTargets-relwithdebinfo.cmake:
+
+C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/string_view:
 
 C:/Qt/6.11.2/mingw_64/include/QtCore/qbytearraylist.h:
 
@@ -13915,6 +13926,14 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6QmlWorkerScript/Qt6QmlWorkerScriptTargetsPrec
 
 .rcc/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp:
 
+C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6GuiTools/Qt6GuiToolsConfig.cmake:
+
+C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtquick3dhelpersimplpluginConfig.cmake:
+
+C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtchartsqml2Targets-relwithdebinfo.cmake:
+
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp:
+
 appDashboardEnv_autogen/mocs_compilation.cpp:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Gui/Qt6QTuioTouchPluginTargetsPrecheck.cmake:
@@ -14095,9 +14114,17 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtquickcontrols2fusionstyle
 
 .rcc/qmlcache/appDashboardEnv_qmlcache_loader.cpp:
 
+C:/Qt/6.11.2/mingw_64/include/QtCore/QDirIterator:
+
+C:/Qt/6.11.2/mingw_64/include/QtCore/qdiriterator.h:
+
 C:/Qt/6.11.2/mingw_64/include/QtCore/qsize.h:
 
 C:/Qt/6.11.2/mingw_64/include/QtGui/QFontDatabase:
+
+C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreTargets.cmake:
+
+C:/Qt/6.11.2/mingw_64/include/QtGui/QIcon:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtvkbhangulpluginTargets-relwithdebinfo.cmake:
 
@@ -14135,11 +14162,13 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtquick3dassetutilspluginCo
 
 C:/Qt/6.11.2/mingw_64/include/QtGui/qguiapplication_platform.h:
 
+C:/Qt/6.11.2/mingw_64/include/QtGui/qicon.h:
+
+C:/Qt/6.11.2/mingw_64/include/QtGui/qpixelformat.h:
+
 C:/Qt/6.11.2/mingw_64/include/QtGui/qinputmethod.h:
 
 C:/Qt/6.11.2/mingw_64/include/QtGui/qpaintdevice.h:
-
-C:/Qt/6.11.2/mingw_64/include/QtGui/qpixelformat.h:
 
 C:/Qt/6.11.2/mingw_64/include/QtGui/qpolygon.h:
 
@@ -14298,8 +14327,6 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreDependencies.cmake:
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreMacros.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreTargets-relwithdebinfo.cmake:
-
-C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreTargets.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreTargetsPrecheck.cmake:
 
@@ -14506,8 +14533,6 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake:
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6quick3dcorepluginTargets.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Gui/Qt6QWindowsIntegrationPluginTargets-relwithdebinfo.cmake:
-
-C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6GuiTools/Qt6GuiToolsConfig.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6Quick3DXrpluginAdditionalTargetInfo.cmake:
 
@@ -14821,8 +14846,6 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qmlxmllistmodelpluginAdditi
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qmlxmllistmodelpluginTargetsPrecheck.cmake:
 
-C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagehelperspluginTargetsPrecheck.cmake:
-
 C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/FindThreads.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquick3dphysicspluginTargets.cmake:
@@ -14845,6 +14868,8 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtquicktimelinepluginConfig
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagehelperspluginTargets.cmake:
 
+C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagehelperspluginTargetsPrecheck.cmake:
+
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagepluginAdditionalTargetInfo.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qquickvectorimagepluginTargets-relwithdebinfo.cmake:
@@ -14858,10 +14883,6 @@ C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtchartsqml2AdditionalTarge
 C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtchartsqml2Config.cmake:
-
-C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtquick3dhelpersimplpluginConfig.cmake:
-
-C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtchartsqml2Targets-relwithdebinfo.cmake:
 
 C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/QmlPlugins/Qt6qtgraphicaleffectspluginAdditionalTargetInfo.cmake:
 
@@ -15544,6 +15565,8 @@ C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake:
 C:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake:
 
 D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/CMakeLists.txt:
+
+D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/app.qrc:
 
 .qt/qml_imports/appDashboardEnv_conf.cmake:
 

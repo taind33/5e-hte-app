@@ -1,0 +1,10 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  GUI: hiệu chuẩn 2445
+PASS  GUI: hiệu chuẩn 2455
+PASS  GUI: Offset 31.0 dB @ 2450.0 MHz (nội suy 2445–2455)
+saved /tmp/claude-0/-home-claude/9166c23e-afad-5c8e-b3ae-89f63f38ae4b/scratchpad/cal/gui_1_noisuy_2450.png
+saved /tmp/claude-0/-home-claude/9166c23e-afad-5c8e-b3ae-89f63f38ae4b/scratchpad/cal/gui_2_diem_2445.png
+PASS  tìm thấy khung Phổ RF
+saved /tmp/claude-0/-home-claude/9166c23e-afad-5c8e-b3ae-89f63f38ae4b/scratchpad/cal/gui_3_hoi_xoa_diem.png
+PASS  không có cảnh báo QML lúc chạy (0)
+RESULT(gui-cal): 5 passed, 0 failed

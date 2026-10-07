@@ -25,8 +25,16 @@
                             "codegenResult": 2,
                             "column": 5,
                             "durationMicroseconds": 0,
-                            "functionName": "populateSeries",
+                            "functionName": "askClearCalPoint",
                             "line": 28,
+                            "message": "Functions without type annotations won't be compiled"
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 5,
+                            "durationMicroseconds": 1000,
+                            "functionName": "populateSeries",
+                            "line": 34,
                             "message": "Cannot load property waveData from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -34,15 +42,15 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "fill",
-                            "line": 40,
+                            "line": 46,
                             "message": ""
                         },
                         {
                             "codegenResult": 0,
                             "column": 33,
-                            "durationMicroseconds": 3000,
+                            "durationMicroseconds": 8000,
                             "functionName": "color",
-                            "line": 53,
+                            "line": 59,
                             "message": ""
                         },
                         {
@@ -50,7 +58,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "implicitWidth",
-                            "line": 60,
+                            "line": 66,
                             "message": ""
                         },
                         {
@@ -58,7 +66,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 61,
+                            "line": 67,
                             "message": "Cannot load property waveSource from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -66,7 +74,7 @@
                             "column": 37,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 69,
+                            "line": 75,
                             "message": ""
                         },
                         {
@@ -74,7 +82,7 @@
                             "column": 27,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 70,
+                            "line": 76,
                             "message": "Cannot load property waveSource from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -82,7 +90,7 @@
                             "column": 39,
                             "durationMicroseconds": 0,
                             "functionName": "centerIn",
-                            "line": 66,
+                            "line": 72,
                             "message": ""
                         },
                         {
@@ -90,7 +98,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 81,
+                            "line": 87,
                             "message": ""
                         },
                         {
@@ -98,7 +106,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "elide",
-                            "line": 82,
+                            "line": 88,
                             "message": ""
                         },
                         {
@@ -106,7 +114,7 @@
                             "column": 23,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 84,
+                            "line": 90,
                             "message": "Cannot load property rfStatusValid from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -114,7 +122,7 @@
                             "column": 35,
                             "durationMicroseconds": 0,
                             "functionName": "alignment",
-                            "line": 79,
+                            "line": 85,
                             "message": ""
                         },
                         {
@@ -122,7 +130,7 @@
                             "column": 38,
                             "durationMicroseconds": 0,
                             "functionName": "maximumWidth",
-                            "line": 83,
+                            "line": 89,
                             "message": ""
                         },
                         {
@@ -130,7 +138,7 @@
                             "column": 34,
                             "durationMicroseconds": 0,
                             "functionName": "fill",
-                            "line": 100,
+                            "line": 106,
                             "message": ""
                         },
                         {
@@ -138,7 +146,7 @@
                             "column": 34,
                             "durationMicroseconds": 0,
                             "functionName": "labelsColor",
-                            "line": 111,
+                            "line": 117,
                             "message": ""
                         },
                         {
@@ -146,7 +154,7 @@
                             "column": 36,
                             "durationMicroseconds": 0,
                             "functionName": "gridLineColor",
-                            "line": 113,
+                            "line": 119,
                             "message": ""
                         },
                         {
@@ -154,7 +162,7 @@
                             "column": 34,
                             "durationMicroseconds": 0,
                             "functionName": "labelFormat",
-                            "line": 114,
+                            "line": 120,
                             "message": "Cannot load property xIsFrequency from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -162,7 +170,7 @@
                             "column": 37,
                             "durationMicroseconds": 0,
                             "functionName": "labelsColor",
-                            "line": 122,
+                            "line": 128,
                             "message": ""
                         },
                         {
@@ -170,14 +178,6 @@
                             "column": 37,
                             "durationMicroseconds": 0,
                             "functionName": "gridLineColor",
-                            "line": 124,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 28,
-                            "durationMicroseconds": 0,
-                            "functionName": "axisX",
                             "line": 130,
                             "message": ""
                         },
@@ -185,8 +185,16 @@
                             "codegenResult": 0,
                             "column": 28,
                             "durationMicroseconds": 0,
+                            "functionName": "axisX",
+                            "line": 136,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 28,
+                            "durationMicroseconds": 0,
                             "functionName": "axisY",
-                            "line": 131,
+                            "line": 137,
                             "message": ""
                         },
                         {
@@ -194,7 +202,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 132,
+                            "line": 138,
                             "message": "Cannot load property waveSource from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -202,7 +210,7 @@
                             "column": 44,
                             "durationMicroseconds": 0,
                             "functionName": "onCompleted",
-                            "line": 135,
+                            "line": 141,
                             "message": ""
                         },
                         {
@@ -210,7 +218,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "target",
-                            "line": 138,
+                            "line": 144,
                             "message": ""
                         },
                         {
@@ -218,15 +226,15 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "onWaveDataChanged",
-                            "line": 139,
+                            "line": 145,
                             "message": ""
                         },
                         {
                             "codegenResult": 0,
                             "column": 20,
-                            "durationMicroseconds": 39000,
+                            "durationMicroseconds": 0,
                             "functionName": "x",
-                            "line": 146,
+                            "line": 152,
                             "message": ""
                         },
                         {
@@ -234,7 +242,7 @@
                             "column": 20,
                             "durationMicroseconds": 0,
                             "functionName": "y",
-                            "line": 147,
+                            "line": 153,
                             "message": ""
                         },
                         {
@@ -242,7 +250,7 @@
                             "column": 23,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 148,
+                            "line": 154,
                             "message": "Cannot load property spectrumUnit from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -250,7 +258,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 150,
+                            "line": 156,
                             "message": ""
                         },
                         {
@@ -258,7 +266,7 @@
                             "column": 23,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 156,
+                            "line": 162,
                             "message": "Cannot load property xIsFrequency from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -266,7 +274,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 158,
+                            "line": 164,
                             "message": ""
                         },
                         {
@@ -274,7 +282,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "right",
-                            "line": 153,
+                            "line": 159,
                             "message": ""
                         },
                         {
@@ -282,7 +290,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "bottom",
-                            "line": 154,
+                            "line": 160,
                             "message": ""
                         },
                         {
@@ -290,7 +298,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "visible",
-                            "line": 164,
+                            "line": 170,
                             "message": "Cannot load property waveSource from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -298,7 +306,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "width",
-                            "line": 168,
+                            "line": 174,
                             "message": ""
                         },
                         {
@@ -306,7 +314,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "height",
-                            "line": 169,
+                            "line": 175,
                             "message": ""
                         },
                         {
@@ -314,7 +322,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 171,
+                            "line": 177,
                             "message": "Cannot load property diagLevel from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -322,7 +330,7 @@
                             "column": 30,
                             "durationMicroseconds": 0,
                             "functionName": "top",
-                            "line": 165,
+                            "line": 171,
                             "message": ""
                         },
                         {
@@ -330,7 +338,7 @@
                             "column": 43,
                             "durationMicroseconds": 0,
                             "functionName": "horizontalCenter",
-                            "line": 166,
+                            "line": 172,
                             "message": ""
                         },
                         {
@@ -338,7 +346,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 177,
+                            "line": 183,
                             "message": ""
                         },
                         {
@@ -346,7 +354,7 @@
                             "column": 27,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 178,
+                            "line": 184,
                             "message": "Cannot load property diagText from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -354,7 +362,7 @@
                             "column": 39,
                             "durationMicroseconds": 0,
                             "functionName": "centerIn",
-                            "line": 174,
+                            "line": 180,
                             "message": ""
                         },
                         {
@@ -362,7 +370,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "visible",
-                            "line": 184,
+                            "line": 190,
                             "message": "Cannot load property waveSource from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -370,7 +378,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "width",
-                            "line": 186,
+                            "line": 192,
                             "message": ""
                         },
                         {
@@ -378,7 +386,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "height",
-                            "line": 187,
+                            "line": 193,
                             "message": ""
                         },
                         {
@@ -386,7 +394,7 @@
                             "column": 25,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 189,
+                            "line": 195,
                             "message": ""
                         },
                         {
@@ -394,7 +402,7 @@
                             "column": 35,
                             "durationMicroseconds": 0,
                             "functionName": "centerIn",
-                            "line": 185,
+                            "line": 191,
                             "message": ""
                         },
                         {
@@ -402,7 +410,7 @@
                             "column": 31,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 190,
+                            "line": 196,
                             "message": "Cannot load property diagLevel from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -410,7 +418,7 @@
                             "column": 42,
                             "durationMicroseconds": 0,
                             "functionName": "horizontalAlignment",
-                            "line": 195,
+                            "line": 201,
                             "message": ""
                         },
                         {
@@ -418,7 +426,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 197,
+                            "line": 203,
                             "message": ""
                         },
                         {
@@ -426,7 +434,7 @@
                             "column": 27,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 200,
+                            "line": 206,
                             "message": "Cannot load property diagText from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -434,7 +442,7 @@
                             "column": 39,
                             "durationMicroseconds": 0,
                             "functionName": "centerIn",
-                            "line": 194,
+                            "line": 200,
                             "message": ""
                         },
                         {
@@ -442,15 +450,15 @@
                             "column": 34,
                             "durationMicroseconds": 0,
                             "functionName": "acceptedButtons",
-                            "line": 210,
+                            "line": 216,
                             "message": ""
                         },
                         {
                             "codegenResult": 2,
                             "column": 36,
-                            "durationMicroseconds": 1000,
+                            "durationMicroseconds": 3000,
                             "functionName": "onPositionChanged",
-                            "line": 212,
+                            "line": 218,
                             "message": "Cannot load property spectrumUnit from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -458,7 +466,7 @@
                             "column": 36,
                             "durationMicroseconds": 0,
                             "functionName": "onPositionChanged",
-                            "line": 212,
+                            "line": 218,
                             "message": ""
                         },
                         {
@@ -466,7 +474,7 @@
                             "column": 27,
                             "durationMicroseconds": 0,
                             "functionName": "onExited",
-                            "line": 241,
+                            "line": 247,
                             "message": ""
                         },
                         {
@@ -474,7 +482,7 @@
                             "column": 31,
                             "durationMicroseconds": 0,
                             "functionName": "fill",
-                            "line": 208,
+                            "line": 214,
                             "message": ""
                         },
                         {
@@ -482,7 +490,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "visible",
-                            "line": 246,
+                            "line": 252,
                             "message": ""
                         },
                         {
@@ -490,7 +498,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "x",
-                            "line": 247,
+                            "line": 253,
                             "message": ""
                         },
                         {
@@ -498,7 +506,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "y",
-                            "line": 248,
+                            "line": 254,
                             "message": ""
                         },
                         {
@@ -506,7 +514,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "width",
-                            "line": 249,
+                            "line": 255,
                             "message": ""
                         },
                         {
@@ -514,14 +522,6 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "opacity",
-                            "line": 253,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 39,
-                            "durationMicroseconds": 0,
-                            "functionName": "text",
                             "line": 259,
                             "message": ""
                         },
@@ -529,8 +529,16 @@
                             "codegenResult": 0,
                             "column": 39,
                             "durationMicroseconds": 0,
+                            "functionName": "text",
+                            "line": 265,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 39,
+                            "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 260,
+                            "line": 266,
                             "message": ""
                         },
                         {
@@ -538,15 +546,119 @@
                             "column": 39,
                             "durationMicroseconds": 0,
                             "functionName": "centerIn",
-                            "line": 258,
+                            "line": 264,
                             "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 25,
+                            "durationMicroseconds": 0,
+                            "functionName": "parent",
+                            "line": 275,
+                            "message": "Could not find property \"parent\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 34,
+                            "durationMicroseconds": 0,
+                            "functionName": "standardButtons",
+                            "line": 280,
+                            "message": "Could not find property \"standardButtons\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 29,
+                            "durationMicroseconds": 0,
+                            "functionName": "onAccepted",
+                            "line": 281,
+                            "message": "Could not find signal \"accepted\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 35,
+                            "durationMicroseconds": 0,
+                            "functionName": "centerIn",
+                            "line": 276,
+                            "message": "Could not find property \"centerIn\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 32,
+                            "durationMicroseconds": 0,
+                            "functionName": "width",
+                            "line": 282,
+                            "message": "Could not find property \"width\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 56,
+                            "durationMicroseconds": 0,
+                            "functionName": "wrapMode",
+                            "line": 282,
+                            "message": "Could not find property \"wrapMode\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 25,
+                            "durationMicroseconds": 0,
+                            "functionName": "parent",
+                            "line": 288,
+                            "message": "Could not find property \"parent\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 34,
+                            "durationMicroseconds": 0,
+                            "functionName": "standardButtons",
+                            "line": 293,
+                            "message": "Could not find property \"standardButtons\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 29,
+                            "durationMicroseconds": 0,
+                            "functionName": "onAccepted",
+                            "line": 294,
+                            "message": "Could not find signal \"accepted\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 35,
+                            "durationMicroseconds": 0,
+                            "functionName": "centerIn",
+                            "line": 289,
+                            "message": "Could not find property \"centerIn\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 32,
+                            "durationMicroseconds": 0,
+                            "functionName": "width",
+                            "line": 295,
+                            "message": "Could not find property \"width\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 56,
+                            "durationMicroseconds": 0,
+                            "functionName": "wrapMode",
+                            "line": 295,
+                            "message": "Could not find property \"wrapMode\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 77,
+                            "durationMicroseconds": 0,
+                            "functionName": "text",
+                            "line": 295,
+                            "message": "Could not find property \"text\"."
                         },
                         {
                             "codegenResult": 0,
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "visible",
-                            "line": 267,
+                            "line": 299,
                             "message": ""
                         },
                         {
@@ -554,7 +666,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "x",
-                            "line": 268,
+                            "line": 300,
                             "message": ""
                         },
                         {
@@ -562,7 +674,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "y",
-                            "line": 269,
+                            "line": 301,
                             "message": ""
                         },
                         {
@@ -570,7 +682,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "height",
-                            "line": 271,
+                            "line": 303,
                             "message": ""
                         },
                         {
@@ -578,7 +690,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 272,
+                            "line": 304,
                             "message": ""
                         },
                         {
@@ -586,7 +698,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 285,
+                            "line": 317,
                             "message": ""
                         },
                         {
@@ -594,7 +706,7 @@
                             "column": 23,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 286,
+                            "line": 318,
                             "message": "Cannot load property waveData from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
@@ -602,7 +714,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 292,
+                            "line": 324,
                             "message": ""
                         },
                         {
@@ -610,31 +722,15 @@
                             "column": 23,
                             "durationMicroseconds": 0,
                             "functionName": "text",
-                            "line": 293,
+                            "line": 325,
                             "message": "Cannot load property waveData from EnvelopeChartPanel::rf with type QVariant."
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 24,
-                            "durationMicroseconds": 0,
-                            "functionName": "color",
-                            "line": 302,
-                            "message": "Cannot load property calMismatch from EnvelopeChartPanel::rf with type QVariant."
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 23,
-                            "durationMicroseconds": 0,
-                            "functionName": "text",
-                            "line": 303,
-                            "message": "Cannot load property calibrated from EnvelopeChartPanel::rf with type QVariant."
                         },
                         {
                             "codegenResult": 2,
                             "column": 38,
                             "durationMicroseconds": 0,
                             "functionName": "horizontalAlignment",
-                            "line": 314,
+                            "line": 338,
                             "message": "Could not find property \"horizontalAlignment\"."
                         },
                         {
@@ -642,7 +738,7 @@
                             "column": 38,
                             "durationMicroseconds": 0,
                             "functionName": "verticalAlignment",
-                            "line": 315,
+                            "line": 339,
                             "message": "Could not find property \"verticalAlignment\"."
                         },
                         {
@@ -650,7 +746,7 @@
                             "column": 24,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 316,
+                            "line": 340,
                             "message": "Could not find property \"color\"."
                         },
                         {
@@ -658,7 +754,7 @@
                             "column": 36,
                             "durationMicroseconds": 0,
                             "functionName": "onEditingFinished",
-                            "line": 321,
+                            "line": 345,
                             "message": "Could not find signal \"editingFinished\"."
                         },
                         {
@@ -666,7 +762,7 @@
                             "column": 40,
                             "durationMicroseconds": 0,
                             "functionName": "onCompleted",
-                            "line": 320,
+                            "line": 344,
                             "message": "Cannot access value for name dashboard"
                         },
                         {
@@ -674,7 +770,7 @@
                             "column": 76,
                             "durationMicroseconds": 0,
                             "functionName": "regularExpression",
-                            "line": 323,
+                            "line": 347,
                             "message": "Cannot generate efficient code for MoveRegExp"
                         },
                         {
@@ -682,7 +778,7 @@
                             "column": 34,
                             "durationMicroseconds": 0,
                             "functionName": "visible",
-                            "line": 324,
+                            "line": 348,
                             "message": "Could not find property \"visible\"."
                         },
                         {
@@ -690,7 +786,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 328,
+                            "line": 352,
                             "message": ""
                         },
                         {
@@ -698,7 +794,7 @@
                             "column": 35,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 329,
+                            "line": 353,
                             "message": ""
                         },
                         {
@@ -706,7 +802,7 @@
                             "column": 33,
                             "durationMicroseconds": 0,
                             "functionName": "implicitWidth",
-                            "line": 337,
+                            "line": 361,
                             "message": "Could not find property \"implicitWidth\"."
                         },
                         {
@@ -714,7 +810,7 @@
                             "column": 26,
                             "durationMicroseconds": 0,
                             "functionName": "enabled",
-                            "line": 338,
+                            "line": 362,
                             "message": "Could not find property \"enabled\"."
                         },
                         {
@@ -722,7 +818,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "onClicked",
-                            "line": 339,
+                            "line": 363,
                             "message": "Could not find signal \"clicked\"."
                         },
                         {
@@ -730,7 +826,7 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 342,
+                            "line": 366,
                             "message": "Cannot access value for name calButton"
                         },
                         {
@@ -738,80 +834,8 @@
                             "column": 28,
                             "durationMicroseconds": 0,
                             "functionName": "color",
-                            "line": 350,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 42,
-                            "durationMicroseconds": 0,
-                            "functionName": "horizontalAlignment",
-                            "line": 351,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 42,
-                            "durationMicroseconds": 0,
-                            "functionName": "verticalAlignment",
-                            "line": 352,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 33,
-                            "durationMicroseconds": 0,
-                            "functionName": "implicitWidth",
-                            "line": 359,
-                            "message": "Could not find property \"implicitWidth\"."
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 26,
-                            "durationMicroseconds": 0,
-                            "functionName": "enabled",
-                            "line": 360,
-                            "message": "Could not find property \"enabled\"."
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 28,
-                            "durationMicroseconds": 0,
-                            "functionName": "onClicked",
-                            "line": 361,
-                            "message": "Could not find signal \"clicked\"."
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 30,
-                            "durationMicroseconds": 0,
-                            "functionName": "opacity",
-                            "line": 367,
-                            "message": "Cannot access value for name clearCalButton"
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 35,
-                            "durationMicroseconds": 0,
-                            "functionName": "color",
-                            "line": 365,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 0,
-                            "column": 28,
-                            "durationMicroseconds": 0,
-                            "functionName": "color",
-                            "line": 373,
-                            "message": ""
-                        },
-                        {
-                            "codegenResult": 2,
-                            "column": 30,
-                            "durationMicroseconds": 0,
-                            "functionName": "opacity",
                             "line": 374,
-                            "message": "Cannot access value for name clearCalButton"
+                            "message": ""
                         },
                         {
                             "codegenResult": 0,
@@ -827,6 +851,230 @@
                             "durationMicroseconds": 0,
                             "functionName": "verticalAlignment",
                             "line": 376,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 33,
+                            "durationMicroseconds": 0,
+                            "functionName": "implicitWidth",
+                            "line": 383,
+                            "message": "Could not find property \"implicitWidth\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 26,
+                            "durationMicroseconds": 0,
+                            "functionName": "enabled",
+                            "line": 384,
+                            "message": "Could not find property \"enabled\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 28,
+                            "durationMicroseconds": 0,
+                            "functionName": "onClicked",
+                            "line": 385,
+                            "message": "Could not find signal \"clicked\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 30,
+                            "durationMicroseconds": 0,
+                            "functionName": "opacity",
+                            "line": 391,
+                            "message": "Cannot access value for name clearCalButton"
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 35,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 389,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 28,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 397,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 30,
+                            "durationMicroseconds": 0,
+                            "functionName": "opacity",
+                            "line": 398,
+                            "message": "Cannot access value for name clearCalButton"
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 42,
+                            "durationMicroseconds": 0,
+                            "functionName": "horizontalAlignment",
+                            "line": 399,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 42,
+                            "durationMicroseconds": 0,
+                            "functionName": "verticalAlignment",
+                            "line": 400,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 24,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 413,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 24,
+                            "durationMicroseconds": 0,
+                            "functionName": "model",
+                            "line": 417,
+                            "message": "Cannot load property calPoints from EnvelopeChartPanel::rf with type QVariant."
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 37,
+                            "durationMicroseconds": 0,
+                            "functionName": "implicitWidth",
+                            "line": 422,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 28,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 424,
+                            "message": "Cannot load property active from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 30,
+                            "durationMicroseconds": 0,
+                            "functionName": "opacity",
+                            "line": 429,
+                            "message": "Cannot load property valid from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 35,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 427,
+                            "message": "Cannot load property mismatch from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 32,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 435,
+                            "message": "Cannot load property active from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 31,
+                            "durationMicroseconds": 0,
+                            "functionName": "text",
+                            "line": 437,
+                            "message": "Cannot load property label from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 43,
+                            "durationMicroseconds": 0,
+                            "functionName": "centerIn",
+                            "line": 432,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 36,
+                            "durationMicroseconds": 0,
+                            "functionName": "bold",
+                            "line": 434,
+                            "message": "Cannot load property active from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 38,
+                            "durationMicroseconds": 0,
+                            "functionName": "cursorShape",
+                            "line": 443,
+                            "message": "Cannot load property valid from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 36,
+                            "durationMicroseconds": 0,
+                            "functionName": "onClicked",
+                            "line": 444,
+                            "message": "Cannot load property valid from (component in D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views/EnvelopeChartPanel.qml)::modelData with type QVariant."
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 39,
+                            "durationMicroseconds": 0,
+                            "functionName": "fill",
+                            "line": 441,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 38,
+                            "durationMicroseconds": 0,
+                            "functionName": "visible",
+                            "line": 449,
+                            "message": "Could not find property \"visible\"."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 35,
+                            "durationMicroseconds": 0,
+                            "functionName": "text",
+                            "line": 450,
+                            "message": "Could not find property \"text\"."
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 24,
+                            "durationMicroseconds": 0,
+                            "functionName": "elide",
+                            "line": 462,
+                            "message": ""
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 24,
+                            "durationMicroseconds": 0,
+                            "functionName": "color",
+                            "line": 464,
+                            "message": "Cannot load property calMismatch from EnvelopeChartPanel::rf with type QVariant."
+                        },
+                        {
+                            "codegenResult": 2,
+                            "column": 23,
+                            "durationMicroseconds": 0,
+                            "functionName": "text",
+                            "line": 465,
+                            "message": "Cannot load property calInfo from EnvelopeChartPanel::rf with type QVariant."
+                        },
+                        {
+                            "codegenResult": 0,
+                            "column": 38,
+                            "durationMicroseconds": 0,
+                            "functionName": "maximumWidth",
+                            "line": 461,
                             "message": ""
                         }
                     ],

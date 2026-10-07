@@ -7,19 +7,28 @@
 #include <QQuickStyle>
 #include <QFontDatabase>
 #include <QSettings>
+#include <QIcon>
+#include <QUrl>
+#include <QDirIterator>
 
 int main(int argc, char *argv[]) {
     // 1. Khởi tạo ứng dụng với cấu hình đầy đủ của Widgets (bắt buộc cho QtCharts)
     QApplication app(argc, argv);
-
     // Ép mọi QSettings mặc định (kể cả QSettings settings; không tham số
     // trong DashboardManager) ra file *.ini thay vì registry Windows/plist
     // macOS - đúng yêu cầu "lưu config file *.ini". Phải gọi TRƯỚC khi bất kỳ
     // QSettings nào được tạo (DashboardManager tạo 1 cái trong constructor
     // ngay bên dưới) - và sau khi setOrganizationName/setApplicationName vì
     // QSettings mặc định dùng 2 tên đó để đặt tên file .ini.
-    app.setOrganizationName("VASC");
-    app.setApplicationName("AvionicsDashboard");
+    app.setWindowIcon(QIcon(":/assets/logo/icon_5E-HTE.ico"));
+    app.processEvents();
+
+    auto *splash = new QQmlApplicationEngine;
+    splash->load(QUrl(QStringLiteral("qrc:/Splash.qml")));
+    app.processEvents();
+
+    app.setOrganizationName("5E-HTE");
+    app.setApplicationName("Avionics");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QQuickStyle ::setStyle("Basic");
@@ -48,9 +57,15 @@ int main(int argc, char *argv[]) {
 
     // Kết nối signal bảo vệ: Nếu load file QML thất bại thì tắt app ngay lập tức để tránh chạy ngầm lỗi
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-                         if (!obj && url == objUrl)
-                             QCoreApplication::exit(-1);
+                     &app, [&](QObject *obj, const QUrl &objUrl) {
+                        if (!obj && url == objUrl) {
+                            QCoreApplication::exit(-1);
+                            return;
+                        }
+                        if (obj) {                              // cửa sổ chính đã tạo xong
+                            app.setQuitOnLastWindowClosed(true);
+                            splash->deleteLater();
+                        }
                      }, Qt::QueuedConnection);
 
     // 7. Kích hoạt nạp giao diện

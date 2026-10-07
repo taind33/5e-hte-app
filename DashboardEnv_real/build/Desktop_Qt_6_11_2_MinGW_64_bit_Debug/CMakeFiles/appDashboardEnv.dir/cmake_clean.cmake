@@ -72,6 +72,9 @@ file(REMOVE_RECURSE
   "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.obj.d"
   "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj"
   "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj.d"
+  "CMakeFiles/appDashboardEnv.dir/app.rc.obj"
+  "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj"
+  "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj.d"
   "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj"
   "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj.d"
   "CMakeFiles/appDashboardEnv.dir/appdashboardenv_qmltyperegistrations.cpp.obj"
@@ -109,6 +112,7 @@ file(REMOVE_RECURSE
   "appDashboardEnv.exe"
   "appDashboardEnv.exe.manifest"
   "appDashboardEnv.pdb"
+  "appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp"
   "appDashboardEnv_autogen/mocs_compilation.cpp"
   "appDashboardEnv_autogen/timestamp"
   "appdashboardenv_qmltyperegistrations.cpp"
@@ -120,6 +124,6 @@ file(REMOVE_RECURSE
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang CXX)
+foreach(lang CXX RC)
   include(CMakeFiles/appDashboardEnv.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()

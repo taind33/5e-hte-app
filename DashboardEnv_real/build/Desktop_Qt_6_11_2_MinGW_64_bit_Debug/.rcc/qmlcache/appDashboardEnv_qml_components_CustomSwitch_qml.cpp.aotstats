@@ -8,7 +8,7 @@
                         {
                             "codegenResult": 2,
                             "column": 23,
-                            "durationMicroseconds": 7000,
+                            "durationMicroseconds": 16000,
                             "functionName": "color",
                             "line": 14,
                             "message": "Cannot access value for name control"

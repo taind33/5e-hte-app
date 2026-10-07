@@ -1,0 +1,106 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  help lists commands incl. raw/scan
+PASS  help ac explains 'ac clear' (reset lỗi = PROT:CLE)
+PASS  clear empties the terminal
+PASS  unknown command -> error + hint
+PASS  old comma syntax -> points to 'board'
+PASS  Tab completion: 'ac r' -> ac read / ac raw
+PASS  scan found the board (skipped the dead port)
+PASS  scan result in terminal
+PASS  status: verified + firmware build
+PASS  ping prints round-trip time
+PASS  ac on 120 50 -> UI inputs updated
+PASS  att rounds to 0.25 dB steps (12.8 -> 12.75)
+PASS  AC confirmed ON via CLI
+PASS  DC ON via CLI
+PASS  att/delay applied
+PASS  monitor prints per-second frame counts (WAVD at ~10/s)
+PASS  ac raw *IDN? -> supply reply printed
+PASS  ac clear -> PROT:CLE sent, accepted (SYST:ERR? 0)
+PASS  bad raw AC command -> SCPI error shown
+PASS  dc status -> #0 STT? reply printed
+PASS  raw OUTP OFF -> switch follows real output (OFF)
+PASS  read all -> both pending
+PASS  'reset yes' without arming is refused
+PASS  reset yes -> RESET sent, AC/DC confirmed OFF
+      | [04:16:52] [CMD] status
+      | ──────── TRẠNG THÁI ────────
+      | Kết nối: /dev/pts/0 @ 115200 — CHƯA xác thực
+      | Nhận: 0 byte, 0 khung đúng, 0 khung lỗi
+      | Chẩn đoán: Cổng /dev/pts/0 đã mở nhưng KHÔNG nhận được byte nào từ board. Kiểm tra: board đã chạy firmware (nếu chạy Debug trong Vitis phải bấm Resume), đúng cổng COM của RS422, dây RS422 (TX/RX, A/B), nguồn board. Gõ 'scan' trong Terminal để tự tìm cổng/baud có board.
+      | Firmware: chưa nhận gói DIAG từ board
+      | Nguồn AC: TẮT, lần đọc cuối -- [none]
+      | Nguồn DC: TẮT, lần đọc cuối -- [none]
+      | Hiệu chuẩn phổ RF (dBm = dBFS + hệ số):
+      |    2440.0 MHz : --
+      |    2445.0 MHz : --
+      |    2450.0 MHz : --
+      |    2455.0 MHz : --
+      |    2460.0 MHz : --
+      |   Đang dùng: Chưa hiệu chuẩn
+      | [04:16:52] [BOARD] 5E-HTE firmware build Oct  5 2026 10:53:14 - RS422/PC san sang (RX polling).
+      | [04:16:52] [BOARD] AD9361: bat dau khoi tao (ad9361_init)...
+      | [04:16:52] [BOARD] AD9361: LO RX = 2440000000 Hz
+      | [04:16:52] [BOARD] AD9361: khoi tao xong.
+      | [04:16:52] [BOARD] Board san sang: AD9361 OK, pho RF OK, ATT OK, Delay OK, ADC7928 OK, UART AC OK, UART DC OK.
+      | [04:16:52] [INFO] Firmware trên board: build Oct 5 2026 10:53:14
+      | [04:16:54] [CMD] status
+      | ──────── TRẠNG THÁI ────────
+      | Kết nối: /dev/pts/0 @ 115200 — đã xác thực board
+      | Nhận: 14872 byte, 67 khung đúng, 0 khung lỗi
+      | Firmware: build Oct 5 2026 10:53:14, chạy 4 s
+      | AD9361: OK | Phổ RF: chạy | DMA ok 49, timeout 0 | đỉnh ADC RX1 206/2047
+      | Board nhận từ PC: 26 byte, 2 khung đúng, 0 khung lỗi
+      | Nguồn AC: TẮT, lần đọc cuối -- [none]
+      | Nguồn DC: TẮT, lần đọc cuối -- [none]
+      | Hiệu chuẩn phổ RF (dBm = dBFS + hệ số):
+      |    2440.0 MHz : --
+      |    2445.0 MHz : --
+      |    2450.0 MHz : --
+      |    2455.0 MHz : --
+      |    2460.0 MHz : --
+      |   Đang dùng: Chưa hiệu chuẩn
+      | [04:16:54] [CMD] ping
+      | PING -> board trả lời sau 2 ms
+      | [04:16:55] [CMD] ac on 120 50
+      | [04:16:55] [TX] AC ON 120 V 50 Hz
+      | [04:16:55] [CMD] dc on 24 2.5
+      | [04:16:55] [TX] DC ON 24 V, giới hạn 2.50 A
+      | [04:16:55] [CMD] att 1 12.8
+      |   (làm tròn 12.8 -> 12.75 dB theo bước 0.25 dB)
+      | [04:16:55] [CMD] delay 270
+      | [04:16:55] [CMD] monitor on
+      | monitor: BẬT - mỗi giây in số byte/khung nhận được (gõ monitor off để tắt).
+      | [04:16:56] [RX] DC (xác nhận lệnh): OK 24.00 V 0.800 A
+      | [04:16:56] [RX] AC (xác nhận lệnh): OK OUT=ON 120.30 V 1.234 A 50.00 Hz
+      | [MON] 2915 byte/s, 18 khung đúng, 0 khung lỗi | ACK_AC×1 ACK_ATT×1 ACK_DC×1 ACK_DELAY×1 ACK_PING×1 ADC×1 NGUON×2 RFST×1 WAVD×9
+      | [MON] 2604 byte/s, 11 khung đúng, 0 khung lỗi | ADC×1 WAVD×10
+      | [04:16:58] [CMD] monitor off
+      | monitor: TẮT
+      | [04:16:58] [CMD] ac raw *IDN?
+      | [04:16:58] [TX] AC ← *IDN?
+      | [04:16:58] [RX] AC → ITECH, M7722, 00000000000004, 1.01-1.00-1.0-1.1-1.2
+      | [04:16:59] [CMD] ac clear
+      | [04:16:59] [TX] AC ← PROT:CLE
+      | [04:16:59] [RX] AC → (đã gửi)  [SYST:ERR? = 0, không lỗi]  [ngõ ra ON]
+      | [04:17:00] [CMD] ac raw BOGUS
+      | [04:17:00] [TX] AC ← BOGUS
+      | [04:17:00] [ERR] AC → (đã gửi)  [LỖI SCPI -113]  [ngõ ra ON]
+      | [04:17:01] [CMD] dc status
+      | [04:17:01] [TX] DC ← #0 STT?
+      | [04:17:01] [RX] DC → #0 V24.00 A2.50 ON
+      | [04:17:02] [CMD] ac raw OUTP OFF
+      | [04:17:02] [TX] AC ← OUTP OFF
+      | [04:17:02] [RX] AC → (đã gửi)  [SYST:ERR? = 0, không lỗi]  [ngõ ra OFF]
+      | [04:17:03] [CMD] read all
+      | [04:17:03] [CMD] reset yes
+      | [04:17:03] [ERR] Gõ 'reset' trước, rồi 'reset yes' trong vòng 30 s để xác nhận.
+      | [04:17:03] [CMD] reset
+      | Đặt lại sẽ TẮT ngõ ra nguồn AC và DC, ATT về 0 dB, giữ chậm về 0 ns, xoá đỉnh kích nổ.
+      | Gõ 'reset yes' để xác nhận (trong 30 s).
+      | [04:17:03] [CMD] reset yes
+      | [04:17:03] [TX] RESET (AC/DC OFF, ATT 0 dB, delay 0 ns)
+      | [04:17:03] [RX] ACK OK
+      | [04:17:03] [RX] DC (đặt lại): OK 0.00 V 0.000 A
+      | [04:17:03] [RX] AC (đặt lại): OK OUT=OFF 0.00 V 0.000 A 0.00 Hz
+RESULT(cli): 24 passed, 0 failed

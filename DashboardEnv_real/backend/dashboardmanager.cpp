@@ -12,6 +12,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
+#include <QRegularExpression>
+#include <QVariantMap>
 
 namespace {
 constexpr int STREAM_MAGIC_LEN = 4;
@@ -75,7 +77,9 @@ DashboardManager::DashboardManager(QObject *parent)
     m_rxLoHz(0), m_rxFsHz(0), m_rxGainDb(0),
     m_lastTotalDbfs(0.0),
     m_lastSpectrumLive(false),
-    m_calibrated(false), m_calOffsetDb(0.0), m_calLoHz(0), m_calGainDb(0),
+    m_calibrated(false), m_calOffsetDb(0.0),
+    m_calFreqMHz(std::numeric_limits<double>::quiet_NaN()),
+    m_lastPeakMHz(0.0), m_lastPeakProminenceDb(0.0), m_lastHaveFreq(false),
     m_simSpectrumTick(0),
     m_acPendingOn(false), m_acPrevOn(false),
     m_dcPendingOn(false), m_dcPrevOn(false),
@@ -163,11 +167,8 @@ DashboardManager::DashboardManager(QObject *parent)
         appendCommandLog("INFO", "Cấu hình: " + QDir::toNativeSeparators(m_configPath));
     });
 
-    // Hiệu chuẩn phổ RF (dBFS -> dBm) đã lưu từ lần trước, nếu có.
-    m_calibrated = m_settings.contains("rf/calOffsetDb");
-    m_calOffsetDb = m_settings.value("rf/calOffsetDb", 0.0).toDouble();
-    m_calLoHz     = m_settings.value("rf/calLoHz", 0).toULongLong();
-    m_calGainDb   = m_settings.value("rf/calGainDb", 0).toInt();
+    // Hiệu chuẩn phổ RF (dBFS -> dBm) nhiều tần số, đã lưu từ lần trước.
+    loadRfCalibration();
     updateCalibrationState();
 }
 
@@ -295,6 +296,7 @@ void DashboardManager::startSession() {
         const bool rts = m_serialPort->setRequestToSend(true);
         writeToLog(QString("[LINK] DTR %1, RTS %2").arg(dtr ? "ON" : "lỗi", rts ? "ON" : "lỗi"));
     }
+    m_simTimer->stop();
     emit isConnectedChanged();
     emit systemNotification("Success",QString("Đã kết nối thành công cổng %1 @ %2 baud").arg(m_comPort).arg(m_baudRate));
 
@@ -342,6 +344,8 @@ void DashboardManager::startSession() {
 
     if(m_logFile->open(QIODevice::WriteOnly|QIODevice::Text)){
         m_logStream = new QTextStream(m_logFile);
+        m_logStream->setEncoding(QStringConverter::Utf8);   // ghi tiếng Việt UTF-8
+        m_logStream->setGenerateByteOrderMark(true);
         writeToLog(QString("[SESSION START] %1 | Port:%2 | Baud:%3")
                        .arg(QDateTime::currentDateTime().toString(Qt::ISODate))
                        .arg(m_comPort).arg(m_baudRate));
@@ -373,6 +377,7 @@ void DashboardManager::stopSession(){
                    QDateTime::currentDateTime().toString(Qt::ISODate));
         m_serialPort->close();
         emit isConnectedChanged();
+        m_simTimer->start(8);
         emit systemNotification("Info", "Đã ngắt kết nối cổng " + m_comPort);
         resetRfState();
         m_rfController->setWaveSource(QStringLiteral("sim"));
@@ -1406,20 +1411,37 @@ void DashboardManager::processWaveMagnitudes(const QVector<double> &mags, bool s
     const bool   haveFreq  = m_rfStatusValid && m_rxFsHz > 0;
     const double binHz     = haveFreq ? static_cast<double>(m_rxFsHz) / n : 1.0;
     const double loMHz     = static_cast<double>(m_rxLoHz) / 1e6;
-    const double offset    = m_calibrated ? m_calOffsetDb : 0.0;
 
     // fftshift: bin N/2..N-1 là tần số âm -> vẽ từ -Fs/2 tới +Fs/2.
+    // Tìm đỉnh trên dBFS (chưa cộng hệ số) - hệ số hiệu chuẩn phụ thuộc
+    // chính tần số đỉnh này.
     QVector<QPointF> pts;
     pts.reserve(n);
-    double peakLevel = -1e9, peakX = 0.0;
+    double peakDbfs = -1e9, peakX = 0.0;
     for (int i = 0; i < n; ++i) {
         const int k = (i + n / 2) % n;
         const int rel = i - n / 2;                      // -N/2 .. N/2-1
         const double x = haveFreq ? loMHz + rel * binHz / 1e6 : static_cast<double>(rel);
-        const double y = dbfs[k] + offset;
-        pts.append(QPointF(x, y));
-        if (y > peakLevel) { peakLevel = y; peakX = x; }
+        pts.append(QPointF(x, dbfs[k]));
+        if (dbfs[k] > peakDbfs) { peakDbfs = dbfs[k]; peakX = x; }
     }
+    // Đỉnh có "nổi" khỏi nền nhiễu không: so với trung vị các bin.
+    QVector<double> sorted = dbfs;
+    std::nth_element(sorted.begin(), sorted.begin() + n / 2, sorted.end());
+    const double medianDbfs = sorted[n / 2];
+    m_lastPeakMHz          = peakX;
+    m_lastPeakProminenceDb = peakDbfs - medianDbfs;
+    m_lastHaveFreq         = haveFreq;
+    // Chỉ cập nhật tần số chọn hệ số khi có tín hiệu rõ ràng; chỉ có nhiễu
+    // thì giữ tần số lần trước (đỉnh nhiễu nhảy lung tung -> hệ số nhảy theo).
+    if (!simulated && haveFreq && m_lastPeakProminenceDb >= RF_CAL_MIN_PROMINENCE_DB)
+        m_calFreqMHz = peakX;
+    m_lastSpectrumLive = !simulated;
+    updateCalibrationState();                 // tính m_calOffsetDb theo m_calFreqMHz
+    const double offset    = m_calibrated ? m_calOffsetDb : 0.0;
+    for (QPointF &p : pts)
+        p.setY(p.y() + offset);
+    const double peakLevel = peakDbfs + offset;
 
     // Trục X trọn băng [-Fs/2, +Fs/2] quanh LO (điểm cuối = +Fs/2 - 1 bin
     // nằm trong khoảng) -> vạch chia tròn số (vd 2410/2425/2440/2455/2470).
@@ -1431,7 +1453,6 @@ void DashboardManager::processWaveMagnitudes(const QVector<double> &mags, bool s
     const double yMin = yMax - 100.0;
 
     m_lastTotalDbfs   = totalDbfs;
-    m_lastSpectrumLive = !simulated;
     m_rfController->setSpectrum(pts, haveFreq, xMin, xMax, yMin, yMax,
                                 peakLevel, peakX, totalDbfs + offset, totalDbfs);
 
@@ -1485,6 +1506,9 @@ void DashboardManager::resetRfState()
     m_waveSeenThisSession = false;
     m_rfStatusValid = false;
     m_lastSpectrumLive = false;
+    m_calFreqMHz = std::numeric_limits<double>::quiet_NaN();
+    m_lastPeakProminenceDb = 0.0;
+    m_lastHaveFreq = false;
     m_rxLoHz = 0;
     m_rxFsHz = 0;
     m_rxGainDb = 0;
@@ -1493,52 +1517,278 @@ void DashboardManager::resetRfState()
     updateCalibrationState();
 }
 
+QString DashboardManager::rfCalKey(double mhz)
+{
+    // "rf/cal/2450", "rf/cal/2447.5" - số tròn không có phần thập phân.
+    QString t = QString::number(mhz, 'f', 3);
+    while (t.contains('.') && (t.endsWith('0') || t.endsWith('.')))
+        t.chop(1);
+    return QStringLiteral("rf/cal/") + t;
+}
+
+void DashboardManager::loadRfCalibration()
+{
+    // Danh sách điểm tần số (MHz), sửa được trong config.ini.
+    const QString defPoints = QStringLiteral("2440,2445,2450,2455,2460");
+    if (!m_settings.contains("rf/calPointsMHz"))
+        saveSetting("rf/calPointsMHz", defPoints);
+    QStringList list = m_settings.value("rf/calPointsMHz", defPoints).toString()
+                           .split(QRegularExpression(QStringLiteral("[,;\\s]+")), Qt::SkipEmptyParts);
+    QVector<double> freqs;
+    for (const QString &t : list) {
+        bool ok = false;
+        const double f = t.toDouble(&ok);
+        if (ok && f > 0.0 && !freqs.contains(f))
+            freqs.append(f);
+    }
+    if (freqs.isEmpty())
+        for (const QString &t : defPoints.split(','))
+            freqs.append(t.toDouble());
+    std::sort(freqs.begin(), freqs.end());
+
+    m_calPoints.clear();
+    for (double f : freqs) {
+        RfCalPoint p{f, false, 0.0, 0, 0, QString()};
+        const QString k = rfCalKey(f);
+        if (m_settings.contains(k + "/offsetDb")) {
+            p.valid    = true;
+            p.offsetDb = m_settings.value(k + "/offsetDb", 0.0).toDouble();
+            p.loHz     = m_settings.value(k + "/loHz", 0).toULongLong();
+            p.gainDb   = m_settings.value(k + "/gainDb", 0).toInt();
+            p.when     = m_settings.value(k + "/time", QString()).toString();
+        }
+        m_calPoints.append(p);
+    }
+
+    // Chuyển hệ số MỘT điểm của bản cũ (rf/calOffsetDb) sang điểm gần LO cũ.
+    if (m_settings.contains("rf/calOffsetDb")) {
+        const quint64 oldLo = m_settings.value("rf/calLoHz", 0).toULongLong();
+        const int idx = rfCalNearestPoint(oldLo > 0 ? static_cast<double>(oldLo) / 1e6
+                                                    : m_calPoints[m_calPoints.size() / 2].mhz);
+        if (idx >= 0 && !m_calPoints[idx].valid) {
+            RfCalPoint &p = m_calPoints[idx];
+            p.valid    = true;
+            p.offsetDb = m_settings.value("rf/calOffsetDb", 0.0).toDouble();
+            p.loHz     = oldLo;
+            p.gainDb   = m_settings.value("rf/calGainDb", 0).toInt();
+            p.when     = QStringLiteral("(chuyển từ bản cũ)");
+            saveRfCalPoint(idx);
+            writeToLog(QString("[RF] Chuyển hệ số hiệu chuẩn cũ %1 dB sang điểm %2 MHz")
+                           .arg(p.offsetDb, 0, 'f', 2).arg(p.mhz, 0, 'f', 1));
+        }
+        m_settings.remove("rf/calOffsetDb");
+        m_settings.remove("rf/calLoHz");
+        m_settings.remove("rf/calGainDb");
+        m_settings.sync();
+    }
+}
+
+void DashboardManager::saveRfCalPoint(int idx)
+{
+    if (idx < 0 || idx >= m_calPoints.size())
+        return;
+    const RfCalPoint &p = m_calPoints[idx];
+    const QString k = rfCalKey(p.mhz);
+    if (!p.valid) {
+        m_settings.remove(k);
+        m_settings.sync();
+        return;
+    }
+    m_settings.setValue(k + "/offsetDb", p.offsetDb);
+    m_settings.setValue(k + "/loHz", static_cast<qulonglong>(p.loHz));
+    m_settings.setValue(k + "/gainDb", p.gainDb);
+    m_settings.setValue(k + "/time", p.when);
+    m_settings.sync();
+}
+
+int DashboardManager::rfCalNearestPoint(double mhz) const
+{
+    int best = -1;
+    double bestD = std::numeric_limits<double>::max();
+    for (int i = 0; i < m_calPoints.size(); ++i) {
+        const double d = std::abs(m_calPoints[i].mhz - mhz);
+        if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+}
+
+double DashboardManager::rfCalOffsetAt(double mhz, int *loIdx, int *hiIdx) const
+{
+    // m_calPoints đã sắp xếp tăng dần theo tần số.
+    QVector<int> v;
+    for (int i = 0; i < m_calPoints.size(); ++i)
+        if (m_calPoints[i].valid)
+            v.append(i);
+    *loIdx = *hiIdx = -1;
+    if (v.isEmpty())
+        return 0.0;
+    // Đỉnh nằm sát 1 điểm đã hiệu chuẩn (lệch < ~nửa bin phổ) -> dùng đúng
+    // điểm đó (tone 2445 MHz rơi vào bin 2445.16 MHz vẫn là "điểm 2445").
+    for (int i : v)
+        if (std::abs(m_calPoints[i].mhz - mhz) <= RF_CAL_EXACT_MHZ) {
+            *loIdx = *hiIdx = i;
+            return m_calPoints[i].offsetDb;
+        }
+    if (v.size() == 1 || mhz <= m_calPoints[v.first()].mhz) {
+        *loIdx = *hiIdx = v.first();
+        return m_calPoints[v.first()].offsetDb;
+    }
+    if (mhz >= m_calPoints[v.last()].mhz) {
+        *loIdx = *hiIdx = v.last();
+        return m_calPoints[v.last()].offsetDb;
+    }
+    for (int j = 0; j + 1 < v.size(); ++j) {
+        const RfCalPoint &a = m_calPoints[v[j]];
+        const RfCalPoint &b = m_calPoints[v[j + 1]];
+        if (mhz >= a.mhz && mhz <= b.mhz) {
+            if (qFuzzyCompare(mhz + 1.0, a.mhz + 1.0)) { *loIdx = *hiIdx = v[j];     return a.offsetDb; }
+            if (qFuzzyCompare(mhz + 1.0, b.mhz + 1.0)) { *loIdx = *hiIdx = v[j + 1]; return b.offsetDb; }
+            *loIdx = v[j];
+            *hiIdx = v[j + 1];
+            const double t = (mhz - a.mhz) / (b.mhz - a.mhz);
+            return a.offsetDb + t * (b.offsetDb - a.offsetDb);
+        }
+    }
+    *loIdx = *hiIdx = v.last();
+    return m_calPoints[v.last()].offsetDb;
+}
+
 void DashboardManager::updateCalibrationState()
 {
-    // Offset dBFS->dBm chỉ đúng cho đúng LO/gain lúc hiệu chuẩn.
-    const bool mismatch = m_calibrated && m_rfStatusValid
-                          && (m_calLoHz != m_rxLoHz || m_calGainDb != m_rxGainDb);
-    m_rfController->setCalibration(m_calibrated, m_calOffsetDb, mismatch);
+    m_calibrated = false;
+    for (const RfCalPoint &p : m_calPoints)
+        if (p.valid) { m_calibrated = true; break; }
+
+    // Tần số chọn hệ số: đỉnh tín hiệu gần nhất; chưa thấy tín hiệu thì
+    // dùng LO (tâm phổ); chưa biết LO thì điểm giữa bảng.
+    bool   noSignal = false;
+    double f = m_calFreqMHz;
+    if (std::isnan(f)) {
+        noSignal = true;
+        f = (m_rfStatusValid && m_rxLoHz > 0) ? static_cast<double>(m_rxLoHz) / 1e6
+            : (m_calPoints.isEmpty() ? 0.0 : m_calPoints[m_calPoints.size() / 2].mhz);
+    }
+    int lo = -1, hi = -1;
+    m_calOffsetDb = m_calibrated ? rfCalOffsetAt(f, &lo, &hi) : 0.0;
+
+    // Hệ số chỉ đúng cho đúng LO/gain lúc hiệu chuẩn điểm đó.
+    auto pointMismatch = [this](const RfCalPoint &p) {
+        return p.valid && m_rfStatusValid && (p.loHz != m_rxLoHz || p.gainDb != m_rxGainDb);
+    };
+    bool mismatch = false;
+    if (lo >= 0) mismatch |= pointMismatch(m_calPoints[lo]);
+    if (hi >= 0) mismatch |= pointMismatch(m_calPoints[hi]);
+
+    QVariantList pts;
+    for (int i = 0; i < m_calPoints.size(); ++i) {
+        const RfCalPoint &p = m_calPoints[i];
+        QVariantMap m;
+        QString lbl = QString::number(p.mhz, 'f', 1);
+        if (lbl.endsWith(QLatin1String(".0"))) lbl.chop(2);
+        m["mhz"]      = p.mhz;
+        m["label"]    = lbl;
+        m["valid"]    = p.valid;
+        m["offsetDb"] = p.offsetDb;
+        m["mismatch"] = pointMismatch(p);
+        m["active"]   = (i == lo || i == hi);
+        m["when"]     = p.when;
+        pts.append(m);
+    }
+
+    QString info;
+    auto lbl = [this](int i) {
+        QString t = QString::number(m_calPoints[i].mhz, 'f', 1);
+        if (t.endsWith(QLatin1String(".0"))) t.chop(2);
+        return t;
+    };
+    if (!m_calibrated) {
+        info = QStringLiteral("Chưa hiệu chuẩn");
+    } else {
+        QString how;
+        if (lo != hi)
+            how = QString("nội suy %1–%2").arg(lbl(lo), lbl(hi));
+        else if (std::abs(f - m_calPoints[lo].mhz) <= RF_CAL_EXACT_MHZ)
+            how = QString("điểm %1").arg(lbl(lo));
+        else
+            how = QString("theo điểm %1").arg(lbl(lo));
+        info = noSignal
+            ? QString("Offset %1 dB (%2, chưa thấy tín hiệu)").arg(m_calOffsetDb, 0, 'f', 1).arg(how)
+            : QString("Offset %1 dB @ %2 MHz (%3)").arg(m_calOffsetDb, 0, 'f', 1).arg(f, 0, 'f', 1).arg(how);
+        if (mismatch)
+            info = QStringLiteral("Hiệu chuẩn ở LO/gain khác! ") + info;
+    }
+    m_rfController->setCalibration(m_calibrated, m_calOffsetDb, mismatch, pts, info);
 }
 
 bool DashboardManager::calibrateRf(double refDbm)
 {
+    if (!std::isfinite(refDbm)) {
+        emit systemNotification("Warning", "Chưa nhập công suất chuẩn (dBm).");
+        return false;
+    }
     if (!m_lastSpectrumLive || m_rfController->waveSource() != QLatin1String("live")) {
         emit systemNotification("Warning", "Hiệu chuẩn cần phổ THẬT đang về từ board (không dùng dữ liệu mô phỏng).");
         return false;
     }
-    if (!m_rfStatusValid) {
+    if (!m_rfStatusValid || !m_lastHaveFreq) {
         emit systemNotification("Warning", "Chưa nhận cấu hình RX (RFST) từ board - đợi vài giây rồi thử lại.");
         return false;
     }
-    m_calOffsetDb = refDbm - m_lastTotalDbfs;
-    m_calibrated  = true;
-    m_calLoHz     = m_rxLoHz;
-    m_calGainDb   = m_rxGainDb;
-    saveSetting("rf/calOffsetDb", m_calOffsetDb);
-    saveSetting("rf/calLoHz", static_cast<qulonglong>(m_calLoHz));
-    saveSetting("rf/calGainDb", m_calGainDb);
+    if (m_lastPeakProminenceDb < RF_CAL_MIN_PROMINENCE_DB) {
+        emit systemNotification("Warning",
+            QString("Không thấy tín hiệu rõ ràng trên phổ (đỉnh chỉ cao hơn nền %1 dB, cần >= %2 dB). Kiểm tra máy phát.")
+                .arg(m_lastPeakProminenceDb, 0, 'f', 1).arg(RF_CAL_MIN_PROMINENCE_DB, 0, 'f', 0));
+        return false;
+    }
+    const int idx = rfCalNearestPoint(m_lastPeakMHz);
+    if (idx < 0 || std::abs(m_calPoints[idx].mhz - m_lastPeakMHz) > RF_CAL_SNAP_MHZ) {
+        emit systemNotification("Warning",
+            QString("Đỉnh phổ đang ở %1 MHz - không gần điểm hiệu chuẩn nào (cho phép lệch ±%2 MHz).")
+                .arg(m_lastPeakMHz, 0, 'f', 2).arg(RF_CAL_SNAP_MHZ, 0, 'f', 1));
+        return false;
+    }
+    RfCalPoint &p = m_calPoints[idx];
+    p.valid    = true;
+    p.offsetDb = refDbm - m_lastTotalDbfs;
+    p.loHz     = m_rxLoHz;
+    p.gainDb   = m_rxGainDb;
+    p.when     = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+    saveRfCalPoint(idx);
+    m_calFreqMHz = m_lastPeakMHz;
     updateCalibrationState();
-    writeToLog(QString("[RF] Hiệu chuẩn: chuẩn %1 dBm <-> đo %2 dBFS => offset %3 dB (LO %4 MHz, gain %5 dB)")
-                   .arg(refDbm, 0, 'f', 2).arg(m_lastTotalDbfs, 0, 'f', 2).arg(m_calOffsetDb, 0, 'f', 2)
-                   .arg(static_cast<double>(m_calLoHz) / 1e6, 0, 'f', 3).arg(m_calGainDb));
-    emit systemNotification("Success", QString("Đã hiệu chuẩn RF: offset %1 dB").arg(m_calOffsetDb, 0, 'f', 2));
+    const QString msg = QString("Điểm %1 MHz: chuẩn %2 dBm, đo %3 dBFS (đỉnh @ %4 MHz) => hệ số %5 dB (LO %6 MHz, gain %7 dB)")
+                            .arg(p.mhz, 0, 'f', 1).arg(refDbm, 0, 'f', 2).arg(m_lastTotalDbfs, 0, 'f', 2)
+                            .arg(m_lastPeakMHz, 0, 'f', 2).arg(p.offsetDb, 0, 'f', 2)
+                            .arg(static_cast<double>(p.loHz) / 1e6, 0, 'f', 3).arg(p.gainDb);
+    writeToLog("[RF] Hiệu chuẩn " + msg);
+    appendCommandLog("CAL", msg);
+    emit systemNotification("Success", QString("Đã hiệu chuẩn điểm %1 MHz: hệ số %2 dB")
+                                           .arg(p.mhz, 0, 'f', 1).arg(p.offsetDb, 0, 'f', 2));
     return true;
+}
+
+void DashboardManager::clearRfCalPoint(double mhz)
+{
+    const int idx = rfCalNearestPoint(mhz);
+    if (idx < 0 || std::abs(m_calPoints[idx].mhz - mhz) > 0.01 || !m_calPoints[idx].valid)
+        return;
+    m_calPoints[idx].valid = false;
+    saveRfCalPoint(idx);
+    updateCalibrationState();
+    writeToLog(QString("[RF] Đã xoá hiệu chuẩn điểm %1 MHz").arg(m_calPoints[idx].mhz, 0, 'f', 1));
+    emit systemNotification("Info", QString("Đã xoá hiệu chuẩn điểm %1 MHz").arg(m_calPoints[idx].mhz, 0, 'f', 1));
 }
 
 void DashboardManager::clearRfCalibration()
 {
-    m_calibrated = false;
-    m_calOffsetDb = 0.0;
-    m_calLoHz = 0;
-    m_calGainDb = 0;
-    m_settings.remove("rf/calOffsetDb");
-    m_settings.remove("rf/calLoHz");
-    m_settings.remove("rf/calGainDb");
-    m_settings.sync();
+    for (int i = 0; i < m_calPoints.size(); ++i) {
+        m_calPoints[i].valid = false;
+        saveRfCalPoint(i);
+    }
+    m_calFreqMHz = std::numeric_limits<double>::quiet_NaN();
     updateCalibrationState();
-    writeToLog("[RF] Đã xoá hiệu chuẩn - phổ hiển thị theo dBFS");
-    emit systemNotification("Info", "Đã xoá hiệu chuẩn RF (đơn vị trở về dBFS)");
+    writeToLog("[RF] Đã xoá toàn bộ hiệu chuẩn - phổ hiển thị theo dBFS");
+    emit systemNotification("Info", "Đã xoá toàn bộ hiệu chuẩn RF (đơn vị trở về dBFS)");
 }
 
 

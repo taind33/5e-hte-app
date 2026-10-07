@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icon"/>
+    <qresource prefix="/">
+        <file>assets/logo/icon_5E-HTE.ico</file>
+        <file>assets/logo/Viettel_Aerospace_Institute_(VTX)_logo.ico</file>
+        <file>Splash.qml</file>
+    </qresource>
+</RCC>

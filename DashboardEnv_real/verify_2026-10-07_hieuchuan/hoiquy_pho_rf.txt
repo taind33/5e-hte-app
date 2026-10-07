@@ -1,0 +1,37 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+PASS  opened /dev/pts/0
+PASS  PING_STD -> ACK_STD: board verified
+PASS  WAVE spectrum frames arriving (waveSource=live)
+PASS  124 spectrum points (WAVD)
+PASS  RFST: LO 2440 MHz, Fs 60 MSPS
+PASS  X axis = absolute MHz, LO-Fs/2..LO+Fs/2 (fftshift)
+      peak -20.000 dBFS @ 2445.8065 MHz, total -20.000 dBFS
+PASS  tone at bin +12 shows at 2445.806 MHz
+PASS  tone level -20 dBFS (+-0.3)
+PASS  band power -20 dBFS (+-0.3)
+PASS  ADC7928 telemetry ch0=1000
+PASS  AC ON acked -> switch ON
+PASS  DC ON acked -> switch ON
+PASS  generic CMD ACK shown in terminal log
+PASS  ATT 12.75 dB accepted (no NACK)
+PASS  calibrate: ref -30 dBm
+PASS  AC OFF acked -> switch stays OFF (old bug: turned ON)
+      after cal: total -30.010 dBm, peak -30.010
+PASS  calibrated band power reads -30 dBm (+-0.3)
+PASS  calibrated peak reads ~-30 dBm
+PASS  RESET -> DC shown OFF
+PASS  disconnect -> back to simulation, RF status cleared
+
+notifications:
+  Success: Đã kết nối thành công cổng /dev/pts/0 @ 115200 baud
+  Info: ATT 1 cập nhật: 12.75 dB
+  Info: Giữ chậm: 270 ns
+  Success: Nguồn DC đã xác nhận: BẬT
+  Success: Nguồn AC đã xác nhận: BẬT
+  Success: Đã hiệu chuẩn điểm 2445.0 MHz: hệ số -10.00 dB
+  Success: Nguồn AC đã xác nhận: TẮT
+  Warning: Đã gửi lệnh đặt lại toàn bộ hệ thống.
+  Info: Đã ngắt kết nối cổng /dev/pts/0
+  Info: Đã xoá toàn bộ hiệu chuẩn RF (đơn vị trở về dBFS)
+
+RESULT: 20 passed, 0 failed

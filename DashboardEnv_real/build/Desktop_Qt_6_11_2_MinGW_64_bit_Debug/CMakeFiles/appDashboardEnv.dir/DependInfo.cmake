@@ -4,6 +4,56 @@ set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
 
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
+  "RC"
+  )
+# The set of files for implicit dependencies of each language:
+set(CMAKE_DEPENDS_CHECK_RC
+  "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/app.rc" "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/CMakeFiles/appDashboardEnv.dir/app.rc.obj"
+  )
+
+# Preprocessor definitions for this target.
+set(CMAKE_TARGET_DEFINITIONS_RC
+  "MINGW_HAS_SECURE_API=1"
+  "QT_CHARTS_LIB"
+  "QT_CORE_LIB"
+  "QT_GUI_LIB"
+  "QT_NEEDS_QMAIN"
+  "QT_NETWORK_LIB"
+  "QT_OPENGLWIDGETS_LIB"
+  "QT_OPENGL_LIB"
+  "QT_QMLINTEGRATION_LIB"
+  "QT_QML_DEBUG"
+  "QT_QML_LIB"
+  "QT_QUICKCONTROLS2_LIB"
+  "QT_QUICK_LIB"
+  "QT_SERIALPORT_LIB"
+  "QT_WIDGETS_LIB"
+  "UNICODE"
+  "WIN32"
+  "WIN64"
+  "_ENABLE_EXTENDED_ALIGNED_STORAGE"
+  "_UNICODE"
+  "_WIN64"
+  )
+
+# The include file search paths:
+set(CMAKE_RC_TARGET_INCLUDE_PATH
+  "appDashboardEnv_autogen/include"
+  "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real"
+  "C:/Qt/6.11.2/mingw_64/include/QtQml"
+  "C:/Qt/6.11.2/mingw_64/include"
+  "C:/Qt/6.11.2/mingw_64/include/QtCore"
+  "C:/Qt/6.11.2/mingw_64/mkspecs/win32-g++"
+  "C:/Qt/6.11.2/mingw_64/include/QtQmlIntegration"
+  "C:/Qt/6.11.2/mingw_64/include/QtNetwork"
+  "C:/Qt/6.11.2/mingw_64/include/QtQuick"
+  "C:/Qt/6.11.2/mingw_64/include/QtGui"
+  "C:/Qt/6.11.2/mingw_64/include/QtOpenGL"
+  "C:/Qt/6.11.2/mingw_64/include/QtSerialPort"
+  "C:/Qt/6.11.2/mingw_64/include/QtCharts"
+  "C:/Qt/6.11.2/mingw_64/include/QtWidgets"
+  "C:/Qt/6.11.2/mingw_64/include/QtOpenGLWidgets"
+  "C:/Qt/6.11.2/mingw_64/include/QtQuickControls2"
   )
 
 # The set of dependency files which are needed:
@@ -26,6 +76,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp.obj.d"
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.obj.d"
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj.d"
+  "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp" "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj.d"
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/appDashboardEnv_autogen/mocs_compilation.cpp" "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj.d"
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/appdashboardenv_qmltyperegistrations.cpp" "CMakeFiles/appDashboardEnv.dir/appdashboardenv_qmltyperegistrations.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/appdashboardenv_qmltyperegistrations.cpp.obj.d"
   "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/acsource.cpp" "CMakeFiles/appDashboardEnv.dir/backend/acsource.cpp.obj" "gcc" "CMakeFiles/appDashboardEnv.dir/backend/acsource.cpp.obj.d"

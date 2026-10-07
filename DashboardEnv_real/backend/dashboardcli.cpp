@@ -37,6 +37,8 @@ const CliCmd kCommands[] = {
     { "scan",    "scan",                          "Tự tìm cổng COM + baud đang có board 5E-HTE" },
     { "monitor", "monitor on|off",                "Mỗi giây in số byte/khung nhận được từ board" },
     { "board",   "board <TÊN> [v1 v2 v3]",        "Lệnh chung tới FIRMWARE board (kiểu cũ, msgid 39)" },
+    { "cal",     "cal | cal clear <MHz> | cal clear all",
+                                                  "Bảng hiệu chuẩn phổ RF theo tần số (dBFS -> dBm)" },
 };
 
 QStringList tokens(const QString &line)
@@ -81,7 +83,8 @@ QStringList DashboardManager::cliCompletions(const QString &prefix) const
         "ac on", "ac off", "ac read", "ac clear", "ac err", "ac idn", "ac power", "ac raw",
         "dc on", "dc off", "dc read", "dc status", "dc raw",
         "att 1", "att 2", "att 3", "delay", "reset", "reset yes",
-        "ping", "scan", "monitor on", "monitor off", "board" };
+        "ping", "scan", "monitor on", "monitor off", "board",
+        "cal", "cal clear", "cal clear all" };
     QStringList out;
     const QString p = prefix.trimmed().toLower();
     for (const QString &w : words)
@@ -121,6 +124,7 @@ void DashboardManager::executeCommand(const QString &line)
     if (cmd == "scan")    { startScan(); return; }
     if (cmd == "monitor") { cliMonitor(a); return; }
     if (cmd == "board")   { cliBoard(a, trimmed); return; }
+    if (cmd == "cal")     { cliCal(a); return; }
 
     cliError(QString("Không có lệnh '%1'. Gõ help để xem danh sách lệnh.").arg(a.first()));
 }
@@ -140,6 +144,13 @@ void DashboardManager::cliHelp(const QString &topic)
                     cliOut("  Ví dụ: dc on 24 2.5   (bật 24 V, giới hạn dòng 2.5 A)");
                     cliOut("         dc status      (#0 STT? - đọc giá trị cài đặt/trạng thái)");
                     cliOut("         dc raw OVP 30  (tự thêm \"#0 \" nếu thiếu -> gửi \"#0 OVP 30\")");
+                } else if (topic == "cal") {
+                    cliOut("  Hiệu chuẩn: phát tín hiệu chuẩn vào RX1, nhập công suất (dBm) ở khung Phổ RF,");
+                    cliOut("  bấm \"Hiệu chuẩn\" - app tự gán vào điểm tần số gần đỉnh phổ nhất (±2.5 MHz).");
+                    cliOut("  Ví dụ: cal              (xem bảng hệ số)");
+                    cliOut("         cal clear 2445   (xoá điểm 2445 MHz)");
+                    cliOut("         cal clear all    (xoá tất cả)");
+                    cliOut("  Danh sách điểm sửa trong config.ini: rf/calPointsMHz=2440,2445,2450,2455,2460");
                 } else if (topic == "board") {
                     cliOut("  Gửi lệnh chung tới firmware của board (không phải tới nguồn).");
                     cliOut("  Firmware hiện chỉ xử lý RESET; lệnh khác chỉ được ACK. Ví dụ: board RESET");
@@ -193,6 +204,45 @@ void DashboardManager::cliStatus()
     };
     src("AC", m_acSource);
     src("DC", m_dcSource);
+    cliCal(QStringList{QStringLiteral("cal")});
+}
+
+void DashboardManager::cliCal(const QStringList &a)
+{
+    const QString sub = a.size() > 1 ? a[1].toLower() : QString();
+    if (sub == "clear") {
+        if (a.size() < 3) { cliError("Cú pháp: cal clear <MHz> | cal clear all"); return; }
+        if (a[2].toLower() == "all") { clearRfCalibration(); cliOut("Đã xoá toàn bộ bảng hiệu chuẩn."); return; }
+        double f = 0.0;
+        if (!toNum(a[2], f)) { cliError(QString("Tần số không hợp lệ: '%1'").arg(a[2])); return; }
+        const int idx = rfCalNearestPoint(f);
+        if (idx < 0 || std::abs(m_calPoints[idx].mhz - f) > 0.01) {
+            QStringList l;
+            for (const RfCalPoint &p : m_calPoints) l << QString::number(p.mhz, 'f', 1);
+            cliError(QString("Không có điểm %1 MHz. Các điểm: %2").arg(a[2], l.join(", ")));
+            return;
+        }
+        if (!m_calPoints[idx].valid) { cliOut(QString("Điểm %1 MHz chưa được hiệu chuẩn.").arg(m_calPoints[idx].mhz, 0, 'f', 1)); return; }
+        clearRfCalPoint(m_calPoints[idx].mhz);
+        cliOut(QString("Đã xoá điểm %1 MHz.").arg(m_calPoints[idx].mhz, 0, 'f', 1));
+        return;
+    }
+    if (!sub.isEmpty()) { cliError("Cú pháp: cal | cal clear <MHz> | cal clear all"); return; }
+
+    cliOut("Hiệu chuẩn phổ RF (dBm = dBFS + hệ số):");
+    for (const RfCalPoint &p : m_calPoints) {
+        if (!p.valid) {
+            cliOut(QString("  %1 MHz : --").arg(p.mhz, 7, 'f', 1));
+            continue;
+        }
+        const bool mism = m_rfStatusValid && (p.loHz != m_rxLoHz || p.gainDb != m_rxGainDb);
+        cliOut(QString("  %1 MHz : %2 dB   (LO %3 MHz, gain %4 dB, %5)%6")
+                   .arg(p.mhz, 7, 'f', 1).arg(p.offsetDb, 6, 'f', 2)
+                   .arg(static_cast<double>(p.loHz) / 1e6, 0, 'f', 3).arg(p.gainDb)
+                   .arg(p.when.isEmpty() ? QStringLiteral("--") : p.when)
+                   .arg(mism ? QStringLiteral("  <- LO/gain KHÁC hiện tại") : QString()));
+    }
+    cliOut("  Đang dùng: " + m_rfController->calInfo());
 }
 
 void DashboardManager::cliAc(const QStringList &a)

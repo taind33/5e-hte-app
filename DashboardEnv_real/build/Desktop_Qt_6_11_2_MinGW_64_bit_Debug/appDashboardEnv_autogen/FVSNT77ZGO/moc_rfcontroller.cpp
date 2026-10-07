@@ -79,6 +79,8 @@ template <> constexpr inline auto RfController::qt_create_metaobjectdata<qt_meta
         "calibrated",
         "calOffsetDb",
         "calMismatch",
+        "calPoints",
+        "calInfo",
         "diagText",
         "diagLevel"
     };
@@ -164,10 +166,14 @@ template <> constexpr inline auto RfController::qt_create_metaobjectdata<qt_meta
         QtMocHelpers::PropertyData<double>(39, QMetaType::Double, QMC::DefaultPropertyFlags, 6),
         // property 'calMismatch'
         QtMocHelpers::PropertyData<bool>(40, QMetaType::Bool, QMC::DefaultPropertyFlags, 6),
+        // property 'calPoints'
+        QtMocHelpers::PropertyData<QVariantList>(41, 0x80000000 | 19, QMC::DefaultPropertyFlags | QMC::EnumOrFlag, 6),
+        // property 'calInfo'
+        QtMocHelpers::PropertyData<QString>(42, QMetaType::QString, QMC::DefaultPropertyFlags, 6),
         // property 'diagText'
-        QtMocHelpers::PropertyData<QString>(41, QMetaType::QString, QMC::DefaultPropertyFlags, 7),
+        QtMocHelpers::PropertyData<QString>(43, QMetaType::QString, QMC::DefaultPropertyFlags, 7),
         // property 'diagLevel'
-        QtMocHelpers::PropertyData<QString>(42, QMetaType::QString, QMC::DefaultPropertyFlags, 7),
+        QtMocHelpers::PropertyData<QString>(44, QMetaType::QString, QMC::DefaultPropertyFlags, 7),
     };
     QtMocHelpers::UintData qt_enums {
     };
@@ -253,8 +259,10 @@ void RfController::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id
         case 22: *reinterpret_cast<bool*>(_v) = _t->calibrated(); break;
         case 23: *reinterpret_cast<double*>(_v) = _t->calOffsetDb(); break;
         case 24: *reinterpret_cast<bool*>(_v) = _t->calMismatch(); break;
-        case 25: *reinterpret_cast<QString*>(_v) = _t->diagText(); break;
-        case 26: *reinterpret_cast<QString*>(_v) = _t->diagLevel(); break;
+        case 25: *reinterpret_cast<QVariantList*>(_v) = _t->calPoints(); break;
+        case 26: *reinterpret_cast<QString*>(_v) = _t->calInfo(); break;
+        case 27: *reinterpret_cast<QString*>(_v) = _t->diagText(); break;
+        case 28: *reinterpret_cast<QString*>(_v) = _t->diagLevel(); break;
         default: break;
         }
     }
@@ -301,7 +309,7 @@ int RfController::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
             || _c == QMetaObject::ResetProperty || _c == QMetaObject::BindableProperty
             || _c == QMetaObject::RegisterPropertyMetaType) {
         qt_static_metacall(this, _c, _id, _a);
-        _id -= 27;
+        _id -= 29;
     }
     return _id;
 }

@@ -1436,6 +1436,7 @@ appDashboardEnv_autogen/timestamp: \
 	C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h \
 	C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wctype.h \
 	D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/CMakeLists.txt \
+	D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/app.qrc \
 	D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/acsource.cpp \
 	D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/acsource.h \
 	D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/backend/basepowersource.cpp \

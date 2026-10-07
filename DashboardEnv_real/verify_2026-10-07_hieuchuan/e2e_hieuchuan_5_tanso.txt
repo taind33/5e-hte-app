@@ -1,0 +1,34 @@
+PASS  5 điểm mặc định 2440..2460, chưa hiệu chuẩn
+PASS  ghi rf/calPointsMHz mặc định vào config.ini
+PASS  nhận phổ thật + RFST
+PASS  không có tín hiệu -> từ chối hiệu chuẩn
+PASS  phát 2445 MHz -40 dBFS, chuẩn -10 dBm -> hiệu chuẩn OK
+PASS  điểm 2445 hệ số = 29.9947 (mong 30.0)
+PASS  không đụng điểm khác
+PASS  phát 2455 MHz -42 dBFS -> hiệu chuẩn OK
+PASS  điểm 2455 hệ số = 31.9909 (mong 32.0)
+PASS  2450 (giữa 2445/2455): nội suy = 30.9928 (mong 31.0)
+PASS  tổng hiển thị = -10 dBm (mong -10)
+PASS  calInfo: Offset 31.0 dB @ 2450.0 MHz (nội suy 2445–2455)
+PASS  2 ô 2445/2455 được tô 'đang dùng'
+PASS  đơn vị dBm
+PASS  đỉnh 2470 MHz xa mọi điểm -> từ chối
+PASS  2465 ngoài dải -> dùng điểm biên 2455 (31.9909) | Offset 32.0 dB @ 2465.0 MHz (theo điểm 2455)
+PASS  mất tín hiệu -> GIỮ hệ số cũ (31.9909), không nhảy theo nhiễu
+PASS  gain đổi 0 -> 10 dB -> cảnh báo LO/gain khác
+      |    2440.0 MHz : --
+      |    2445.0 MHz :  29.99 dB   (LO 2450.000 MHz, gain 0 dB, 2026-10-07 04:09:23)  <- LO/gain KHÁC hiện tại
+      |    2450.0 MHz : --
+      |    2455.0 MHz :  31.99 dB   (LO 2450.000 MHz, gain 0 dB, 2026-10-07 04:09:23)  <- LO/gain KHÁC hiện tại
+      |    2460.0 MHz : --
+      |   Đang dùng: Hiệu chuẩn ở LO/gain khác! Offset 30.0 dB @ 2445.2 MHz (điểm 2445)
+PASS  lệnh cal in bảng hệ số
+PASS  mở lại app: bảng hệ số nạp lại từ config.ini
+PASS  gain về 0 -> hết cảnh báo
+PASS  cal clear 2445 chỉ xoá điểm 2445
+PASS  xoá hết điểm -> về dBFS
+PASS  cal clear all
+PASS  config.ini sạch các điểm đã xoá
+PASS  hệ số cũ 26.5 dB -> chuyển sang điểm 2450
+PASS  khoá cũ đã gỡ, khoá mới đã ghi
+RESULT(cal): 27 passed, 0 failed

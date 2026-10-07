@@ -444,4 +444,6 @@ CMakeFiles/appDashboardEnv.dir/backend/dashboardmanager.cpp.obj: \
  C:/Qt/6.11.2/mingw_64/include/QtCore/qcoreevent.h \
  C:/Qt/6.11.2/mingw_64/include/QtCore/qnativeinterface.h \
  C:/Qt/6.11.2/mingw_64/include/QtCore/qcoreapplication_platform.h \
- C:/Qt/6.11.2/mingw_64/include/QtCore/QFileInfo
+ C:/Qt/6.11.2/mingw_64/include/QtCore/QFileInfo \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/QRegularExpression \
+ C:/Qt/6.11.2/mingw_64/include/QtCore/qregularexpression.h

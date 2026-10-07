@@ -828,6 +828,38 @@ appDashboardEnv_autogen/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\appDashboardEnv.dir\build.make CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.s
 .PHONY : 7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.s
 
+app.obj: app.rc.obj
+.PHONY : app.obj
+
+# target to build an object file
+app.rc.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\appDashboardEnv.dir\build.make CMakeFiles/appDashboardEnv.dir/app.rc.obj
+.PHONY : app.rc.obj
+
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.obj: appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.obj
+
+# target to build an object file
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\appDashboardEnv.dir\build.make CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj
+
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.i: appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.i
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.i
+
+# target to preprocess a source file
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\appDashboardEnv.dir\build.make CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.i
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.i
+
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.s: appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.s
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.s
+
+# target to generate assembly for a file
+appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\appDashboardEnv.dir\build.make CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.s
+.PHONY : appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.s
+
 appDashboardEnv_autogen/mocs_compilation.obj: appDashboardEnv_autogen/mocs_compilation.cpp.obj
 .PHONY : appDashboardEnv_autogen/mocs_compilation.obj
 
@@ -1271,6 +1303,10 @@ help:
 	@echo ... 7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.obj
 	@echo ... 7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.i
 	@echo ... 7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.s
+	@echo ... app.obj
+	@echo ... appDashboardEnv_autogen/EWIEGA46WW/qrc_app.obj
+	@echo ... appDashboardEnv_autogen/EWIEGA46WW/qrc_app.i
+	@echo ... appDashboardEnv_autogen/EWIEGA46WW/qrc_app.s
 	@echo ... appDashboardEnv_autogen/mocs_compilation.obj
 	@echo ... appDashboardEnv_autogen/mocs_compilation.i
 	@echo ... appDashboardEnv_autogen/mocs_compilation.s

@@ -1812,7 +1812,8 @@
 		"C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Core/Qt6CoreConfigureFileTemplate.in",
 		"C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6Qml/Qt6qmldirTemplate.cmake.in",
 		"D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/qml_imports/appDashboardEnv_conf.cmake",
-		"C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6/windows/app.exe.manifest.in"
+		"C:/Qt/6.11.2/mingw_64/lib/cmake/Qt6/windows/app.exe.manifest.in",
+		"D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/app.qrc"
 	],
 	"CMAKE_SOURCE_DIR" : "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real",
 	"CROSS_CONFIG" : false,

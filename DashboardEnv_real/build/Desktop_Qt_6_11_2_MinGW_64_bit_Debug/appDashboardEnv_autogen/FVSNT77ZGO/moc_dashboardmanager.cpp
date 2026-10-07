@@ -108,6 +108,8 @@ template <> constexpr inline auto DashboardManager::qt_create_metaobjectdata<qt_
         "calibrateRf",
         "refDbm",
         "clearRfCalibration",
+        "clearRfCalPoint",
+        "mhz",
         "acSource",
         "ACsource*",
         "dcSource",
@@ -278,72 +280,76 @@ template <> constexpr inline auto DashboardManager::qt_create_metaobjectdata<qt_
         }}),
         // Method 'clearRfCalibration'
         QtMocHelpers::MethodData<void()>(69, 2, QMC::AccessPublic, QMetaType::Void),
+        // Method 'clearRfCalPoint'
+        QtMocHelpers::MethodData<void(double)>(70, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::Double, 71 },
+        }}),
     };
     QtMocHelpers::UintData qt_properties {
         // property 'acSource'
-        QtMocHelpers::PropertyData<ACsource*>(70, 0x80000000 | 71, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
+        QtMocHelpers::PropertyData<ACsource*>(72, 0x80000000 | 73, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
         // property 'dcSource'
-        QtMocHelpers::PropertyData<DCsource*>(72, 0x80000000 | 73, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
+        QtMocHelpers::PropertyData<DCsource*>(74, 0x80000000 | 75, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
         // property 'rfController'
-        QtMocHelpers::PropertyData<RfController*>(74, 0x80000000 | 75, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
+        QtMocHelpers::PropertyData<RfController*>(76, 0x80000000 | 77, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Constant),
         // property 'comPort'
-        QtMocHelpers::PropertyData<QString>(76, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 0),
+        QtMocHelpers::PropertyData<QString>(78, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 0),
         // property 'baudRate'
-        QtMocHelpers::PropertyData<int>(77, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 1),
+        QtMocHelpers::PropertyData<int>(79, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 1),
         // property 'delayTime'
-        QtMocHelpers::PropertyData<int>(78, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 2),
+        QtMocHelpers::PropertyData<int>(80, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 2),
         // property 'sessionName'
-        QtMocHelpers::PropertyData<QString>(79, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet | QMC::Final, 3),
+        QtMocHelpers::PropertyData<QString>(81, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet | QMC::Final, 3),
         // property 'isConnected'
-        QtMocHelpers::PropertyData<bool>(80, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 4),
+        QtMocHelpers::PropertyData<bool>(82, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 4),
         // property 'availablePorts'
-        QtMocHelpers::PropertyData<QStringList>(81, QMetaType::QStringList, QMC::DefaultPropertyFlags | QMC::Final, 5),
+        QtMocHelpers::PropertyData<QStringList>(83, QMetaType::QStringList, QMC::DefaultPropertyFlags | QMC::Final, 5),
         // property 'commandLog'
-        QtMocHelpers::PropertyData<QStringList>(82, QMetaType::QStringList, QMC::DefaultPropertyFlags | QMC::Final, 6),
+        QtMocHelpers::PropertyData<QStringList>(84, QMetaType::QStringList, QMC::DefaultPropertyFlags | QMC::Final, 6),
         // property 'adcChannels'
-        QtMocHelpers::PropertyData<QVariantList>(83, 0x80000000 | 84, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Final, 7),
+        QtMocHelpers::PropertyData<QVariantList>(85, 0x80000000 | 86, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Final, 7),
         // property 'configPath'
-        QtMocHelpers::PropertyData<QString>(85, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Constant | QMC::Final),
+        QtMocHelpers::PropertyData<QString>(87, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Constant | QMC::Final),
         // property 'isPortVerified'
-        QtMocHelpers::PropertyData<bool>(86, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 8),
+        QtMocHelpers::PropertyData<bool>(88, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 8),
         // property 'linkDiagnosis'
-        QtMocHelpers::PropertyData<QString>(87, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 9),
+        QtMocHelpers::PropertyData<QString>(89, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 9),
         // property 'linkDiagnosisShort'
-        QtMocHelpers::PropertyData<QString>(88, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 9),
+        QtMocHelpers::PropertyData<QString>(90, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 9),
         // property 'boardFirmware'
-        QtMocHelpers::PropertyData<QString>(89, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 10),
+        QtMocHelpers::PropertyData<QString>(91, QMetaType::QString, QMC::DefaultPropertyFlags | QMC::Final, 10),
         // property 'boardDiag'
-        QtMocHelpers::PropertyData<QVariantMap>(90, 0x80000000 | 91, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Final, 10),
+        QtMocHelpers::PropertyData<QVariantMap>(92, 0x80000000 | 93, QMC::DefaultPropertyFlags | QMC::EnumOrFlag | QMC::Final, 10),
         // property 'scanning'
-        QtMocHelpers::PropertyData<bool>(92, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 11),
+        QtMocHelpers::PropertyData<bool>(94, QMetaType::Bool, QMC::DefaultPropertyFlags | QMC::Final, 11),
         // property 'kichNoPeakVoltage'
-        QtMocHelpers::PropertyData<double>(93, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Final, 12),
+        QtMocHelpers::PropertyData<double>(95, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Final, 12),
         // property 'acVoltMin'
-        QtMocHelpers::PropertyData<int>(94, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'acVoltMax'
-        QtMocHelpers::PropertyData<int>(95, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'acFreqMin'
         QtMocHelpers::PropertyData<int>(96, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'acFreqMax'
+        // property 'acVoltMax'
         QtMocHelpers::PropertyData<int>(97, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'dcVoltMin'
+        // property 'acFreqMin'
         QtMocHelpers::PropertyData<int>(98, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'dcVoltMax'
+        // property 'acFreqMax'
         QtMocHelpers::PropertyData<int>(99, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
+        // property 'dcVoltMin'
+        QtMocHelpers::PropertyData<int>(100, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
+        // property 'dcVoltMax'
+        QtMocHelpers::PropertyData<int>(101, QMetaType::Int, QMC::DefaultPropertyFlags | QMC::Constant),
         // property 'dcCurrentMin'
-        QtMocHelpers::PropertyData<double>(100, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'dcCurrentMax'
-        QtMocHelpers::PropertyData<double>(101, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Constant),
-        // property 'attMax'
         QtMocHelpers::PropertyData<double>(102, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Constant),
+        // property 'dcCurrentMax'
+        QtMocHelpers::PropertyData<double>(103, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Constant),
+        // property 'attMax'
+        QtMocHelpers::PropertyData<double>(104, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Constant),
         // property 'stagedAcVolt'
-        QtMocHelpers::PropertyData<double>(103, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 13),
+        QtMocHelpers::PropertyData<double>(105, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 13),
         // property 'stagedAcFreq'
-        QtMocHelpers::PropertyData<double>(104, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 14),
+        QtMocHelpers::PropertyData<double>(106, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 14),
         // property 'stagedDcVolt'
-        QtMocHelpers::PropertyData<double>(105, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 15),
+        QtMocHelpers::PropertyData<double>(107, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 15),
         // property 'stagedDcCurrent'
-        QtMocHelpers::PropertyData<double>(106, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 16),
+        QtMocHelpers::PropertyData<double>(108, QMetaType::Double, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet, 16),
     };
     QtMocHelpers::UintData qt_enums {
     };
@@ -420,6 +426,7 @@ void DashboardManager::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         case 46: { bool _r = _t->calibrateRf((*reinterpret_cast<std::add_pointer_t<double>>(_a[1])));
             if (_a[0]) *reinterpret_cast<bool*>(_a[0]) = std::move(_r); }  break;
         case 47: _t->clearRfCalibration(); break;
+        case 48: _t->clearRfCalPoint((*reinterpret_cast<std::add_pointer_t<double>>(_a[1]))); break;
         default: ;
         }
     }
@@ -545,14 +552,14 @@ int DashboardManager::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 48)
+        if (_id < 49)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 48;
+        _id -= 49;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 48)
+        if (_id < 49)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 48;
+        _id -= 49;
     }
     if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty
             || _c == QMetaObject::ResetProperty || _c == QMetaObject::BindableProperty

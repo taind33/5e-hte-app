@@ -64,7 +64,7 @@
                         {
                             "codegenResult": 2,
                             "column": 5,
-                            "durationMicroseconds": 4000,
+                            "durationMicroseconds": 10000,
                             "functionName": "refreshSeries",
                             "line": 51,
                             "message": "Cannot load property length from MiniMonitorChart::dataSource with type QVariant."
@@ -128,7 +128,7 @@
                         {
                             "codegenResult": 0,
                             "column": 24,
-                            "durationMicroseconds": 4000,
+                            "durationMicroseconds": 11000,
                             "functionName": "color",
                             "line": 109,
                             "message": ""
@@ -216,7 +216,7 @@
                         {
                             "codegenResult": 0,
                             "column": 28,
-                            "durationMicroseconds": 0,
+                            "durationMicroseconds": 1000,
                             "functionName": "color",
                             "line": 152,
                             "message": ""
@@ -432,7 +432,7 @@
                         {
                             "codegenResult": 0,
                             "column": 23,
-                            "durationMicroseconds": 2000,
+                            "durationMicroseconds": 6000,
                             "functionName": "text",
                             "line": 254,
                             "message": ""
@@ -480,7 +480,7 @@
                         {
                             "codegenResult": 2,
                             "column": 27,
-                            "durationMicroseconds": 0,
+                            "durationMicroseconds": 1000,
                             "functionName": "text",
                             "line": 281,
                             "message": "Cannot generate efficient code for call to untyped JavaScript function"
@@ -496,7 +496,7 @@
                         {
                             "codegenResult": 2,
                             "column": 27,
-                            "durationMicroseconds": 0,
+                            "durationMicroseconds": 1000,
                             "functionName": "text",
                             "line": 286,
                             "message": "Cannot generate efficient code for call to untyped JavaScript function"

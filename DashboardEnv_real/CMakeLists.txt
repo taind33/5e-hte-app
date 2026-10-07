@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(DashboardEnv VERSION 0.1 LANGUAGES CXX)
+set(CMAKE_AUTORCC ON)
+if(WIN32)
+    enable_language(RC)
+endif()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
@@ -14,7 +18,22 @@ qt_standard_project_setup(REQUIRES 6.8)
 
 qt_add_executable(appDashboardEnv
     main.cpp
+    app.qrc
 )
+if(WIN32)
+    file(GLOB_RECURSE _ico_candidates "${CMAKE_CURRENT_SOURCE_DIR}/*icon_5E-HTE.ico")
+    list(FILTER _ico_candidates EXCLUDE REGEX "/build/")
+    list(LENGTH _ico_candidates _ico_n)
+    if(_ico_n EQUAL 0)
+        message(FATAL_ERROR "Khong tim thay icon_5E-HTE.ico trong ${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+    list(GET _ico_candidates 0 APP_ICON_FILE)
+    message(STATUS "App icon: ${APP_ICON_FILE}")
+
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/app.rc"
+         "IDI_ICON1 ICON \"${APP_ICON_FILE}\"\n")
+    target_sources(appDashboardEnv PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/app.rc")
+endif()
 set_source_files_properties(qml/components/AppTheme.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
@@ -86,7 +105,6 @@ set_target_properties(appDashboardEnv PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-
 
 target_link_libraries(appDashboardEnv
     PRIVATE Qt6::Quick

@@ -66,14 +66,17 @@ void RfController::setRfStatus(bool valid, double loMHz, double fsMHz, double bw
     emit rfStatusChanged();
 }
 
-void RfController::setCalibration(bool calibrated, double offsetDb, bool mismatch)
+void RfController::setCalibration(bool calibrated, double offsetDb, bool mismatch,
+                                  const QVariantList &points, const QString &info)
 {
     if (m_calibrated == calibrated && qFuzzyCompare(m_calOffsetDb + 1.0, offsetDb + 1.0)
-        && m_calMismatch == mismatch)
+        && m_calMismatch == mismatch && m_calPoints == points && m_calInfo == info)
         return;
     m_calibrated  = calibrated;
     m_calOffsetDb = offsetDb;
     m_calMismatch = mismatch;
+    m_calPoints   = points;
+    m_calInfo     = info;
     emit calibrationChanged();
 }
 

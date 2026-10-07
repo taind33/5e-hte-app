@@ -51,6 +51,12 @@ class RfController : public QObject {
     Q_PROPERTY(double calOffsetDb READ calOffsetDb NOTIFY calibrationChanged)
     // true khi LO/gain hiện tại khác lúc hiệu chuẩn -> số dBm không còn đúng.
     Q_PROPERTY(bool   calMismatch READ calMismatch NOTIFY calibrationChanged)
+    // Bảng hiệu chuẩn nhiều tần số: mỗi phần tử là map
+    // {mhz, label, valid, offsetDb, mismatch, active}. active = điểm đang
+    // được dùng (hoặc 1 trong 2 điểm đang nội suy).
+    Q_PROPERTY(QVariantList calPoints READ calPoints NOTIFY calibrationChanged)
+    // Dòng trạng thái, vd "Offset 26.6 dB @ 2452.4 MHz (nội suy 2450–2455)".
+    Q_PROPERTY(QString calInfo READ calInfo NOTIFY calibrationChanged)
 
     // Vì sao chưa/không có phổ, theo gói "DIAG" của board (AD9361 lỗi, DMA
     // không về dữ liệu, ADC bão hoà...). "" = không có gì để báo.
@@ -98,6 +104,8 @@ public:
     bool   calibrated() const { return m_calibrated; }
     double calOffsetDb() const { return m_calOffsetDb; }
     bool   calMismatch() const { return m_calMismatch; }
+    QVariantList calPoints() const { return m_calPoints; }
+    QString calInfo() const { return m_calInfo; }
     QString diagText() const { return m_diagText; }
     QString diagLevel() const { return m_diagLevel; }
     void setDiag(const QString &text, const QString &level) {
@@ -113,7 +121,8 @@ public:
     void setWaveSource(const QString &src);
     void setRfStatus(bool valid, double loMHz, double fsMHz, double bwMHz,
                      int gainDb, const QString &gainMode, int fftSize);
-    void setCalibration(bool calibrated, double offsetDb, bool mismatch);
+    void setCalibration(bool calibrated, double offsetDb, bool mismatch,
+                        const QVariantList &points, const QString &info);
 
     // Bấm gửi trên giao diện = lệnh tường minh: LUÔN phát attUpdateRequested
     // khi force=true (nút gửi), kể cả khi giá trị không đổi - trước đây giá
@@ -150,6 +159,8 @@ private:
     bool    m_calibrated;
     double  m_calOffsetDb;
     bool    m_calMismatch;
+    QVariantList m_calPoints;
+    QString m_calInfo;
     QString m_diagText;
     QString m_diagLevel;
 };

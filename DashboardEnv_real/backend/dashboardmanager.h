@@ -198,8 +198,15 @@ public:
     // là dữ liệu THẬT từ board (không hiệu chuẩn trên dữ liệu mô phỏng). Lưu
     // vào .ini kèm LO/gain lúc hiệu chuẩn (đổi LO/gain thì offset không còn
     // đúng -> RfController::calMismatch).
+    //
+    // Hiệu chuẩn NHIỀU TẦN SỐ (2026-10): các điểm tần số lấy từ config.ini
+    // (rf/calPointsMHz, mặc định 2440,2445,2450,2455,2460). calibrateRf() lấy
+    // tần số ĐỈNH phổ đang đo, gán vào điểm gần nhất (lệch <= RF_CAL_SNAP_MHZ),
+    // lưu hệ số riêng cho điểm đó. Khi đo: nội suy tuyến tính theo tần số
+    // đỉnh giữa 2 điểm đã hiệu chuẩn gần nhất (ngoài dải -> điểm biên).
     Q_INVOKABLE bool calibrateRf(double refDbm);
-    Q_INVOKABLE void clearRfCalibration();
+    Q_INVOKABLE void clearRfCalibration();              // xoá TẤT CẢ các điểm
+    Q_INVOKABLE void clearRfCalPoint(double mhz);       // xoá 1 điểm
 
 signals:
     void comPortChanged();
@@ -397,10 +404,36 @@ private:
     int      m_rxGainDb;
     double   m_lastTotalDbfs;
     bool     m_lastSpectrumLive;
-    bool     m_calibrated;
-    double   m_calOffsetDb;
-    quint64  m_calLoHz;
-    int      m_calGainDb;
+    // ── Hiệu chuẩn nhiều tần số ──
+    struct RfCalPoint {
+        double  mhz;        // tần số điểm hiệu chuẩn
+        bool    valid;      // đã hiệu chuẩn chưa
+        double  offsetDb;   // dBm = dBFS + offsetDb
+        quint64 loHz;       // LO RX lúc hiệu chuẩn
+        int     gainDb;     // gain RX1 lúc hiệu chuẩn
+        QString when;       // thời điểm hiệu chuẩn
+    };
+    QVector<RfCalPoint> m_calPoints;
+    bool     m_calibrated;        // có ít nhất 1 điểm hợp lệ
+    double   m_calOffsetDb;       // hệ số đang áp dụng cho phổ hiện tại
+    double   m_calFreqMHz;        // tần số dùng để tính hệ số (NaN = chưa thấy tín hiệu)
+    double   m_lastPeakMHz;       // tần số đỉnh của khung phổ gần nhất
+    double   m_lastPeakProminenceDb; // đỉnh cao hơn nền (trung vị) bao nhiêu dB
+    bool     m_lastHaveFreq;
+    // Đỉnh phải lệch điểm hiệu chuẩn không quá giá trị này mới được gán.
+    static constexpr double RF_CAL_SNAP_MHZ = 2.5;
+    // Đỉnh lệch 1 điểm đã hiệu chuẩn không quá giá trị này (~nửa bin
+    // 0.48 MHz ở 60 MSPS/124 điểm) thì dùng đúng hệ số điểm đó.
+    static constexpr double RF_CAL_EXACT_MHZ = 0.3;
+    // Đỉnh phải cao hơn nền nhiễu (trung vị các bin) ít nhất ngần này mới
+    // được coi là có tín hiệu (dùng để hiệu chuẩn / chọn hệ số).
+    static constexpr double RF_CAL_MIN_PROMINENCE_DB = 15.0;
+    void   loadRfCalibration();
+    void   saveRfCalPoint(int idx);
+    static QString rfCalKey(double mhz);
+    double rfCalOffsetAt(double mhz, int *loIdx, int *hiIdx) const;
+    int    rfCalNearestPoint(double mhz) const;
+    void   cliCal(const QStringList &a);
     int      m_simSpectrumTick;
     // AD9361 ADC 12-bit, axi_adc sign-extend lên 16-bit: biên độ đầy thang
     // của 1 thành phần I/Q = 2048 -> sóng sin phức đầy thang qua FFT N điểm
@@ -430,4 +463,4 @@ private:
     QSettings m_settings;
 };
 
-#endif // DASHBOARDMANAGER_H
+#endif // DASHBOARDMANAGER_H

@@ -726,15 +726,28 @@
                             }
                         ],
                         "index": 46,
-                        "lineNumber": 201,
+                        "lineNumber": 207,
                         "name": "calibrateRf",
                         "returnType": "bool"
                     },
                     {
                         "access": "public",
                         "index": 47,
-                        "lineNumber": 202,
+                        "lineNumber": 208,
                         "name": "clearRfCalibration",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "mhz",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 48,
+                        "lineNumber": 209,
+                        "name": "clearRfCalPoint",
                         "returnType": "void"
                     }
                 ],
@@ -1285,119 +1298,119 @@
                     {
                         "access": "public",
                         "index": 0,
-                        "lineNumber": 205,
+                        "lineNumber": 212,
                         "name": "comPortChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 1,
-                        "lineNumber": 206,
+                        "lineNumber": 213,
                         "name": "baudRateChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 2,
-                        "lineNumber": 207,
+                        "lineNumber": 214,
                         "name": "delayTimeChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 3,
-                        "lineNumber": 208,
+                        "lineNumber": 215,
                         "name": "sessionNameChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 4,
-                        "lineNumber": 209,
+                        "lineNumber": 216,
                         "name": "isConnectedChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 5,
-                        "lineNumber": 210,
+                        "lineNumber": 217,
                         "name": "availablePortsChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 6,
-                        "lineNumber": 211,
+                        "lineNumber": 218,
                         "name": "commandLogChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 7,
-                        "lineNumber": 212,
+                        "lineNumber": 219,
                         "name": "adcChannelsChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 8,
-                        "lineNumber": 213,
+                        "lineNumber": 220,
                         "name": "isPortVerifiedChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 9,
-                        "lineNumber": 214,
+                        "lineNumber": 221,
                         "name": "linkDiagnosisChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 10,
-                        "lineNumber": 215,
+                        "lineNumber": 222,
                         "name": "boardDiagChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 11,
-                        "lineNumber": 216,
+                        "lineNumber": 223,
                         "name": "scanningChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 12,
-                        "lineNumber": 217,
+                        "lineNumber": 224,
                         "name": "kichNoPeakVoltageChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 13,
-                        "lineNumber": 218,
+                        "lineNumber": 225,
                         "name": "stagedAcVoltChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 14,
-                        "lineNumber": 219,
+                        "lineNumber": 226,
                         "name": "stagedAcFreqChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 15,
-                        "lineNumber": 220,
+                        "lineNumber": 227,
                         "name": "stagedDcVoltChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 16,
-                        "lineNumber": 221,
+                        "lineNumber": 228,
                         "name": "stagedDcCurrentChanged",
                         "returnType": "void"
                     },
@@ -1414,7 +1427,7 @@
                             }
                         ],
                         "index": 17,
-                        "lineNumber": 222,
+                        "lineNumber": 229,
                         "name": "systemNotification",
                         "returnType": "void"
                     }
@@ -1429,14 +1442,14 @@
                             }
                         ],
                         "index": 18,
-                        "lineNumber": 225,
+                        "lineNumber": 232,
                         "name": "handleSerialError",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 19,
-                        "lineNumber": 226,
+                        "lineNumber": 233,
                         "name": "generateSimulatedWave",
                         "returnType": "void"
                     },
@@ -1453,42 +1466,42 @@
                             }
                         ],
                         "index": 20,
-                        "lineNumber": 227,
+                        "lineNumber": 234,
                         "name": "onAttUpdateRequested",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 21,
-                        "lineNumber": 233,
+                        "lineNumber": 240,
                         "name": "sendPingProbe",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 22,
-                        "lineNumber": 235,
+                        "lineNumber": 242,
                         "name": "onPingTimeout",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 23,
-                        "lineNumber": 237,
+                        "lineNumber": 244,
                         "name": "onWaveWatchdog",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 24,
-                        "lineNumber": 239,
+                        "lineNumber": 246,
                         "name": "onAcPowerTimeout",
                         "returnType": "void"
                     },
                     {
                         "access": "private",
                         "index": 25,
-                        "lineNumber": 240,
+                        "lineNumber": 247,
                         "name": "onDcPowerTimeout",
                         "returnType": "void"
                     }
@@ -1545,7 +1558,7 @@
                             }
                         ],
                         "index": 9,
-                        "lineNumber": 122,
+                        "lineNumber": 131,
                         "name": "requestSetAtt",
                         "returnType": "bool"
                     },
@@ -1563,7 +1576,7 @@
                         ],
                         "index": 10,
                         "isCloned": true,
-                        "lineNumber": 122,
+                        "lineNumber": 131,
                         "name": "requestSetAtt",
                         "returnType": "bool"
                     }
@@ -2003,7 +2016,41 @@
                         "designable": true,
                         "final": false,
                         "index": 25,
-                        "lineNumber": 58,
+                        "lineNumber": 57,
+                        "name": "calPoints",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calPoints",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 26,
+                        "lineNumber": 59,
+                        "name": "calInfo",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calInfo",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 27,
+                        "lineNumber": 64,
                         "name": "diagText",
                         "notify": "diagChanged",
                         "override": false,
@@ -2019,8 +2066,8 @@
                         "constant": false,
                         "designable": true,
                         "final": false,
-                        "index": 26,
-                        "lineNumber": 59,
+                        "index": 28,
+                        "lineNumber": 65,
                         "name": "diagLevel",
                         "notify": "diagChanged",
                         "override": false,
@@ -2038,56 +2085,56 @@
                     {
                         "access": "public",
                         "index": 0,
-                        "lineNumber": 125,
+                        "lineNumber": 134,
                         "name": "att1Changed",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 1,
-                        "lineNumber": 126,
+                        "lineNumber": 135,
                         "name": "att2Changed",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 2,
-                        "lineNumber": 127,
+                        "lineNumber": 136,
                         "name": "att3Changed",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 3,
-                        "lineNumber": 128,
+                        "lineNumber": 137,
                         "name": "waveDataChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 4,
-                        "lineNumber": 129,
+                        "lineNumber": 138,
                         "name": "waveSourceChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 5,
-                        "lineNumber": 130,
+                        "lineNumber": 139,
                         "name": "rfStatusChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 6,
-                        "lineNumber": 131,
+                        "lineNumber": 140,
                         "name": "calibrationChanged",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
                         "index": 7,
-                        "lineNumber": 132,
+                        "lineNumber": 141,
                         "name": "diagChanged",
                         "returnType": "void"
                     },
@@ -2104,7 +2151,7 @@
                             }
                         ],
                         "index": 8,
-                        "lineNumber": 133,
+                        "lineNumber": 142,
                         "name": "attUpdateRequested",
                         "returnType": "void"
                     }

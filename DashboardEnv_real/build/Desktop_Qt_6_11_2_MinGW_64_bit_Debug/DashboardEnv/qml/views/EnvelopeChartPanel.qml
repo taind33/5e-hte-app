@@ -4,8 +4,8 @@ import QtQuick.Controls
 import QtCharts
 import DashboardEnv
 
-// Phổ RF đầu vào RX1 của AD9361 (firmware stream_framer.c: DMA 32 mẫu I/Q ->
-// FFT 32 điểm -> gói "WAVE" ~300 ms/lần; cấu hình RX qua gói "RFST").
+// Phổ RF đầu vào RX1 của AD9361 (firmware stream_framer.c: DMA 124 mẫu I/Q ->
+// DFT 124 điểm -> gói "WAVD" 100 ms/lần; cấu hình RX qua gói "RFST").
 // Mọi xử lý số (dBFS, fftshift, trục tần số, đỉnh, tổng công suất, hiệu
 // chuẩn) nằm ở DashboardManager::processWaveMagnitudes() - file này chỉ vẽ.
 BoxWrap {
@@ -23,6 +23,12 @@ BoxWrap {
 
     function fmtX(x) {
         return panel.rf.xIsFrequency ? x.toFixed(3) + " MHz" : "bin " + Math.round(x)
+    }
+
+    function askClearCalPoint(mhz, label) {
+        clearPointDialog.pointMhz = mhz
+        clearPointDialog.pointLabel = label
+        clearPointDialog.open()
     }
 
     function populateSeries() {
@@ -263,6 +269,32 @@ BoxWrap {
                 }
             }
 
+            // Hộp xác nhận xoá hiệu chuẩn (Popup không phải Item -> đặt trong Item chartArea).
+            Dialog {
+                id: clearAllDialog
+                parent: Overlay.overlay
+                anchors.centerIn: parent
+                width: 380
+                modal: true
+                title: qsTr("Xoá hiệu chuẩn")
+                standardButtons: Dialog.Ok | Dialog.Cancel
+                onAccepted: dashboard.clearRfCalibration()
+                Label { width: parent.width; wrapMode: Text.WordWrap; text: qsTr("Xoá hệ số hiệu chuẩn của TẤT CẢ các điểm tần số?") }
+            }
+            Dialog {
+                id: clearPointDialog
+                property real   pointMhz: 0
+                property string pointLabel: ""
+                parent: Overlay.overlay
+                anchors.centerIn: parent
+                width: 380
+                modal: true
+                title: qsTr("Xoá điểm hiệu chuẩn")
+                standardButtons: Dialog.Ok | Dialog.Cancel
+                onAccepted: dashboard.clearRfCalPoint(pointMhz)
+                Label { width: parent.width; wrapMode: Text.WordWrap; text: qsTr("Xoá hệ số hiệu chuẩn của điểm %1 MHz?").arg(clearPointDialog.pointLabel) }
+            }
+
             Rectangle {
                 visible: panel.tooltipVisible
                 x:       chartHover.mouseX
@@ -297,14 +329,6 @@ BoxWrap {
 
             Item { Layout.fillWidth: true }
 
-            Text {
-                font.pixelSize: 11
-                color: panel.rf.calMismatch ? AppTheme.warningNote : AppTheme.textMuted
-                text: !panel.rf.calibrated ? qsTr("Chưa hiệu chuẩn")
-                      : panel.rf.calMismatch ? qsTr("Hiệu chuẩn ở LO/gain khác!")
-                      : qsTr("Offset %1 dB").arg(panel.rf.calOffsetDb.toFixed(1))
-            }
-
             TextField {
                 id: refInput
                 Layout.preferredWidth:  64
@@ -322,7 +346,7 @@ BoxWrap {
                 // Công suất chuẩn (dBm) đưa vào RX1 - cho phép số âm.
                 validator: RegularExpressionValidator { regularExpression: /^-?\d{0,3}(\.\d{0,2})?$/ }
                 ToolTip.visible: hovered
-                ToolTip.text: qsTr("Công suất chuẩn (dBm) đang đưa vào RX1")
+                ToolTip.text: qsTr("Công suất chuẩn (dBm) đang đưa vào RX1 - bấm Hiệu chuẩn để lưu cho điểm tần số gần đỉnh phổ nhất")
                 background: Rectangle {
                     radius: 5
                     color: AppTheme.elementBg
@@ -358,7 +382,7 @@ BoxWrap {
                 implicitHeight: 22
                 implicitWidth:  clearLabel.implicitWidth + 14
                 enabled: panel.rf.calibrated
-                onClicked: dashboard.clearRfCalibration()
+                onClicked: clearAllDialog.open()
                 background: Rectangle {
                     radius: 5
                     color: "transparent"
@@ -368,13 +392,77 @@ BoxWrap {
                 }
                 contentItem: Text {
                     id: clearLabel
-                    text: qsTr("Xoá")
+                    text: qsTr("Xoá tất cả")
                     font.pixelSize: 11
                     color: AppTheme.textDark
                     opacity: clearCalButton.enabled ? 1.0 : 0.4
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment:   Text.AlignVCenter
                 }
+            }
+        }
+
+        // ── Bảng hiệu chuẩn theo tần số: 1 ô / điểm, bấm ô để xoá điểm đó ──
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 4
+
+            Text {
+                text: qsTr("Hiệu chuẩn:")
+                font.pixelSize: 10
+                color: AppTheme.textMuted
+            }
+
+            Repeater {
+                model: panel.rf.calPoints
+                delegate: Rectangle {
+                    id: chip
+                    required property var modelData
+                    implicitHeight: 18
+                    implicitWidth:  chipText.implicitWidth + 12
+                    radius: 4
+                    color: chip.modelData.active && chip.modelData.valid ? AppTheme.brandRed
+                         : chip.modelData.valid ? AppTheme.elementBg : "transparent"
+                    border.width: 1
+                    border.color: chip.modelData.mismatch ? AppTheme.warningNote
+                                : chip.modelData.valid ? AppTheme.borderMuted : AppTheme.borderMuted
+                    opacity: chip.modelData.valid ? 1.0 : 0.6
+                    Text {
+                        id: chipText
+                        anchors.centerIn: parent
+                        font.pixelSize: 10
+                        font.bold: chip.modelData.active && chip.modelData.valid
+                        color: chip.modelData.active && chip.modelData.valid ? AppTheme.textLight
+                             : chip.modelData.mismatch ? AppTheme.warningNote : AppTheme.textDark
+                        text: chip.modelData.label + ": " + (chip.modelData.valid ? chip.modelData.offsetDb.toFixed(1) : "--")
+                    }
+                    MouseArea {
+                        id: chipMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: chip.modelData.valid ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            if (chip.modelData.valid)
+                                panel.askClearCalPoint(chip.modelData.mhz, chip.modelData.label)
+                        }
+                    }
+                    ToolTip.visible: chipMouse.containsMouse
+                    ToolTip.text: chip.modelData.valid
+                        ? qsTr("%1 MHz: hệ số %2 dB, đo lúc %3%4\nBấm để xoá điểm này")
+                              .arg(chip.modelData.label).arg(chip.modelData.offsetDb.toFixed(2)).arg(chip.modelData.when)
+                              .arg(chip.modelData.mismatch ? qsTr(" - LO/gain KHÁC hiện tại!") : "")
+                        : qsTr("%1 MHz: chưa hiệu chuẩn - phát tín hiệu ở tần số này rồi bấm Hiệu chuẩn").arg(chip.modelData.label)
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                Layout.maximumWidth: panel.width * 0.45
+                elide: Text.ElideLeft
+                font.pixelSize: 10
+                color: panel.rf.calMismatch ? AppTheme.warningNote : AppTheme.textMuted
+                text: panel.rf.calInfo
             }
         }
     }
