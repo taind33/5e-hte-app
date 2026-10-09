@@ -8088,6 +8088,7 @@ CMakeFiles/appDashboardEnv.dir/backend/dashboardmanager.cpp.obj: D:/taind33/Qt/D
   C:/Qt/6.11.2/mingw_64/include/QtCore/QMap \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QObject \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QPointF \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/QRegularExpression \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QSettings \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QStandardPaths \
   C:/Qt/6.11.2/mingw_64/include/QtCore/QString \
@@ -8191,6 +8192,7 @@ CMakeFiles/appDashboardEnv.dir/backend/dashboardmanager.cpp.obj: D:/taind33/Qt/D
   C:/Qt/6.11.2/mingw_64/include/QtCore/qproperty.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qpropertyprivate.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qrefcount.h \
+  C:/Qt/6.11.2/mingw_64/include/QtCore/qregularexpression.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qscopedpointer.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qscopeguard.h \
   C:/Qt/6.11.2/mingw_64/include/QtCore/qset.h \

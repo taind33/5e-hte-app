@@ -17,7 +17,7 @@ ApplicationWindow {
     // theo đúng yêu cầu - quay lại literal tiếng Việt bọc qsTr() để khi có
     // mẫu Qt Linguist thật (.ts/.qm qua lupdate/lrelease) chỉ cần chạy
     // lupdate là tự trích được hết chuỗi, không phải sửa lại từng file.
-    title: qsTr("Bảng Điều Khiển Hệ Thống Avionics VASC")
+    title: qsTr("Phầm mềm hỗ trợ kiểm tra phần cứng 5E15VT")
     color: AppTheme.mainBg
 
     // ── Nhớ giao diện giữa các lần mở (config.ini, nhóm [ui]) ──

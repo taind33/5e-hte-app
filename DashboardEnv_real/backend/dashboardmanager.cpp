@@ -1278,6 +1278,9 @@ void DashboardManager::parseIncomingData(const QByteArray &data) {
                 // "giu dinh" cua chinh mach analog - reset ve 0 chi khi
                 // nguoi dung bam "Dat lai" (xem resetSystem() ben duoi).
                 double codeToVolts = (static_cast<double>(adc.raw_code[0]) / 4096.0) * ADC7928_FULL_SCALE;
+                qDebug().noquote() << QString("[ADC7928] CH0 raw = %1 (0x%2) | V_ADC = %3 V")          // DEBUG ADC
+                                          .arg(adc.raw_code[0]).arg(adc.raw_code[0], 3, 16, QChar('0'))
+                                          .arg(codeToVolts, 0, 'f', 4);
                 double candidate = -codeToVolts;
                 if (candidate < m_kichNoPeakV) {
                     m_kichNoPeakV = candidate;

@@ -32,7 +32,7 @@
                         {
                             "codegenResult": 2,
                             "column": 5,
-                            "durationMicroseconds": 1000,
+                            "durationMicroseconds": 0,
                             "functionName": "populateSeries",
                             "line": 34,
                             "message": "Cannot load property waveData from EnvelopeChartPanel::rf with type QVariant."
@@ -48,7 +48,7 @@
                         {
                             "codegenResult": 0,
                             "column": 33,
-                            "durationMicroseconds": 8000,
+                            "durationMicroseconds": 5000,
                             "functionName": "color",
                             "line": 59,
                             "message": ""
@@ -456,7 +456,7 @@
                         {
                             "codegenResult": 2,
                             "column": 36,
-                            "durationMicroseconds": 3000,
+                            "durationMicroseconds": 2000,
                             "functionName": "onPositionChanged",
                             "line": 218,
                             "message": "Cannot load property spectrumUnit from EnvelopeChartPanel::rf with type QVariant."

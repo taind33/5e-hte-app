@@ -24,7 +24,7 @@
                         {
                             "codegenResult": 0,
                             "column": 23,
-                            "durationMicroseconds": 13000,
+                            "durationMicroseconds": 11000,
                             "functionName": "color",
                             "line": 34,
                             "message": ""

@@ -24,7 +24,7 @@
                         {
                             "codegenResult": 2,
                             "column": 28,
-                            "durationMicroseconds": 10000,
+                            "durationMicroseconds": 4000,
                             "functionName": "onCompleted",
                             "line": 25,
                             "message": "Cannot access value for name dashboard"
