@@ -104,6 +104,7 @@ set_target_properties(appDashboardEnv PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
+    OUTPUT_NAME "5E-HTE"
 )
 
 target_link_libraries(appDashboardEnv

@@ -1066,7 +1066,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
   ".qt/rcc/appDashboardEnv_raw_qml_0_extra_qmldirs.qrc"
   "DashboardEnv/qmldir"
   ".qt/.qmlls.build.ini.part"
-  "appDashboardEnv.exe.manifest"
+  "5E-HTE.exe.manifest"
   "CMakeFiles/appDashboardEnv_autogen.dir/AutogenInfo.json"
   "CMakeFiles/appDashboardEnv_autogen.dir/AutoRcc_app_EWIEGA46WW_Info.json"
   ".qt/QtDeploySupport.cmake"

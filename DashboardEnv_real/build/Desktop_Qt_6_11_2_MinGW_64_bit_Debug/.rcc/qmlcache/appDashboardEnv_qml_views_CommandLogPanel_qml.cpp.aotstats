@@ -40,7 +40,7 @@
                         {
                             "codegenResult": 0,
                             "column": 35,
-                            "durationMicroseconds": 5000,
+                            "durationMicroseconds": 7000,
                             "functionName": "color",
                             "line": 35,
                             "message": ""
@@ -256,7 +256,7 @@
                         {
                             "codegenResult": 2,
                             "column": 44,
-                            "durationMicroseconds": 4000,
+                            "durationMicroseconds": 6000,
                             "functionName": "onTabPressed",
                             "line": 143,
                             "message": "Cannot access value for name dashboard"

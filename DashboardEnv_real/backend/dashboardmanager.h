@@ -456,6 +456,7 @@ private:
 
     static constexpr double ADC7928_VREF_VOLTS = 2.5;      // board_config.h
     static constexpr double ADC7928_FULL_SCALE = ADC7928_VREF_VOLTS * 2.0; // RANGE 0..2*VREF
+    static constexpr double KICH_NO_SCALE = -45;   // he so kenh kich no
 
     // config.ini - xem resolveConfigPath(). m_configPath PHẢI khai báo trước
     // m_settings (thứ tự khởi tạo thành viên).
@@ -463,4 +464,4 @@ private:
     QSettings m_settings;
 };
 
-#endif // DASHBOARDMANAGER_H
+#endif // DASHBOARDMANAGER_H

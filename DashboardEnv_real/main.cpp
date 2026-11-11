@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("dashboard", &dbManager);
 
     // 6. Định nghĩa đường dẫn nạp file giao diện chính (Đã map theo CMake QML Module)
-    const QUrl url(QStringLiteral("DashboardEnv/qml/Main.qml"));
+    const QUrl url(QStringLiteral("qrc:/qt/qml/DashboardEnv/qml/Main.qml"));
 
     // Kết nối signal bảo vệ: Nếu load file QML thất bại thì tắt app ngay lập tức để tránh chạy ngầm lỗi
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

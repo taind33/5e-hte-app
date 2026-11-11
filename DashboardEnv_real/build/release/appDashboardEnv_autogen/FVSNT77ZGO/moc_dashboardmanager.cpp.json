@@ -1,0 +1,1053 @@
+{
+    "classes": [
+        {
+            "className": "DashboardManager",
+            "lineNumber": 32,
+            "methods": [
+                {
+                    "access": "public",
+                    "index": 26,
+                    "lineNumber": 157,
+                    "name": "startSession",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 27,
+                    "lineNumber": 158,
+                    "name": "stopSession",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 28,
+                    "lineNumber": 159,
+                    "name": "openLogFile",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "on",
+                            "type": "bool"
+                        }
+                    ],
+                    "index": 29,
+                    "lineNumber": 164,
+                    "name": "requestAcPower",
+                    "returnType": "bool"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "on",
+                            "type": "bool"
+                        }
+                    ],
+                    "index": 30,
+                    "lineNumber": 165,
+                    "name": "requestDcPower",
+                    "returnType": "bool"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "on",
+                            "type": "bool"
+                        },
+                        {
+                            "name": "volt",
+                            "type": "uint16_t"
+                        },
+                        {
+                            "name": "freq",
+                            "type": "uint16_t"
+                        }
+                    ],
+                    "index": 31,
+                    "lineNumber": 166,
+                    "name": "setAcPower",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "on",
+                            "type": "bool"
+                        },
+                        {
+                            "name": "volt",
+                            "type": "uint16_t"
+                        },
+                        {
+                            "name": "cur",
+                            "type": "double"
+                        }
+                    ],
+                    "index": 32,
+                    "lineNumber": 167,
+                    "name": "setDcPower",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "dev",
+                            "type": "int"
+                        }
+                    ],
+                    "index": 33,
+                    "lineNumber": 172,
+                    "name": "refreshPower",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 34,
+                    "lineNumber": 173,
+                    "name": "refreshAllPower",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "key",
+                            "type": "QString"
+                        },
+                        {
+                            "name": "defaultValue",
+                            "type": "QVariant"
+                        }
+                    ],
+                    "index": 35,
+                    "isConst": true,
+                    "lineNumber": 177,
+                    "name": "loadUi",
+                    "returnType": "QVariant"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "key",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 36,
+                    "isCloned": true,
+                    "isConst": true,
+                    "lineNumber": 177,
+                    "name": "loadUi",
+                    "returnType": "QVariant"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "key",
+                            "type": "QString"
+                        },
+                        {
+                            "name": "value",
+                            "type": "QVariant"
+                        }
+                    ],
+                    "index": 37,
+                    "lineNumber": 178,
+                    "name": "saveUi",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "ns",
+                            "type": "int"
+                        }
+                    ],
+                    "index": 38,
+                    "lineNumber": 179,
+                    "name": "applyDelayTime",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 39,
+                    "lineNumber": 180,
+                    "name": "refreshPorts",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "portName",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 40,
+                    "isConst": true,
+                    "lineNumber": 181,
+                    "name": "isPortAvailable",
+                    "returnType": "bool"
+                },
+                {
+                    "access": "public",
+                    "index": 41,
+                    "lineNumber": 183,
+                    "name": "resetSystem",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "cmd",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 42,
+                    "lineNumber": 184,
+                    "name": "sendCommand",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "line",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 43,
+                    "lineNumber": 190,
+                    "name": "executeCommand",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "prefix",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 44,
+                    "isConst": true,
+                    "lineNumber": 192,
+                    "name": "cliCompletions",
+                    "returnType": "QStringList"
+                },
+                {
+                    "access": "public",
+                    "index": 45,
+                    "lineNumber": 193,
+                    "name": "clearCommandLog",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "refDbm",
+                            "type": "double"
+                        }
+                    ],
+                    "index": 46,
+                    "lineNumber": 207,
+                    "name": "calibrateRf",
+                    "returnType": "bool"
+                },
+                {
+                    "access": "public",
+                    "index": 47,
+                    "lineNumber": 208,
+                    "name": "clearRfCalibration",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "mhz",
+                            "type": "double"
+                        }
+                    ],
+                    "index": 48,
+                    "lineNumber": 209,
+                    "name": "clearRfCalPoint",
+                    "returnType": "void"
+                }
+            ],
+            "object": true,
+            "properties": [
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 0,
+                    "lineNumber": 34,
+                    "name": "acSource",
+                    "override": false,
+                    "read": "acSource",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "ACsource*",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 1,
+                    "lineNumber": 35,
+                    "name": "dcSource",
+                    "override": false,
+                    "read": "dcSource",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "DCsource*",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 2,
+                    "lineNumber": 36,
+                    "name": "rfController",
+                    "override": false,
+                    "read": "rfController",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "RfController*",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 3,
+                    "lineNumber": 37,
+                    "name": "comPort",
+                    "notify": "comPortChanged",
+                    "override": false,
+                    "read": "comPort",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setComPort"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 4,
+                    "lineNumber": 38,
+                    "name": "baudRate",
+                    "notify": "baudRateChanged",
+                    "override": false,
+                    "read": "baudRate",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setBaudRate"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 5,
+                    "lineNumber": 39,
+                    "name": "delayTime",
+                    "notify": "delayTimeChanged",
+                    "override": false,
+                    "read": "delayTime",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setDelayTime"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 6,
+                    "lineNumber": 40,
+                    "name": "sessionName",
+                    "notify": "sessionNameChanged",
+                    "override": false,
+                    "read": "sessionName",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setSessionName"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 7,
+                    "lineNumber": 41,
+                    "name": "isConnected",
+                    "notify": "isConnectedChanged",
+                    "override": false,
+                    "read": "isConnected",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 8,
+                    "lineNumber": 42,
+                    "name": "availablePorts",
+                    "notify": "availablePortsChanged",
+                    "override": false,
+                    "read": "availablePorts",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QStringList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 9,
+                    "lineNumber": 43,
+                    "name": "commandLog",
+                    "notify": "commandLogChanged",
+                    "override": false,
+                    "read": "commandLog",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QStringList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 10,
+                    "lineNumber": 44,
+                    "name": "adcChannels",
+                    "notify": "adcChannelsChanged",
+                    "override": false,
+                    "read": "adcChannels",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantList",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": true,
+                    "index": 11,
+                    "lineNumber": 47,
+                    "name": "configPath",
+                    "override": false,
+                    "read": "configPath",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 12,
+                    "lineNumber": 53,
+                    "name": "isPortVerified",
+                    "notify": "isPortVerifiedChanged",
+                    "override": false,
+                    "read": "isPortVerified",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 13,
+                    "lineNumber": 58,
+                    "name": "linkDiagnosis",
+                    "notify": "linkDiagnosisChanged",
+                    "override": false,
+                    "read": "linkDiagnosis",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 14,
+                    "lineNumber": 59,
+                    "name": "linkDiagnosisShort",
+                    "notify": "linkDiagnosisChanged",
+                    "override": false,
+                    "read": "linkDiagnosisShort",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 15,
+                    "lineNumber": 62,
+                    "name": "boardFirmware",
+                    "notify": "boardDiagChanged",
+                    "override": false,
+                    "read": "boardFirmware",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QString",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 16,
+                    "lineNumber": 63,
+                    "name": "boardDiag",
+                    "notify": "boardDiagChanged",
+                    "override": false,
+                    "read": "boardDiag",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "QVariantMap",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 17,
+                    "lineNumber": 65,
+                    "name": "scanning",
+                    "notify": "scanningChanged",
+                    "override": false,
+                    "read": "scanning",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "bool",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": true,
+                    "index": 18,
+                    "lineNumber": 70,
+                    "name": "kichNoPeakVoltage",
+                    "notify": "kichNoPeakVoltageChanged",
+                    "override": false,
+                    "read": "kichNoPeakVoltage",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 19,
+                    "lineNumber": 79,
+                    "name": "acVoltMin",
+                    "override": false,
+                    "read": "acVoltMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 20,
+                    "lineNumber": 80,
+                    "name": "acVoltMax",
+                    "override": false,
+                    "read": "acVoltMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 21,
+                    "lineNumber": 81,
+                    "name": "acFreqMin",
+                    "override": false,
+                    "read": "acFreqMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 22,
+                    "lineNumber": 82,
+                    "name": "acFreqMax",
+                    "override": false,
+                    "read": "acFreqMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 23,
+                    "lineNumber": 83,
+                    "name": "dcVoltMin",
+                    "override": false,
+                    "read": "dcVoltMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 24,
+                    "lineNumber": 84,
+                    "name": "dcVoltMax",
+                    "override": false,
+                    "read": "dcVoltMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "int",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 25,
+                    "lineNumber": 85,
+                    "name": "dcCurrentMin",
+                    "override": false,
+                    "read": "dcCurrentMin",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 26,
+                    "lineNumber": 86,
+                    "name": "dcCurrentMax",
+                    "override": false,
+                    "read": "dcCurrentMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": true,
+                    "designable": true,
+                    "final": false,
+                    "index": 27,
+                    "lineNumber": 87,
+                    "name": "attMax",
+                    "override": false,
+                    "read": "attMax",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 28,
+                    "lineNumber": 98,
+                    "name": "stagedAcVolt",
+                    "notify": "stagedAcVoltChanged",
+                    "override": false,
+                    "read": "stagedAcVolt",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setStagedAcVolt"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 29,
+                    "lineNumber": 99,
+                    "name": "stagedAcFreq",
+                    "notify": "stagedAcFreqChanged",
+                    "override": false,
+                    "read": "stagedAcFreq",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setStagedAcFreq"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 30,
+                    "lineNumber": 100,
+                    "name": "stagedDcVolt",
+                    "notify": "stagedDcVoltChanged",
+                    "override": false,
+                    "read": "stagedDcVolt",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setStagedDcVolt"
+                },
+                {
+                    "constant": false,
+                    "designable": true,
+                    "final": false,
+                    "index": 31,
+                    "lineNumber": 101,
+                    "name": "stagedDcCurrent",
+                    "notify": "stagedDcCurrentChanged",
+                    "override": false,
+                    "read": "stagedDcCurrent",
+                    "required": false,
+                    "scriptable": true,
+                    "stored": true,
+                    "type": "double",
+                    "user": false,
+                    "virtual": false,
+                    "write": "setStagedDcCurrent"
+                }
+            ],
+            "qualifiedClassName": "DashboardManager",
+            "signals": [
+                {
+                    "access": "public",
+                    "index": 0,
+                    "lineNumber": 212,
+                    "name": "comPortChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 1,
+                    "lineNumber": 213,
+                    "name": "baudRateChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 2,
+                    "lineNumber": 214,
+                    "name": "delayTimeChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 3,
+                    "lineNumber": 215,
+                    "name": "sessionNameChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 4,
+                    "lineNumber": 216,
+                    "name": "isConnectedChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 5,
+                    "lineNumber": 217,
+                    "name": "availablePortsChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 6,
+                    "lineNumber": 218,
+                    "name": "commandLogChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 7,
+                    "lineNumber": 219,
+                    "name": "adcChannelsChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 8,
+                    "lineNumber": 220,
+                    "name": "isPortVerifiedChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 9,
+                    "lineNumber": 221,
+                    "name": "linkDiagnosisChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 10,
+                    "lineNumber": 222,
+                    "name": "boardDiagChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 11,
+                    "lineNumber": 223,
+                    "name": "scanningChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 12,
+                    "lineNumber": 224,
+                    "name": "kichNoPeakVoltageChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 13,
+                    "lineNumber": 225,
+                    "name": "stagedAcVoltChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 14,
+                    "lineNumber": 226,
+                    "name": "stagedAcFreqChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 15,
+                    "lineNumber": 227,
+                    "name": "stagedDcVoltChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "index": 16,
+                    "lineNumber": 228,
+                    "name": "stagedDcCurrentChanged",
+                    "returnType": "void"
+                },
+                {
+                    "access": "public",
+                    "arguments": [
+                        {
+                            "name": "type",
+                            "type": "QString"
+                        },
+                        {
+                            "name": "message",
+                            "type": "QString"
+                        }
+                    ],
+                    "index": 17,
+                    "lineNumber": 229,
+                    "name": "systemNotification",
+                    "returnType": "void"
+                }
+            ],
+            "slots": [
+                {
+                    "access": "private",
+                    "arguments": [
+                        {
+                            "name": "error",
+                            "type": "QSerialPort::SerialPortError"
+                        }
+                    ],
+                    "index": 18,
+                    "lineNumber": 232,
+                    "name": "handleSerialError",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 19,
+                    "lineNumber": 233,
+                    "name": "generateSimulatedWave",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "arguments": [
+                        {
+                            "name": "channel",
+                            "type": "int"
+                        },
+                        {
+                            "name": "value",
+                            "type": "double"
+                        }
+                    ],
+                    "index": 20,
+                    "lineNumber": 234,
+                    "name": "onAttUpdateRequested",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 21,
+                    "lineNumber": 240,
+                    "name": "sendPingProbe",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 22,
+                    "lineNumber": 242,
+                    "name": "onPingTimeout",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 23,
+                    "lineNumber": 244,
+                    "name": "onWaveWatchdog",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 24,
+                    "lineNumber": 246,
+                    "name": "onAcPowerTimeout",
+                    "returnType": "void"
+                },
+                {
+                    "access": "private",
+                    "index": 25,
+                    "lineNumber": 247,
+                    "name": "onDcPowerTimeout",
+                    "returnType": "void"
+                }
+            ],
+            "superClasses": [
+                {
+                    "access": "public",
+                    "name": "QObject"
+                }
+            ]
+        }
+    ],
+    "inputFile": "dashboardmanager.h",
+    "outputRevision": 69
+}

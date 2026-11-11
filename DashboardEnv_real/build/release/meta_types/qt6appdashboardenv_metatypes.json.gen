@@ -1,0 +1,2170 @@
+[
+    {
+        "classes": [
+            {
+                "className": "ACsource",
+                "lineNumber": 8,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 11,
+                        "name": "freq",
+                        "notify": "freqChanged",
+                        "override": false,
+                        "read": "freq",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 12,
+                        "name": "freqHistory",
+                        "notify": "freqHistoryChanged",
+                        "override": false,
+                        "read": "freqHistory",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 13,
+                        "name": "freqMax",
+                        "notify": "freqMaxChanged",
+                        "override": false,
+                        "read": "freqMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 14,
+                        "name": "freqMin",
+                        "notify": "freqMinChanged",
+                        "override": false,
+                        "read": "freqMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "ACsource",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 29,
+                        "name": "freqChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 30,
+                        "name": "freqHistoryChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 31,
+                        "name": "freqMaxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 32,
+                        "name": "freqMinChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "BasePowerSource"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "acsource.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "BasePowerSource",
+                "lineNumber": 19,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 69,
+                        "name": "resetHistory",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 22,
+                        "name": "voltage",
+                        "notify": "voltageChanged",
+                        "override": false,
+                        "read": "voltage",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 23,
+                        "name": "current",
+                        "notify": "currentChanged",
+                        "override": false,
+                        "read": "current",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 24,
+                        "name": "hasData",
+                        "notify": "hasDataChanged",
+                        "override": false,
+                        "read": "hasData",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 25,
+                        "name": "isOn",
+                        "notify": "isOnChanged",
+                        "override": false,
+                        "read": "isOn",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setIsOn"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 26,
+                        "name": "voltageHistory",
+                        "notify": "voltageHistoryChanged",
+                        "override": false,
+                        "read": "voltageHistory",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 27,
+                        "name": "currentHistory",
+                        "notify": "currentHistoryChanged",
+                        "override": false,
+                        "read": "currentHistory",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 28,
+                        "name": "voltageMax",
+                        "notify": "voltageMaxChanged",
+                        "override": false,
+                        "read": "voltageMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 29,
+                        "name": "voltageMin",
+                        "notify": "voltageMinChanged",
+                        "override": false,
+                        "read": "voltageMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 30,
+                        "name": "currentMax",
+                        "notify": "currentMaxChanged",
+                        "override": false,
+                        "read": "currentMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 31,
+                        "name": "currentMin",
+                        "notify": "currentMinChanged",
+                        "override": false,
+                        "read": "currentMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 35,
+                        "name": "linkState",
+                        "notify": "linkChanged",
+                        "override": false,
+                        "read": "linkState",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 36,
+                        "name": "linkMessage",
+                        "notify": "linkChanged",
+                        "override": false,
+                        "read": "linkMessage",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 37,
+                        "name": "pending",
+                        "notify": "linkChanged",
+                        "override": false,
+                        "read": "pending",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 39,
+                        "name": "lastUpdate",
+                        "notify": "linkChanged",
+                        "override": false,
+                        "read": "lastUpdate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "BasePowerSource",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 72,
+                        "name": "voltageChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 73,
+                        "name": "currentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 74,
+                        "name": "hasDataChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 75,
+                        "name": "isOnChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 76,
+                        "name": "voltageHistoryChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 77,
+                        "name": "currentHistoryChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 78,
+                        "name": "voltageMaxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 79,
+                        "name": "voltageMinChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 80,
+                        "name": "currentMaxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 81,
+                        "name": "currentMinChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 82,
+                        "name": "linkChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "basepowersource.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "DashboardManager",
+                "lineNumber": 32,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 26,
+                        "lineNumber": 157,
+                        "name": "startSession",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 27,
+                        "lineNumber": 158,
+                        "name": "stopSession",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 28,
+                        "lineNumber": 159,
+                        "name": "openLogFile",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "on",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 29,
+                        "lineNumber": 164,
+                        "name": "requestAcPower",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "on",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 30,
+                        "lineNumber": 165,
+                        "name": "requestDcPower",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "on",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "volt",
+                                "type": "uint16_t"
+                            },
+                            {
+                                "name": "freq",
+                                "type": "uint16_t"
+                            }
+                        ],
+                        "index": 31,
+                        "lineNumber": 166,
+                        "name": "setAcPower",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "on",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "volt",
+                                "type": "uint16_t"
+                            },
+                            {
+                                "name": "cur",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 32,
+                        "lineNumber": 167,
+                        "name": "setDcPower",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "dev",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 33,
+                        "lineNumber": 172,
+                        "name": "refreshPower",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 34,
+                        "lineNumber": 173,
+                        "name": "refreshAllPower",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "key",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "defaultValue",
+                                "type": "QVariant"
+                            }
+                        ],
+                        "index": 35,
+                        "isConst": true,
+                        "lineNumber": 177,
+                        "name": "loadUi",
+                        "returnType": "QVariant"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "key",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 36,
+                        "isCloned": true,
+                        "isConst": true,
+                        "lineNumber": 177,
+                        "name": "loadUi",
+                        "returnType": "QVariant"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "key",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "value",
+                                "type": "QVariant"
+                            }
+                        ],
+                        "index": 37,
+                        "lineNumber": 178,
+                        "name": "saveUi",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "ns",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 38,
+                        "lineNumber": 179,
+                        "name": "applyDelayTime",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 39,
+                        "lineNumber": 180,
+                        "name": "refreshPorts",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "portName",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 40,
+                        "isConst": true,
+                        "lineNumber": 181,
+                        "name": "isPortAvailable",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "index": 41,
+                        "lineNumber": 183,
+                        "name": "resetSystem",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "cmd",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 42,
+                        "lineNumber": 184,
+                        "name": "sendCommand",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "line",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 43,
+                        "lineNumber": 190,
+                        "name": "executeCommand",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "prefix",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 44,
+                        "isConst": true,
+                        "lineNumber": 192,
+                        "name": "cliCompletions",
+                        "returnType": "QStringList"
+                    },
+                    {
+                        "access": "public",
+                        "index": 45,
+                        "lineNumber": 193,
+                        "name": "clearCommandLog",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "refDbm",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 46,
+                        "lineNumber": 207,
+                        "name": "calibrateRf",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "index": 47,
+                        "lineNumber": 208,
+                        "name": "clearRfCalibration",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "mhz",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 48,
+                        "lineNumber": 209,
+                        "name": "clearRfCalPoint",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 34,
+                        "name": "acSource",
+                        "override": false,
+                        "read": "acSource",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ACsource*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 35,
+                        "name": "dcSource",
+                        "override": false,
+                        "read": "dcSource",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "DCsource*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 36,
+                        "name": "rfController",
+                        "override": false,
+                        "read": "rfController",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "RfController*",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 37,
+                        "name": "comPort",
+                        "notify": "comPortChanged",
+                        "override": false,
+                        "read": "comPort",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setComPort"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 38,
+                        "name": "baudRate",
+                        "notify": "baudRateChanged",
+                        "override": false,
+                        "read": "baudRate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setBaudRate"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 39,
+                        "name": "delayTime",
+                        "notify": "delayTimeChanged",
+                        "override": false,
+                        "read": "delayTime",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setDelayTime"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 40,
+                        "name": "sessionName",
+                        "notify": "sessionNameChanged",
+                        "override": false,
+                        "read": "sessionName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setSessionName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 41,
+                        "name": "isConnected",
+                        "notify": "isConnectedChanged",
+                        "override": false,
+                        "read": "isConnected",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 42,
+                        "name": "availablePorts",
+                        "notify": "availablePortsChanged",
+                        "override": false,
+                        "read": "availablePorts",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 43,
+                        "name": "commandLog",
+                        "notify": "commandLogChanged",
+                        "override": false,
+                        "read": "commandLog",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 44,
+                        "name": "adcChannels",
+                        "notify": "adcChannelsChanged",
+                        "override": false,
+                        "read": "adcChannels",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 47,
+                        "name": "configPath",
+                        "override": false,
+                        "read": "configPath",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 53,
+                        "name": "isPortVerified",
+                        "notify": "isPortVerifiedChanged",
+                        "override": false,
+                        "read": "isPortVerified",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 58,
+                        "name": "linkDiagnosis",
+                        "notify": "linkDiagnosisChanged",
+                        "override": false,
+                        "read": "linkDiagnosis",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 14,
+                        "lineNumber": 59,
+                        "name": "linkDiagnosisShort",
+                        "notify": "linkDiagnosisChanged",
+                        "override": false,
+                        "read": "linkDiagnosisShort",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 15,
+                        "lineNumber": 62,
+                        "name": "boardFirmware",
+                        "notify": "boardDiagChanged",
+                        "override": false,
+                        "read": "boardFirmware",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 16,
+                        "lineNumber": 63,
+                        "name": "boardDiag",
+                        "notify": "boardDiagChanged",
+                        "override": false,
+                        "read": "boardDiag",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantMap",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 17,
+                        "lineNumber": 65,
+                        "name": "scanning",
+                        "notify": "scanningChanged",
+                        "override": false,
+                        "read": "scanning",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 18,
+                        "lineNumber": 70,
+                        "name": "kichNoPeakVoltage",
+                        "notify": "kichNoPeakVoltageChanged",
+                        "override": false,
+                        "read": "kichNoPeakVoltage",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 19,
+                        "lineNumber": 79,
+                        "name": "acVoltMin",
+                        "override": false,
+                        "read": "acVoltMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 20,
+                        "lineNumber": 80,
+                        "name": "acVoltMax",
+                        "override": false,
+                        "read": "acVoltMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 21,
+                        "lineNumber": 81,
+                        "name": "acFreqMin",
+                        "override": false,
+                        "read": "acFreqMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 22,
+                        "lineNumber": 82,
+                        "name": "acFreqMax",
+                        "override": false,
+                        "read": "acFreqMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 23,
+                        "lineNumber": 83,
+                        "name": "dcVoltMin",
+                        "override": false,
+                        "read": "dcVoltMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 24,
+                        "lineNumber": 84,
+                        "name": "dcVoltMax",
+                        "override": false,
+                        "read": "dcVoltMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 25,
+                        "lineNumber": 85,
+                        "name": "dcCurrentMin",
+                        "override": false,
+                        "read": "dcCurrentMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 26,
+                        "lineNumber": 86,
+                        "name": "dcCurrentMax",
+                        "override": false,
+                        "read": "dcCurrentMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 27,
+                        "lineNumber": 87,
+                        "name": "attMax",
+                        "override": false,
+                        "read": "attMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 28,
+                        "lineNumber": 98,
+                        "name": "stagedAcVolt",
+                        "notify": "stagedAcVoltChanged",
+                        "override": false,
+                        "read": "stagedAcVolt",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setStagedAcVolt"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 29,
+                        "lineNumber": 99,
+                        "name": "stagedAcFreq",
+                        "notify": "stagedAcFreqChanged",
+                        "override": false,
+                        "read": "stagedAcFreq",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setStagedAcFreq"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 30,
+                        "lineNumber": 100,
+                        "name": "stagedDcVolt",
+                        "notify": "stagedDcVoltChanged",
+                        "override": false,
+                        "read": "stagedDcVolt",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setStagedDcVolt"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 31,
+                        "lineNumber": 101,
+                        "name": "stagedDcCurrent",
+                        "notify": "stagedDcCurrentChanged",
+                        "override": false,
+                        "read": "stagedDcCurrent",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setStagedDcCurrent"
+                    }
+                ],
+                "qualifiedClassName": "DashboardManager",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 212,
+                        "name": "comPortChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 213,
+                        "name": "baudRateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 214,
+                        "name": "delayTimeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 215,
+                        "name": "sessionNameChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 216,
+                        "name": "isConnectedChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 217,
+                        "name": "availablePortsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 218,
+                        "name": "commandLogChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 219,
+                        "name": "adcChannelsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 220,
+                        "name": "isPortVerifiedChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 221,
+                        "name": "linkDiagnosisChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 222,
+                        "name": "boardDiagChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 223,
+                        "name": "scanningChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "lineNumber": 224,
+                        "name": "kichNoPeakVoltageChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 13,
+                        "lineNumber": 225,
+                        "name": "stagedAcVoltChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 14,
+                        "lineNumber": 226,
+                        "name": "stagedAcFreqChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 15,
+                        "lineNumber": 227,
+                        "name": "stagedDcVoltChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 16,
+                        "lineNumber": 228,
+                        "name": "stagedDcCurrentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "type",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "message",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 17,
+                        "lineNumber": 229,
+                        "name": "systemNotification",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "error",
+                                "type": "QSerialPort::SerialPortError"
+                            }
+                        ],
+                        "index": 18,
+                        "lineNumber": 232,
+                        "name": "handleSerialError",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 19,
+                        "lineNumber": 233,
+                        "name": "generateSimulatedWave",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "arguments": [
+                            {
+                                "name": "channel",
+                                "type": "int"
+                            },
+                            {
+                                "name": "value",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 20,
+                        "lineNumber": 234,
+                        "name": "onAttUpdateRequested",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 21,
+                        "lineNumber": 240,
+                        "name": "sendPingProbe",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 22,
+                        "lineNumber": 242,
+                        "name": "onPingTimeout",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 23,
+                        "lineNumber": 244,
+                        "name": "onWaveWatchdog",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 24,
+                        "lineNumber": 246,
+                        "name": "onAcPowerTimeout",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 25,
+                        "lineNumber": 247,
+                        "name": "onDcPowerTimeout",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "dashboardmanager.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "DCsource",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "DCsource",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "BasePowerSource"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "dcsource.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "RfController",
+                "lineNumber": 13,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "channel",
+                                "type": "int"
+                            },
+                            {
+                                "name": "value",
+                                "type": "double"
+                            },
+                            {
+                                "name": "force",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 9,
+                        "lineNumber": 131,
+                        "name": "requestSetAtt",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "channel",
+                                "type": "int"
+                            },
+                            {
+                                "name": "value",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 10,
+                        "isCloned": true,
+                        "lineNumber": 131,
+                        "name": "requestSetAtt",
+                        "returnType": "bool"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 18,
+                        "name": "att1",
+                        "notify": "att1Changed",
+                        "override": false,
+                        "read": "att1",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAtt1"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 19,
+                        "name": "att2",
+                        "notify": "att2Changed",
+                        "override": false,
+                        "read": "att2",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAtt2"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 20,
+                        "name": "att3",
+                        "notify": "att3Changed",
+                        "override": false,
+                        "read": "att3",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false,
+                        "write": "setAtt3"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 25,
+                        "name": "waveData",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "waveData",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 26,
+                        "name": "xMin",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "xMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 27,
+                        "name": "xMax",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "xMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 28,
+                        "name": "yMin",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "yMin",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 29,
+                        "name": "yMax",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "yMax",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 30,
+                        "name": "xIsFrequency",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "xIsFrequency",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 31,
+                        "name": "peakLevel",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "peakLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 32,
+                        "name": "peakX",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "peakX",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "lineNumber": 33,
+                        "name": "totalLevel",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "totalLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 12,
+                        "lineNumber": 34,
+                        "name": "totalDbfs",
+                        "notify": "waveDataChanged",
+                        "override": false,
+                        "read": "totalDbfs",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 13,
+                        "lineNumber": 37,
+                        "name": "waveSource",
+                        "notify": "waveSourceChanged",
+                        "override": false,
+                        "read": "waveSource",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 14,
+                        "lineNumber": 38,
+                        "name": "spectrumUnit",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "spectrumUnit",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 15,
+                        "lineNumber": 41,
+                        "name": "rfStatusValid",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rfStatusValid",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 16,
+                        "lineNumber": 42,
+                        "name": "rxLoMHz",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rxLoMHz",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 17,
+                        "lineNumber": 43,
+                        "name": "rxFsMHz",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rxFsMHz",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 18,
+                        "lineNumber": 44,
+                        "name": "rxBwMHz",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rxBwMHz",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 19,
+                        "lineNumber": 45,
+                        "name": "rxGainDb",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rxGainDb",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 20,
+                        "lineNumber": 46,
+                        "name": "rxGainMode",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "rxGainMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 21,
+                        "lineNumber": 47,
+                        "name": "fftSize",
+                        "notify": "rfStatusChanged",
+                        "override": false,
+                        "read": "fftSize",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 22,
+                        "lineNumber": 50,
+                        "name": "calibrated",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calibrated",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 23,
+                        "lineNumber": 51,
+                        "name": "calOffsetDb",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calOffsetDb",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "double",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 24,
+                        "lineNumber": 53,
+                        "name": "calMismatch",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calMismatch",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 25,
+                        "lineNumber": 57,
+                        "name": "calPoints",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calPoints",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 26,
+                        "lineNumber": 59,
+                        "name": "calInfo",
+                        "notify": "calibrationChanged",
+                        "override": false,
+                        "read": "calInfo",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 27,
+                        "lineNumber": 64,
+                        "name": "diagText",
+                        "notify": "diagChanged",
+                        "override": false,
+                        "read": "diagText",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 28,
+                        "lineNumber": 65,
+                        "name": "diagLevel",
+                        "notify": "diagChanged",
+                        "override": false,
+                        "read": "diagLevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "virtual": false
+                    }
+                ],
+                "qualifiedClassName": "RfController",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 134,
+                        "name": "att1Changed",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 135,
+                        "name": "att2Changed",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 136,
+                        "name": "att3Changed",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 137,
+                        "name": "waveDataChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 138,
+                        "name": "waveSourceChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 139,
+                        "name": "rfStatusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 140,
+                        "name": "calibrationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 141,
+                        "name": "diagChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "channel",
+                                "type": "int"
+                            },
+                            {
+                                "name": "value",
+                                "type": "double"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 142,
+                        "name": "attUpdateRequested",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "rfcontroller.h",
+        "outputRevision": 69
+    }
+]

@@ -56,7 +56,7 @@
                         {
                             "codegenResult": 0,
                             "column": 35,
-                            "durationMicroseconds": 8000,
+                            "durationMicroseconds": 5000,
                             "functionName": "color",
                             "line": 70,
                             "message": ""
@@ -88,7 +88,7 @@
                         {
                             "codegenResult": 2,
                             "column": 42,
-                            "durationMicroseconds": 1000,
+                            "durationMicroseconds": 0,
                             "functionName": "errorCount",
                             "line": 82,
                             "message": "Cannot generate efficient code for lookup in QJSValue"

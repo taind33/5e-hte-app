@@ -8,7 +8,7 @@
                         {
                             "codegenResult": 2,
                             "column": 45,
-                            "durationMicroseconds": 1000,
+                            "durationMicroseconds": 0,
                             "functionName": "delayOptions",
                             "line": 11,
                             "message": "Cannot generate efficient code for storing an array in a non-sequence type"
@@ -16,7 +16,7 @@
                         {
                             "codegenResult": 2,
                             "column": 9,
-                            "durationMicroseconds": 1000,
+                            "durationMicroseconds": 0,
                             "functionName": "currentDelayIndex",
                             "line": 19,
                             "message": "Cannot load property length from TimeDelay::delayOptions with type QVariant."
@@ -40,7 +40,7 @@
                         {
                             "codegenResult": 0,
                             "column": 92,
-                            "durationMicroseconds": 5000,
+                            "durationMicroseconds": 4000,
                             "functionName": "color",
                             "line": 38,
                             "message": ""

@@ -16,7 +16,7 @@
                         {
                             "codegenResult": 0,
                             "column": 26,
-                            "durationMicroseconds": 8000,
+                            "durationMicroseconds": 6000,
                             "functionName": "margins",
                             "line": 19,
                             "message": ""

@@ -1,0 +1,18 @@
+{
+    "classes": [
+        {
+            "className": "DCsource",
+            "lineNumber": 4,
+            "object": true,
+            "qualifiedClassName": "DCsource",
+            "superClasses": [
+                {
+                    "access": "public",
+                    "name": "BasePowerSource"
+                }
+            ]
+        }
+    ],
+    "inputFile": "dcsource.h",
+    "outputRevision": 69
+}

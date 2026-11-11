@@ -1,4 +1,4 @@
-set(qml_import_scanner_imports_count 33)
+set(qml_import_scanner_imports_count 35)
 set(qml_import_scanner_import_0 "CLASSNAME;QtQuick2Plugin;LINKTARGET;Qt6::qtquick2plugin;NAME;QtQuick;PATH;C:/Qt/6.11.2/mingw_64/qml/QtQuick;PLUGIN;qtquick2plugin;PLUGINISOPTIONAL;;PREFER;:/qt-project.org/imports/QtQuick/;RELATIVEPATH;QtQuick;TYPE;module;")
 set(qml_import_scanner_import_1 "CLASSNAME;QtQmlPlugin;LINKTARGET;Qt6::qmlplugin;NAME;QtQml;PATH;C:/Qt/6.11.2/mingw_64/qml/QtQml;PLUGIN;qmlplugin;PLUGINISOPTIONAL;;PREFER;:/qt-project.org/imports/QtQml/;RELATIVEPATH;QtQml;TYPE;module;")
 set(qml_import_scanner_import_2 "NAME;QML;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/QML;PREFER;:/qt/qml/DashboardEnv/;RELATIVEPATH;QML;TYPE;module;")
@@ -30,6 +30,8 @@ set(qml_import_scanner_import_27 "COMPONENTS;D:/taind33/Qt/DashboardEnv_fix_tran
 set(qml_import_scanner_import_28 "CLASSNAME;QtChartsQml2Plugin;LINKTARGET;Qt6::qtchartsqml2;NAME;QtCharts;PATH;C:/Qt/6.11.2/mingw_64/qml/QtCharts;PLUGIN;qtchartsqml2plugin;PLUGINISOPTIONAL;;PREFER;:/qt-project.org/imports/QtCharts/;RELATIVEPATH;QtCharts;TYPE;module;")
 set(qml_import_scanner_import_29 "NAME;../qml/views;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/views;TYPE;directory;")
 set(qml_import_scanner_import_30 "NAME;../qml/components;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/DashboardEnv/qml/components;TYPE;directory;")
-set(qml_import_scanner_import_31 "NAME;../qml/views;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views;TYPE;directory;")
-set(qml_import_scanner_import_32 "NAME;../qml/components;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components;TYPE;directory;")
+set(qml_import_scanner_import_31 "NAME;../qml/views;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/release/DashboardEnv/qml/views;TYPE;directory;")
+set(qml_import_scanner_import_32 "NAME;../qml/components;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/release/DashboardEnv/qml/components;TYPE;directory;")
+set(qml_import_scanner_import_33 "NAME;../qml/views;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/views;TYPE;directory;")
+set(qml_import_scanner_import_34 "NAME;../qml/components;PATH;D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components;TYPE;directory;")
 

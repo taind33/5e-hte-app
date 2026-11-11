@@ -1,0 +1,23 @@
+{
+    "formatRevision": 1,
+    "modules": [
+        {
+            "moduleFiles": [
+                {
+                    "entries": [
+                        {
+                            "codegenResult": 2,
+                            "column": 24,
+                            "durationMicroseconds": 0,
+                            "functionName": "verticalAlignment",
+                            "line": 16,
+                            "message": "Could not find property \"verticalAlignment\"."
+                        }
+                    ],
+                    "filePath": "D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/qml/components/CustomBoxFiled.qml"
+                }
+            ],
+            "moduleId": "DashboardEnv(appDashboardEnv)"
+        }
+    ]
+}

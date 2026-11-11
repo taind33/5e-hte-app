@@ -987,62 +987,62 @@ appDashboardEnv_OBJECTS = \
 # External object files for target appDashboardEnv
 appDashboardEnv_EXTERNAL_OBJECTS =
 
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/main.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/app.rc.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/appdashboardenv_qmltyperegistrations.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_qmake_DashboardEnv.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/basepowersource.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/acsource.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/dcsource.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/rfcontroller.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/dashboardmanager.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/dashboardcli.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/backend/vip_helper.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qmlcache_loader.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qml_Main_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_components_BoxWrap_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_views_PowerControlPanel_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_TimeDelay_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_MiniMonitorChart_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_views_EnvelopeChartPanel_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_Detect_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_Attenuation_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomComboBox_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomSwitch_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomBoxFiled_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_ClampedTextField_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_components_AppTheme_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_chartView_qml.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_appDashboardEnv_raw_qml_0.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_appDashboardEnv_raw_res_0.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.qt/rcc/qrc_appDashboardEnv_raw_qml_0_extra_qmldirs.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/build.make
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6SerialPort.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Charts.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6QuickControls2.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6OpenGLWidgets.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Widgets.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Quick.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6OpenGL.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Gui.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Qml.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Network.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Core.a
-appDashboardEnv.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6EntryPoint.a
-appDashboardEnv.exe: appDashboardEnv.exe.manifest
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/linkLibs.rsp
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/objects1.rsp
-appDashboardEnv.exe: CMakeFiles/appDashboardEnv.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=D:\taind33\Qt\DashboardEnv_fix_translation_validator_settings\DashboardEnv_real\build\Desktop_Qt_6_11_2_MinGW_64_bit_Debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Linking CXX executable appDashboardEnv.exe"
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/mocs_compilation.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/main.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/app.rc.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/appdashboardenv_qmltyperegistrations.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_qmake_DashboardEnv.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/basepowersource.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/acsource.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/dcsource.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/rfcontroller.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/dashboardmanager.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/dashboardcli.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/backend/vip_helper.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qmlcache_loader.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.rcc/qmlcache/appDashboardEnv_qml_Main_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_components_BoxWrap_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_ConnectionPanel_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_views_PowerControlPanel_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_TimeDelay_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_MiniMonitorChart_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_views_EnvelopeChartPanel_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_CommandLogPanel_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_views_Notification_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_Detect_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_Attenuation_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomComboBox_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomSwitch_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_CustomBoxFiled_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/2cd9b91339023c1d08bf2d8ceb189dea/appDashboardEnv_qml_components_ClampedTextField_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/7a7c13a559b5318b026b1fd4892e5d5c/qmlcache/appDashboardEnv_qml_components_AppTheme_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.rcc/qmlcache/appDashboardEnv_qml_views_chartView_qml.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_appDashboardEnv_raw_qml_0.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build/Desktop_Qt_6_11_2_MinGW_64_bit_Debug/.qt/rcc/qrc_appDashboardEnv_raw_res_0.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/6fddb1d593a22ac5cb32c6e7abad1545/.qt/rcc/qrc_appDashboardEnv_raw_qml_0_extra_qmldirs.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/appDashboardEnv_autogen/EWIEGA46WW/qrc_app.cpp.obj
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/build.make
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6SerialPort.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Charts.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6QuickControls2.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6OpenGLWidgets.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Widgets.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Quick.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6OpenGL.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Gui.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Qml.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Network.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6Core.a
+5E-HTE.exe: C:/Qt/6.11.2/mingw_64/lib/libQt6EntryPoint.a
+5E-HTE.exe: 5E-HTE.exe.manifest
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/linkLibs.rsp
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/objects1.rsp
+5E-HTE.exe: CMakeFiles/appDashboardEnv.dir/link.txt
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=D:\taind33\Qt\DashboardEnv_fix_translation_validator_settings\DashboardEnv_real\build\Desktop_Qt_6_11_2_MinGW_64_bit_Debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Linking CXX executable 5E-HTE.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\appDashboardEnv.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
-CMakeFiles/appDashboardEnv.dir/build: appDashboardEnv.exe
+CMakeFiles/appDashboardEnv.dir/build: 5E-HTE.exe
 .PHONY : CMakeFiles/appDashboardEnv.dir/build
 
 CMakeFiles/appDashboardEnv.dir/clean:

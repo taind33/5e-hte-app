@@ -1281,7 +1281,7 @@ void DashboardManager::parseIncomingData(const QByteArray &data) {
                 qDebug().noquote() << QString("[ADC7928] CH0 raw = %1 (0x%2) | V_ADC = %3 V")          // DEBUG ADC
                                           .arg(adc.raw_code[0]).arg(adc.raw_code[0], 3, 16, QChar('0'))
                                           .arg(codeToVolts, 0, 'f', 4);
-                double candidate = -codeToVolts;
+                double candidate = codeToVolts * KICH_NO_SCALE;
                 if (candidate < m_kichNoPeakV) {
                     m_kichNoPeakV = candidate;
                     emit kichNoPeakVoltageChanged();

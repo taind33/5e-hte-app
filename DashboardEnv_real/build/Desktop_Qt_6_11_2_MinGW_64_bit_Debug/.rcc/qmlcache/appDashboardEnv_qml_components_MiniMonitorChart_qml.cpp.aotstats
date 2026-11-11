@@ -64,7 +64,7 @@
                         {
                             "codegenResult": 2,
                             "column": 5,
-                            "durationMicroseconds": 8000,
+                            "durationMicroseconds": 7000,
                             "functionName": "refreshSeries",
                             "line": 51,
                             "message": "Cannot load property length from MiniMonitorChart::dataSource with type QVariant."
@@ -128,7 +128,7 @@
                         {
                             "codegenResult": 0,
                             "column": 24,
-                            "durationMicroseconds": 6000,
+                            "durationMicroseconds": 7000,
                             "functionName": "color",
                             "line": 109,
                             "message": ""
@@ -432,7 +432,7 @@
                         {
                             "codegenResult": 0,
                             "column": 23,
-                            "durationMicroseconds": 4000,
+                            "durationMicroseconds": 3000,
                             "functionName": "text",
                             "line": 254,
                             "message": ""

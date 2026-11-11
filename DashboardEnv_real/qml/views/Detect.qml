@@ -55,7 +55,7 @@ BoxWrap{
                         color: "#D9D9D9"
                     }
                     Text {
-                        text: dashboard.kichNoPeakVoltage.toFixed(1) + " V"
+                        text: dashboard.kichNoPeakVoltage.toFixed(2) + " V"
                         font.pixelSize: 18
                         font.bold: true
                         color: "#D9D9D9"

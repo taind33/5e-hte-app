@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/qt/qml/DashboardEnv/">
+    <file alias="qml/qmldir">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/release/DashboardEnv/qml/qmldir</file>
+    <file alias="qml/components/qmldir">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/release/DashboardEnv/qml/components/qmldir</file>
+    <file alias="qml/views/qmldir">D:/taind33/Qt/DashboardEnv_fix_translation_validator_settings/DashboardEnv_real/build/release/DashboardEnv/qml/views/qmldir</file>
+  </qresource>
+</RCC>
+
